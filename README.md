@@ -149,6 +149,12 @@ SkillShare Hub is an online platform where users can share skills, offer lessons
 5. **Access the Application:**
    - Open `http://localhost:3000` in your browser.
 
+6. **Access the PostgresSQL by CLI:**
+
+    ```bash
+    psql -d skillshare -U postgres -W
+   ```
+
 ## Contributing
 
 Feel free to fork this repository, create a new branch, and submit a pull request with your changes.

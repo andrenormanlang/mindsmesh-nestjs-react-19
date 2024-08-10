@@ -1,60 +1,74 @@
-# Stage 1: Build the application
-FROM node:14 as build
+###################
+# BUILD FOR LOCAL DEVELOPMENT
+###################
+FROM node:18-alpine As development
 
-WORKDIR /app
+# Set working directory
+WORKDIR /usr/src/app
 
-# Copy the .env file
-COPY .env .env
-
-# Copy package.json and package-lock.json
+# Copy package.json and package-lock.json to utilize Docker cache
+# This ensures that npm install is only rerun when package*.json files change
 COPY package*.json ./
 
-# Install all dependencies (including dev dependencies)
-RUN npm install
+# Install app dependencies using the `npm ci` command for cleaner dependency installation
+RUN npm ci
 
-# Copy the rest of the application files, including src directory
+# Copy the application source files
 COPY . .
+
+# Use non-root user for better security practices
+USER node
+
+###################
+# BUILD FOR PRODUCTION
+###################
+FROM node:18-alpine As build
+
+# Set working directory
+WORKDIR /usr/src/app
+
+# Copy npm dependency files
+COPY --chown=node:node --from=development /usr/src/app/package*.json ./
+COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
+
+# Copy the rest of the application source
+COPY --chown=node:node . .
 
 # Build the application
 RUN npm run build
 
-# Stage 2: Create the production environment
-FROM node:14-alpine as production
-
-WORKDIR /app
-
-# Set NODE_ENV to production
+# Set production environment to optimize libraries
 ENV NODE_ENV=production
 
-# Set environment variables directly in the Dockerfile
-ENV DATABASE_HOST=localhost
-ENV DATABASE_PORT=5432
-ENV DATABASE_USER=postgres
-ENV DATABASE_PASSWORD=shiva7
-ENV DATABASE_NAME=skillsharehub
-ENV JWT_SECRET=PixieElvinCat77#
+# Install only production dependencies and clean cache
+RUN npm ci --only=production && npm cache clean --force
 
-# Copy the built application from the build stage
-COPY --from=build /app/dist ./dist
+# Continue to use non-root user
+USER node
 
-# Copy only the production dependencies from the build stage
-COPY --from=build /app/package*.json ./
-COPY --from=build /app/node_modules ./node_modules
+###################
+# PRODUCTION
+###################
+FROM node:18-alpine As production
 
-# Copy the .env file from the build stage
-COPY --from=build /app/.env .env
+# Set working directory
+WORKDIR /usr/src/app
 
-# Copy the src directory if you need it in production
-COPY --from=build /app/src ./src
+# Set environment variables securely
+ENV NODE_ENV=production \
+    DATABASE_HOST=host.docker.internal \
+    DATABASE_PORT=5432 \
+    DATABASE_USER=postgres \
+    DATABASE_PASSWORD=shiva7 \
+    DATABASE_NAME=skillsharehub \
+    JWT_SECRET=PixieElvinCat77#
 
-# Prune non-production dependencies (optional)
-RUN npm prune --production
+# Copy node_modules and build directory from the build stage
+COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
+COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 
 # Expose the application port
 EXPOSE 3000
 
-# Start the server using the production build
-CMD ["npm", "run", "start:prod"]
-
-# ON SHELLSCRIPT EXECUTE THE FOLLOWING COMMAND!
-# docker run -it -p <host_port>:<container_port> <image_name> /bin/sh
+# Start the application using the production build
+CMD ["node", "dist/main.js"]
