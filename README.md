@@ -52,9 +52,11 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 - **Swagger:** A tool for documenting  API, enabling easy visualization and interaction with API endpoints directly from a browser.
 - **Socket.IO :** A library for real-time, bidirectional, and event-based communication, making it ideal for applications that require live updates, such as chat apps.
 
-### 🎨 Frontend (React 19 RC)
+### 🎨 Frontend (React 19 RC / OBS: React 18 for the moment)
 
-- **React 19 RC:** The latest release candidate of the popular front-end library, React, introducing several new features and improvements for building user interfaces. Some anticipated features include:
+**🧙‍♂️👨‍💻 Upon it´s release I will be migrating this project to use React 19!** 
+
+- **React 19 :** The latest upcoming version of the most popular front-end library, React, introducing several new features and improvements for building user interfaces. Some anticipated features include:
   - ***Server Components:*** Enhances server-side rendering by allowing you to build components that run exclusively on the server, reducing the need for client-side JavaScript.
   - ***Concurrent Rendering Improvements:*** Better handling of asynchronous tasks, making UIs more responsive by allowing React to interrupt rendering and continue later when needed.
   - ***Simplified State Management:*** Improvements in the way React handles state, making it more intuitive and reducing the complexity of managing state across components.
