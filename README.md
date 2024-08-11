@@ -46,17 +46,20 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 
 ### 🔧 Backend (NestJS)
 
-- **NestJS:** API framework.
-- **TypeORM:** Database management with PostgreSQL.
-- **Passport.js:** Authentication with JWT.
-- **Swagger:** API documentation.
-- **Socket.IO :** Real-time messaging.
+- **NestJS:** A powerful Node.js framework for building scalable and efficient server-side applications, providing an organized structure and TypeScript support out of the box.
+- **TypeORM:**  An ORM for TypeScript and JavaScript (ES7, ES6, ES5), allowing for database management with PostgreSQL, making data modeling easier and more intuitive.
+- **Passport.js:** Middleware for authentication in Node.js applications, supporting various authentication strategies, with a focus on JWT for secure API access.
+- **Swagger:** A tool for documenting  API, enabling easy visualization and interaction with API endpoints directly from a browser.
+- **Socket.IO :** A library for real-time, bidirectional, and event-based communication, making it ideal for applications that require live updates, such as chat apps.
 
-### 🎨 Frontend
+### 🎨 Frontend (React 19 RC)
 
-- **React:** Front-end framework.
-- **ShacnUI Components & Tailwind CSS:** Styling.
-- **Axios:** API requests.
+- **React 19 RC:** The latest release candidate of the popular front-end library, React, introducing several new features and improvements for building user interfaces. Some anticipated features include:
+  - ***Server Components:*** Enhances server-side rendering by allowing you to build components that run exclusively on the server, reducing the need for client-side JavaScript.
+  - ***Concurrent Rendering Improvements:*** Better handling of asynchronous tasks, making UIs more responsive by allowing React to interrupt rendering and continue later when needed.
+  - ***Simplified State Management:*** Improvements in the way React handles state, making it more intuitive and reducing the complexity of managing state across components.
+- **ShadcnUI Components & Tailwind CSS:** A powerful combination for styling and building UI components. ShadcnUI provides a set of highly customizable and accessible UI components using Tailwind syntax.
+- **Axios:** Promise-based HTTP client for making API requests that simplifies the process of handling HTTP requests, supporting features like request and response interception, automatic JSON data transformation, and error handling. 
 
 ### 🗄️ Database
 
