@@ -1,75 +1,80 @@
-# SkillShare Hub
+# 🎨 MindsMesh
 
-## Overview
+## 🚀 Overview
 
-SkillShare Hub is an online platform where users can share skills, offer lessons, and learn from others. The platform provides user authentication, profile management, skill offerings, a booking system, and a review system. Additionally, it includes an admin dashboard for managing users, skills, and bookings.
+Welcome to **MindsMesh** — an innovative online platform designed for creatives (slightly hipsters 🧑‍🎨), tech enthusiasts 💻, and developers 👩‍💻 to share their skills, offer lessons, and learn from others. The platform features user authentication, profile management, skill offerings, a booking system, and a review system. Additionally, it includes an admin dashboard for managing users, skills, and bookings, providing a seamless experience for both users and administrators.
 
-## Features
+## 🌟 Features
 
-### User Authentication
+### 🔒 User Authentication
 
 - **Registration & Login:** Secure user authentication using JWT.
 - **Role-Based Access Control:** Different access levels for users and admins.
 
-### User Profiles
+### 👤 User Profiles
 
 - **Profile Management:** Users can create and update profiles with bio, photo, skills offered, and reviews.
 - **Public Profiles:** Profiles are accessible publicly with user statistics.
 
-### Skill Offering
+### 🎯 Skill Offering
 
 - **Create Listings:** Users can offer skills by creating listings with title, description, price, and availability.
-- **Categories:** Skills are categorized (e.g., programming, cooking, music).
+- **Categories:** Skills are categorized (e.g., frontend developer, creative script writer, illustrator, etc..).
 
-### Booking System
+### 📅 Booking System
 
 - **Book Lessons:** Users can book lessons from available skill offerings.
 - **Scheduling:** Integration with a calendar for lesson scheduling.
 - **Notifications:** Reminders for upcoming lessons.
 
-### Review System
+### ⭐ Review System
 
 - **Leave Reviews:** Users can leave reviews and ratings after lessons.
 - **Aggregate Ratings:** Each skill provider has an overall rating.
 
-### Admin Dashboard
+### 🛠️ Admin Dashboard
 
 - **User & Skill Management:** Admins can manage users, skills, and bookings.
 - **Analytics:** Dashboard showing platform usage, popular skills, etc.
 
-### Optional Features
+### 🎁 Optional Features
 
 - **Messaging System:** In-app messaging for communication before/after booking.
 - **Payment Integration:** Integrate with Stripe for handling paid lessons.
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-### Backend (NestJS)
+### 🔧 Backend (NestJS)
 
 - **NestJS:** API framework.
 - **TypeORM:** Database management with PostgreSQL.
 - **Passport.js:** Authentication with JWT.
 - **Swagger:** API documentation.
-- **Socket.IO (Optional):** Real-time messaging.
+- **Socket.IO :** Real-time messaging.
 
-### Frontend
+### 🎨 Frontend
 
-- **React:** Front-end framework .
-- **Tailwind CSS:** Styling.
+- **React:** Front-end framework.
+- **ShacnUI Components & Tailwind CSS:** Styling.
 - **Axios:** API requests.
 
-### Database
+### 🗄️ Database
 
 - **PostgreSQL:** Relational database management.
 - **Redis (Optional):** Caching and session management.
 
-### DevOps
+### Main Features
+
+   **Messaging with Socket.IO**
+   **Stripe integration for payments**
+
+### 🚢 DevOps
 
 - **Docker:** Containerization.
 - **Heroku/DigitalOcean:** Deployment.
 - **GitHub Actions:** CI/CD pipeline.
 
-## Development Steps
+## 🧑‍💻 Development Steps
 
 1. **Project Setup:**
    - Initialize NestJS project.
@@ -114,7 +119,7 @@ SkillShare Hub is an online platform where users can share skills, offer lessons
     - Set up CI/CD pipelines.
     - Deploy to cloud provider.
 
-## Learning Outcomes
+## 🎓 Learning Outcomes
 
 - **NestJS:** Building RESTful APIs, managing databases, handling authentication.
 - **TypeORM:** Mastering ORM tools for database interactions.
@@ -122,43 +127,92 @@ SkillShare Hub is an online platform where users can share skills, offer lessons
 - **DevOps:** Containerization, CI/CD, and deployment practices.
 - **Advanced Features:** Real-time communication, payment processing.
 
-## Getting Started
+## 🚀 Getting Started
 
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/andrenormanlang/skillshare-hub.git
+   git clone https://github.com/andrenormanlang/mindsmesh.git
    ```
 
 2. **Install Dependencies:**
 
    ```bash
-   cd skillshare-hub/backend
+   cd skillshare/backend
+   npm install
+   ```
+
+   ```bash
+   cd skillshare/frontend
    npm install
    ```
 
 3. **Set Up Environment Variables:**
    - Create a `.env` file and add your configuration.
 
-4. **Run the Application:**
+   ```typescript
+   DATABASE_HOST=localhost
+   DATABASE_PORT=5432
+   DATABASE_USER=postgres
+   DATABASE_PASSWORD=yourpassword
+   DATABASE_NAME=mindsmesh
+   JWT_SECRET=YourSuperSecretKey
+   ```
+
+4. **Create and Access a PostgreSQL Database by CLI:**
+
+   ```bash
+   # Connect to PostgreSQL
+   psql -U postgres
+   enter password
+
+   # Create your database and access your DB
+   CREATE DATABASE mindsmesh;
+   \c mindsmesh
+
+   # Create the necessary tables
+   CREATE TABLE users (
+       id SERIAL PRIMARY KEY,
+       email VARCHAR(255) UNIQUE NOT NULL,
+       username VARCHAR(255) NOT NULL,
+       password VARCHAR(255) NOT NULL,
+       isAdmin BOOLEAN DEFAULT false,
+       role VARCHAR(255) DEFAULT 'user'
+   );
+
+   CREATE TABLE skills (
+       id SERIAL PRIMARY KEY,
+       title VARCHAR(255) NOT NULL,
+       description TEXT,
+       price NUMERIC(10, 2) NOT NULL,
+       isAvailable BOOLEAN DEFAULT true,
+       user_id INTEGER REFERENCES users(id)
+   );
+
+   ```
+
+5. **Run and access the Application endpoints:**
+
+### Backend
 
    ```bash
    npm run start:dev
    ```
 
-5. **Access the Application:**
-   - Open `http://localhost:3000` in your browser.
+- Open `http://localhost:3000` in Postman or Insomnia.
 
-6. **Access the PostgresSQL by CLI:**
+### Frontend
 
-    ```bash
-    psql -d skillshare -U postgres -W
+   ```bash
+   npm run start dev
    ```
 
-## Contributing
+- Open `http://localhost:5173` in your browser of choice.
+
+## 🤝 Contributing
 
 Feel free to fork this repository, create a new branch, and submit a pull request with your changes.
 
-## License
+## 📜 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

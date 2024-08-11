@@ -21,21 +21,28 @@ export class UsersService {
   }
 
   async create(userData: CreateUserDto): Promise<User> {
+    // Create a new User entity instance
     const newUser = new User();
     newUser.email = userData.email;
     newUser.username = userData.username;
-    newUser.password = await bcrypt.hash(userData.password, 10);
+    newUser.password = await bcrypt.hash(userData.password, 10); // Hash the user's password
     newUser.isAdmin = userData.isAdmin;
-    newUser.skills = [];
-
+    newUser.skills = []; // Initialize an empty skills array
+  
+    // Iterate over the skills provided in the DTO
     for (const skillData of userData.skills) {
+      // Create a new Skill entity for each skill in the DTO
       const newSkill = this.skillsRepository.create(skillData);
-      newUser.skills.push(newSkill);
+      newUser.skills.push(newSkill); // Add the new Skill to the user's skills array
     }
-
-    await this.skillsRepository.save(newUser.skills); // Save skills first if needed
-    return this.usersRepository.save(newUser); // Save the user with associated skills
+  
+    // Save all new skills to the database
+    await this.skillsRepository.save(newUser.skills);
+    
+    // Save the new user along with their associated skills to the database
+    return this.usersRepository.save(newUser);
   }
+  
 
   async createBulk(usersData: CreateUserDto[]): Promise<User[]> {
     const hashedUsers = usersData.map(async (user) => {
