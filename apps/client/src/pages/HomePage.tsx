@@ -8,7 +8,6 @@ import {
 } from "../../@/components/ui/card";
 import Navbar from "../components/NavBar";
 import { Input } from "../../@/components/ui/input";
-import { Avatar, AvatarImage } from "../../@/components/ui/avatar";
 import { getAllUsers } from "../services/SkillShareAPI"; // Importing the API call
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.png";
 
