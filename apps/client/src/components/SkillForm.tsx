@@ -14,10 +14,18 @@ export type SkillData = {
 
 interface SkillFormProps {
   onAddSkill: (skill: SkillData) => void;
+  initialSkill?: SkillData;
 }
 
-const SkillForm: React.FC<SkillFormProps> = ({ onAddSkill }) => {
-  const { control, handleSubmit } = useForm<SkillData>();
+const SkillForm: React.FC<SkillFormProps> = ({ onAddSkill, initialSkill }) => {
+  const { control, handleSubmit } = useForm<SkillData>({
+    defaultValues: initialSkill || {
+      title: "",
+      description: "",
+      price: 0,
+      isAvailable: false,
+    },
+  });
 
   const onSubmit = (data: SkillData) => {
     onAddSkill(data);
@@ -67,11 +75,9 @@ const SkillForm: React.FC<SkillFormProps> = ({ onAddSkill }) => {
           )}
         />
       </div>
-      <Button type="submit">Add Skill</Button>
+      <Button type="submit">{initialSkill ? "Update Skill" : "Add Skill"}</Button>
     </form>
   );
 };
 
 export default SkillForm;
-
-
