@@ -80,7 +80,7 @@ export const getAllUsers = async (): Promise<User[]> => {
 };
 
 export const getUserById = async (userId: string): Promise<User> => {
-  const response = await api.get(`/users/${userId}`);
+  const response = await api.get(`/api/users/${userId}`);
   return response.data;
 };
 
