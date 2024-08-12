@@ -1,10 +1,17 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../../@/components/ui/dialog';
+import { Button } from '../../@/components/ui/button';
+import LoginForm from './LoginForm';  // Refactored login form component
+import RegisterForm from './RegisterForm'; // Refactored register form component
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const location = useLocation();
-
   return (
     <nav className="bg-gray-800 p-4">
       <div className="container mx-auto flex justify-between items-center">
@@ -12,26 +19,36 @@ const Navbar = () => {
           MindsMesh
         </Link>
         <div className="hidden md:flex space-x-4">
-          <Link to="/" className={`text-white ${location.pathname === '/' ? 'underline' : ''}`}>Home</Link>
-          <Link to="/login" className={`text-white ${location.pathname === '/login' ? 'underline' : ''}`}>Login</Link>
-          <Link to="/register" className={`text-white ${location.pathname === '/register' ? 'underline' : ''}`}>Register</Link>
-        </div>
-        <div className="md:hidden">
-          <button onClick={() => setIsOpen(!isOpen)} className="text-white focus:outline-none">
-            Menu
-          </button>
+          {/* Login Dialog */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" className="text-white">Login</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              
+              <LoginForm /> {/* Using the refactored LoginForm component */}
+            </DialogContent>
+          </Dialog>
+
+          {/* Register Dialog */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" className="text-white">Register</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Register</DialogTitle>
+                <DialogDescription>
+                  Fill in the details below to create a new account.
+                </DialogDescription>
+              </DialogHeader>
+              <RegisterForm /> {/* Using the refactored RegisterForm component */}
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
-      {isOpen && (
-        <div className="md:hidden">
-          <Link to="/" className="block text-white p-2" onClick={() => setIsOpen(false)}>Home</Link>
-          <Link to="/login" className="block text-white p-2" onClick={() => setIsOpen(false)}>Login</Link>
-          <Link to="/register" className="block text-white p-2" onClick={() => setIsOpen(false)}>Register</Link>
-        </div>
-      )}
     </nav>
   );
 };
 
 export default Navbar;
-

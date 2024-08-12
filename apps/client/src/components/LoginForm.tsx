@@ -4,7 +4,7 @@ import { Card, CardHeader, CardContent, CardFooter } from '../../@/components/ui
 import { Input } from '../../@/components/ui/input';
 
 
-const LoginPage = () => {
+const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -13,7 +13,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+    <div className="flex justify-center items-center  bg-gray-100">
       <Card className="w-full max-w-sm p-4">
         <CardHeader>
           <h2 className="text-2xl font-semibold text-center">Login</h2>
@@ -46,4 +46,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default LoginForm;

@@ -35,7 +35,7 @@ export const register = async (
   password: string, 
   email: string, 
   avatar: File | null, 
-  skills: { title: string; description: string; price: number; isAvailable: boolean }[]
+  skills: { title: string; description: string; price: number; isAvailable: boolean }[] = []
 ): Promise<User> => {
   const formData = new FormData();
 
@@ -47,12 +47,16 @@ export const register = async (
     formData.append('avatar', avatar);
   }
 
-  skills.forEach((skill, index) => {
-    formData.append(`skills[${index}][title]`, skill.title);
-    formData.append(`skills[${index}][description]`, skill.description);
-    formData.append(`skills[${index}][price]`, skill.price.toString());
-    formData.append(`skills[${index}][isAvailable]`, skill.isAvailable.toString());
-  });
+  if (skills && skills.length > 0) {
+    skills.forEach((skill, index) => {
+      if (skill.title && skill.description && skill.price != null && skill.isAvailable != null) {
+        formData.append(`skills[${index}][title]`, skill.title);
+        formData.append(`skills[${index}][description]`, skill.description);
+        formData.append(`skills[${index}][price]`, skill.price.toString());
+        formData.append(`skills[${index}][isAvailable]`, skill.isAvailable.toString());
+      }
+    });
+  }
 
   const response = await axios.post('/api/users/register', formData, {
     headers: {
@@ -62,6 +66,7 @@ export const register = async (
 
   return response.data;
 };
+
 
 export const updateProfile = async (profileData: Partial<User>): Promise<User> => {
   const response = await api.put('/auth/profile', profileData);

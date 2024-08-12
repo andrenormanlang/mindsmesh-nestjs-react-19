@@ -14,9 +14,24 @@ export type User = {
     title: string;
     description: string;
     price: number;
-    isAvailable: boolean; // Updated to match the backend structure.
-    category: string; // Ensure this is consistent with the backend if it's being used there.
+    isAvailable: boolean; 
+    category: string; 
   };
+
+  export type RegisterFormData = {
+    username: string;
+    email: string;
+    password: string;
+    avatar?: FileList;
+  }
+  
+  export type SkillData = {
+    title: string;
+    description: string;
+    price: number;
+    isAvailable: boolean;
+  }
+  
   
   export type Lesson = {
     id: string;
