@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -6,14 +6,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../../@/components/ui/dialog';
-import { Button } from '../../@/components/ui/button';
-import LoginForm from './LoginForm';  // Refactored login form component
-import RegisterForm from './RegisterForm'; // Refactored register form component
+} from "../../@/components/ui/dialog";
+import { Button } from "../../@/components/ui/button";
+import LoginForm from "./LoginForm"; // Refactored login form component
+import RegisterForm from "./RegisterForm"; // Refactored register form component
 
 const Navbar = () => {
   return (
-    <nav className="bg-gray-800 p-4">
+    <nav className="bg-gray-800 p-4 sticky top-0 z-50">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-white text-xl font-bold">
           MindsMesh
@@ -22,10 +22,11 @@ const Navbar = () => {
           {/* Login Dialog */}
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="ghost" className="text-white">Login</Button>
+              <Button variant="ghost" className="text-white">
+                Login
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
-              
               <LoginForm /> {/* Using the refactored LoginForm component */}
             </DialogContent>
           </Dialog>
@@ -33,7 +34,9 @@ const Navbar = () => {
           {/* Register Dialog */}
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="ghost" className="text-white">Register</Button>
+              <Button variant="ghost" className="text-white">
+                Register
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
@@ -42,7 +45,8 @@ const Navbar = () => {
                   Fill in the details below to create a new account.
                 </DialogDescription>
               </DialogHeader>
-              <RegisterForm /> {/* Using the refactored RegisterForm component */}
+              <RegisterForm />{" "}
+              {/* Using the refactored RegisterForm component */}
             </DialogContent>
           </Dialog>
         </div>

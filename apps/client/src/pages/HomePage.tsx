@@ -6,7 +6,6 @@ import {
   CardContent,
   CardFooter,
 } from "../../@/components/ui/card";
-import Navbar from "../components/NavBar";
 import { Input } from "../../@/components/ui/input";
 import { getAllUsers } from "../services/SkillShareAPI"; // Importing the API call
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.png";
@@ -36,7 +35,7 @@ const HomePage = () => {
 
   return (
     <div>
-      <Navbar />
+      
 
       <div className="min-h-screen bg-gradient-to-b from-blue-700 to-green-900 text-white">
         <div className="flex flex-col items-center py-12">
@@ -102,9 +101,6 @@ const HomePage = () => {
           ))}
         </div>
 
-        <div className="bg-gray-800 text-gray-300 p-4 text-center">
-          Trusted by: Meta, Google, Netflix, P&G, PayPal, Payoneer
-        </div>
       </div>
     </div>
   );
