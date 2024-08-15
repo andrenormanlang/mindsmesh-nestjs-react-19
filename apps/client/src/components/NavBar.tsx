@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getProfile, logout } from "../services/SkillShareAPI";
+import { getProfile, getUserById, logout } from "../services/SkillShareAPI";
 import { User } from "../types/types";
 import { Button } from '../../@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../../@/components/ui/dropdown-menu';
@@ -8,31 +8,30 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from 
 import { HamburgerMenuIcon, Cross1Icon } from "@radix-ui/react-icons";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
-
+import EditProfileForm from "./EditProfileForm";
 
 const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false); // State for mobile menu
+  const [isProfileOpen, setIsProfileOpen] = useState(false); // State for profile modal
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       try {
         const profile = await getProfile();
-        if (!profile) {
-          throw new Error("No profile data found");
-        }
-        console.log("Fetched profile", profile);
-        setUser(profile);
+        const userId = profile.sub;  // This is your user ID
+        const fullUserData = await getUserById(userId);
+        setUser(fullUserData);
       } catch (error) {
-        console.error("Failed to fetch profile", error);
-        handleLogout(); // Optional: Log out user if fetching profile fails
+        console.error('Failed to fetch user data', error);
       }
     };
 
-    fetchProfile();
+    fetchData();
   }, []);
-
+  
   const handleLogout = async () => {
     await logout(); // Assume logout function removes token and handles other cleanup
     setUser(null); // Reset the user state
@@ -54,7 +53,7 @@ const Navbar = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white">
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
                   Profile
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout}>
@@ -115,7 +114,7 @@ const Navbar = () => {
                 className="text-white"
                 onClick={() => {
                   setMenuOpen(false);
-                  navigate("/profile");
+                  setIsProfileOpen(true);
                 }}
               >
                 Profile
@@ -161,7 +160,7 @@ const Navbar = () => {
                     Register
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w/[425px]">
                   <DialogHeader>
                     <DialogTitle>Register</DialogTitle>
                   </DialogHeader>
@@ -172,6 +171,15 @@ const Navbar = () => {
           )}
         </div>
       )}
+      {/* Profile Edit Modal */}
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <DialogContent className="sm:max-w/[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
+          {user && <EditProfileForm user={user} onClose={() => setIsProfileOpen(false)} />}
+        </DialogContent>
+      </Dialog>
     </nav>
   );
 };

@@ -9,7 +9,7 @@ import {
 } from "../../@/components/ui/card";
 import { Input } from "../../@/components/ui/input";
 import { getAllUsers, deleteUser, getProfile } from "../services/SkillShareAPI";
-import { User } from "../types/types";
+import { User, UserAuth } from "../types/types";
 import { Star } from "lucide-react";
 import {
   Carousel,
@@ -34,8 +34,20 @@ const HomePage = () => {
         ); // Filter users with at least one skill
         setUsersWithSkills(usersWithSkills);
 
-        const profile = await getProfile();
-        setCurrentUser(profile);
+        const profile: UserAuth = await getProfile();
+
+        const user: User = {
+          ...profile,
+          id: "",
+          username: "",
+          email: "",
+          role: "",
+          profile: "",
+          avatarUrls: [], // Populate this field appropriately
+          skills: [], // Populate this field appropriately
+        };
+
+        setCurrentUser(user);
       } catch (error) {
         console.error("Failed to fetch users or profile", error);
       }
@@ -45,7 +57,11 @@ const HomePage = () => {
   }, []);
 
   const handleDeleteAccount = async (userId: string) => {
-    if (window.confirm("Are you sure you want to delete your account? This action is irreversible.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete your account? This action is irreversible."
+      )
+    ) {
       await deleteUser(userId);
       setCurrentUser(null);
       navigate("/");

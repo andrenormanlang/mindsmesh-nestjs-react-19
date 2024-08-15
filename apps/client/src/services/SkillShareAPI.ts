@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, Skill, Lesson, Review } from '../types/types';
+import { User, Skill, Lesson, Review, UserAuth } from '../types/types';
 
 const api = axios.create({
   baseURL: "http://localhost:3000/api",
@@ -29,9 +29,14 @@ export const logout = async (): Promise<void> => {
   // You might want to do additional cleanup here
 };
 
-export const getProfile = async (): Promise<User> => {
-  const response = await api.get('/auth/profile'); // Ensure this is correct
-  return response.data;
+export const getProfile = async (): Promise<UserAuth> => {
+  try {
+    const response = await api.get('/auth/profile');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    throw error;
+  }
 };
 
 
@@ -104,8 +109,13 @@ export const getAllUsers = async (): Promise<User[]> => {
 };
 
 export const getUserById = async (userId: string): Promise<User> => {
-  const response = await api.get(`/api/users/${userId}`);
-  return response.data;
+  try {
+    const response = await api.get(`/users/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user by ID:", error);
+    throw error;
+  }
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {

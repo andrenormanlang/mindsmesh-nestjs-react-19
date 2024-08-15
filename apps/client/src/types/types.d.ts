@@ -8,7 +8,14 @@ export type User = {
   avatarUrls?: string[]; // Array of avatar URLs
 };
 
-
+export type UserAuth = {
+  emai: string;
+  sub: string;
+  iat: number;
+  exp: number;
+  sub: string;
+  }  
+  
   
   export type Skill = {
     id: string;

@@ -1,37 +1,41 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { getUserById, updateProfile } from "../services/SkillShareAPI";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { updateProfile } from "../services/SkillShareAPI";
 import { Input } from "../../@/components/ui/input";
 import { Button } from "../../@/components/ui/button";
-import { User } from "../types/types"; // Assuming you have a User type defined in types
+import { User } from "../types/types";
 
-// Define the type for the userData state
-type UserData = {
-  username: string;
-  email: string;
-  avatarUrls: string[]; // This should match the type in your User interface
+type EditProfileFormProps = {
+  user: User;
+  onClose: () => void;
 };
 
-const EditProfileForm = () => {
-  const { id } = useParams<{ id: string }>();
+const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
   const navigate = useNavigate();
-  const [userData, setUserData] = useState<UserData>({
-    username: "",
-    email: "",
-    avatarUrls: [],
+  const [userData, setUserData] = useState({
+    username: user.username || "",
+    profile: {
+      bio: user.profile?.bio || "",
+      location: user.profile?.location || "",
+    },
+    skills: user.skills || [],
+    avatarUrls: user.avatarUrls || [],
   });
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const user: User = await getUserById(id!);
-      setUserData({
-        username: user.username || "",
-        email: user.email || "",
-        avatarUrls: user.avatarUrls || [],
-      });
-    };
-    fetchUserData();
-  }, [id]);
+    if (user) {
+        console.log('Populating form with user data:', user);
+        setUserData({
+            username: user.username || "",
+            profile: {
+                bio: user.profile?.bio || "",
+                location: user.profile?.location || "",
+            },
+            skills: user.skills || [],
+            avatarUrls: user.avatarUrls || [],
+        });
+    }
+}, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserData({
@@ -40,14 +44,39 @@ const EditProfileForm = () => {
     });
   };
 
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserData({
+      ...userData,
+      profile: {
+        ...userData.profile,
+        [e.target.name]: e.target.value,
+      },
+    });
+  };
+
+  const handleSkillChange = (index: number, field: string, value: string | number | boolean) => {
+    const newSkills = [...userData.skills];
+    newSkills[index] = { ...newSkills[index], [field]: value };
+    setUserData({ ...userData, skills: newSkills });
+  };
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const avatarUrls = Array.from(e.target.files).map(file => URL.createObjectURL(file));
+      setUserData({ ...userData, avatarUrls });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await updateProfile(userData);
-    navigate(`/profile/${id}`);
+    navigate(`/profile/${user.id}`);
+    onClose(); // Close the modal after saving
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Form fields remain the same */}
       <div>
         <label htmlFor="username">Username</label>
         <Input
@@ -59,16 +88,83 @@ const EditProfileForm = () => {
         />
       </div>
       <div>
-        <label htmlFor="email">Email</label>
+        <label htmlFor="bio">Bio</label>
         <Input
-          type="email"
-          name="email"
-          value={userData.email}
-          onChange={handleChange}
+          type="text"
+          name="bio"
+          value={userData.profile.bio}
+          onChange={handleProfileChange}
           className="w-full"
         />
       </div>
-      {/* Add fields for password, avatar upload, etc. */}
+      <div>
+        <label htmlFor="location">Location</label>
+        <Input
+          type="text"
+          name="location"
+          value={userData.profile.location}
+          onChange={handleProfileChange}
+          className="w-full"
+        />
+      </div>
+      <div>
+        <label htmlFor="avatar">Upload Avatar</label>
+        <Input
+          type="file"
+          name="avatar"
+          multiple
+          onChange={handleAvatarUpload}
+          className="w-full"
+        />
+        <div className="flex space-x-2 mt-2">
+          {userData.avatarUrls.map((url, index) => (
+            <img key={index} src={url} alt={`Avatar ${index + 1}`} className="h-16 w-16 rounded-full" />
+          ))}
+        </div>
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold">Skills</h3>
+        {userData.skills.map((skill, index) => (
+          <div key={index} className="space-y-2">
+            <Input
+              type="text"
+              placeholder="Title"
+              value={skill.title}
+              onChange={(e) => handleSkillChange(index, "title", e.target.value)}
+              className="w-full"
+            />
+            <Input
+              type="text"
+              placeholder="Description"
+              value={skill.description}
+              onChange={(e) => handleSkillChange(index, "description", e.target.value)}
+              className="w-full"
+            />
+            <Input
+              type="number"
+              placeholder="Price"
+              value={skill.price}
+              onChange={(e) => handleSkillChange(index, "price", parseInt(e.target.value))}
+              className="w-full"
+            />
+            <Input
+              type="text"
+              placeholder="Category"
+              value={skill.category}
+              onChange={(e) => handleSkillChange(index, "category", e.target.value)}
+              className="w-full"
+            />
+            <label>
+              <input
+                type="checkbox"
+                checked={skill.isAvailable}
+                onChange={(e) => handleSkillChange(index, "isAvailable", e.target.checked)}
+              />
+              Available
+            </label>
+          </div>
+        ))}
+      </div>
       <Button type="submit" className="w-full">
         Update Profile
       </Button>
