@@ -1,4 +1,12 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Query,
+  Get,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 import { Request as ExpressRequest } from 'express'; // Import the Request type
@@ -18,8 +26,29 @@ export class AuthController {
     return this.authService.register(body);
   }
 
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    await this.authService.sendPasswordReset(email);
+    return { message: 'Password reset email sent' };
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Query('token') token: string,
+    @Body('newPassword') newPassword: string
+  ) {
+    await this.authService.resetPassword(token, newPassword);
+    return { message: 'Password has been reset' };
+  }
+
+  // @UseGuards(JwtAuthGuard)
+  // @Post('profile')
+  // getProfile(@Request() req: ExpressRequest) {
+  //   // Explicitly type the req parameter
+  //   return req.user;
+  // }
   @UseGuards(JwtAuthGuard)
-  @Post('profile')
+  @Get('profile')
   getProfile(@Request() req: ExpressRequest) {
     // Explicitly type the req parameter
     return req.user;

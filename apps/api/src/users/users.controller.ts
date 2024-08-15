@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
 import { CreateUserDto, CreateUsersDto } from './createusersdto';
@@ -18,12 +18,26 @@ export class UsersController {
   async findAll(): Promise<User[]> {
     return this.usersService.findAll();
   }
+  @Post('bulk-create')
+  async createBulk(@Body() createUsersDto: CreateUsersDto) {
+    return this.usersService.createBulk(createUsersDto.users);
+  }
 
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<User | undefined> {
+    if (!this.isValidUUID(id)) {
+      throw new BadRequestException('Invalid UUID');
+    }
     console.log(`Fetching user with ID: ${id}`);
     return this.usersService.findOne(id);
   }
+
+  // Helper method to validate UUID
+  private isValidUUID(id: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
+  }
+
 
   @Post('register')
   @UseInterceptors(FileInterceptor('avatar')) // Use FileInterceptor for file upload
@@ -41,11 +55,8 @@ export class UsersController {
   }  
     return this.usersService.create(createUserDto);
   }
+  
 
-  @Post('bulk-create')
-  async createBulk(@Body() createUsersDto: CreateUsersDto) {
-    return this.usersService.createBulk(createUsersDto.users);
-  }
 
   @Put(':id')
   async update(@Param('id') id: string, @Body() userDto: User): Promise<User> {

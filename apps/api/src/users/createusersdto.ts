@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsEmail, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Skill } from './skill.entity';
 
@@ -11,7 +11,7 @@ export class CreateUserDto {
   password: string;
 
   @IsOptional()
-  @IsString()
+  @IsArray()
   avatarUrls?: string[];
 
   @IsString()
