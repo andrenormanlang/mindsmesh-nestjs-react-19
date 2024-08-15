@@ -8,7 +8,7 @@ import {
   CardFooter,
 } from "../../@/components/ui/card";
 import { Input } from "../../@/components/ui/input";
-import { getAllUsers } from "../services/SkillShareAPI"; // Importing the API call
+import { getAllUsers, deleteUser, getProfile } from "../services/SkillShareAPI";
 import { User } from "../types/types";
 import { Star } from "lucide-react";
 import {
@@ -18,9 +18,12 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../../@/components/ui/carousel";
+import { useNavigate } from "react-router-dom";
 
 const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -29,15 +32,25 @@ const HomePage = () => {
         const usersWithSkills = users.filter(
           (user) => user.skills && user.skills.length > 0
         ); // Filter users with at least one skill
-        console.log("Users with skills", usersWithSkills);
         setUsersWithSkills(usersWithSkills);
+
+        const profile = await getProfile();
+        setCurrentUser(profile);
       } catch (error) {
-        console.error("Failed to fetch users with skills", error);
+        console.error("Failed to fetch users or profile", error);
       }
     };
 
     fetchUsers();
   }, []);
+
+  const handleDeleteAccount = async (userId: string) => {
+    if (window.confirm("Are you sure you want to delete your account? This action is irreversible.")) {
+      await deleteUser(userId);
+      setCurrentUser(null);
+      navigate("/");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-700 to-green-900 text-white">
@@ -68,8 +81,6 @@ const HomePage = () => {
             <CardHeader className="p-0 relative overflow-hidden">
               {user.avatarUrls && user.avatarUrls.length > 0 ? (
                 <div className="relative w-full h-56">
-                  {" "}
-                  {/* Adjust height as needed */}
                   <Carousel className="relative">
                     <CarouselContent>
                       {user.avatarUrls.map((url, index) => (
@@ -77,7 +88,7 @@ const HomePage = () => {
                           <img
                             src={url}
                             alt={`${user.username}'s image ${index + 1}`}
-                            className="w-full h-full object-contain rounded-lg" // Ensures image fits without distortion
+                            className="w-full h-full object-contain rounded-lg"
                           />
                         </CarouselItem>
                       ))}
@@ -114,9 +125,24 @@ const HomePage = () => {
                 <Star className="w-4 h-4" />
                 <p className="ml-1 text-sm">4.9 (1k+)</p>
               </div>
-              <Button className="text-sm" variant="outline">
-                View Profile
-              </Button>
+              {currentUser?.id === user.id && (
+                <>
+                  <Button
+                    className="text-sm"
+                    variant="outline"
+                    onClick={() => navigate(`/profile/edit/${user.id}`)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    className="text-sm"
+                    variant="destructive"
+                    onClick={() => handleDeleteAccount(user.id)}
+                  >
+                    Delete Account
+                  </Button>
+                </>
+              )}
             </CardFooter>
           </Card>
         ))}

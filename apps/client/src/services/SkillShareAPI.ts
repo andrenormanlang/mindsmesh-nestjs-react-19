@@ -18,17 +18,35 @@ api.interceptors.request.use((config) => {
 });
 // Authentication and User Management
 
-export const login = async (username: string, password: string): Promise<User> =>{
+export const login = async (username: string, password: string): Promise<User> => {
   const response = await api.post("/auth/login", { username, password });
   localStorage.setItem('token', response.data.access_token);
   return response.data;
 };
 
+export const logout = async (): Promise<void> => {
+  localStorage.removeItem('token'); // Remove the JWT token
+  // You might want to do additional cleanup here
+};
+
 export const getProfile = async (): Promise<User> => {
-  const response = await api.get('/auth/profile');
-  localStorage.setItem('token', response.data.access_token);
+  const response = await api.get('/auth/profile'); // Ensure this is correct
   return response.data;
 };
+
+
+export const sendPasswordResetEmail = async (email: string): Promise<void> => {
+  await api.post('/api/auth/forgot-password', { email });
+};
+
+export const requestPasswordReset = async (email: string): Promise<void> => {
+  await axios.post('/api/auth/forgot-password', { email });
+};
+
+export const resetPassword = async (token: string, newPassword: string): Promise<void> => {
+  await api.post(`/api/auth/reset-password?token=${token}`, { newPassword });
+};
+
 
 export const register = async (
   username: string, 
@@ -64,17 +82,21 @@ export const register = async (
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+
+    
   });
+
+  localStorage.setItem('token', response.data.access_token); 
 
   return response.data;
 };
 
 
 export const updateProfile = async (profileData: Partial<User>): Promise<User> => {
-  const response = await api.put('/auth/profile', profileData);
-  localStorage.setItem('token', response.data.access_token);
+  const response = await api.put(`/users/${profileData.id}`, profileData);
   return response.data;
 };
+
 
 export const getAllUsers = async (): Promise<User[]> => {
   const response = await api.get('/users');
@@ -87,8 +109,7 @@ export const getUserById = async (userId: string): Promise<User> => {
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {
-  const response = await api.delete(`/users/${userId}`);
-  return response.data;
+  await api.delete(`/users/${userId}`);
 };
 
 // Skill Management
