@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
 import { CreateUserDto, CreateUsersDto } from './createusersdto';
@@ -29,16 +29,16 @@ export class UsersController {
   @UseInterceptors(FileInterceptor('avatar')) // Use FileInterceptor for file upload
   async register(
     @Body() createUserDto: CreateUserDto,
-    @UploadedFile() avatar: Express.Multer.File, // Handle the uploaded file
+    @UploadedFiles() avatars: Express.Multer.File[], // Handle the uploaded file
   ) {
-    if (avatar) {
+    if (avatars && avatars.length > 0) {
       // Upload avatar to Cloudinary and get the URL
-      const uploadResult = await this.cloudinaryService.uploadImage(avatar);
-      createUserDto.avatar = uploadResult.secure_url; // Store the Cloudinary URL in the DTO
-      console.log('Avatar uploaded successfully:', uploadResult);
-
-    }
-    
+      const uploadResults = await Promise.all(
+        avatars.map(file => this.cloudinaryService.uploadImage(file))
+      );
+      createUserDto.avatarUrls = uploadResults.map(result => result.secure_url);
+      console.log('Avatar uploaded successfully:', uploadResults);
+  }  
     return this.usersService.create(createUserDto);
   }
 

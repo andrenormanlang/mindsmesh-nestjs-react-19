@@ -1,12 +1,13 @@
-export type User = { 
-    avatar?: string;
-    id: string;
-    username: string;
-    email: string;
-    role: string;
-    profile: UserProfile;
-    skills: Skill[];
-  }
+export type User = {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  profile: UserProfile;
+  skills: Skill[];
+  avatarUrls?: string[]; // Array of avatar URLs
+};
+
 
   
   export type Skill = {

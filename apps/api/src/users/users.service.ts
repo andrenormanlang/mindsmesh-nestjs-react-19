@@ -27,7 +27,7 @@ export class UsersService {
       username: userData.username,
       password: await bcrypt.hash(userData.password, 10),
       isAdmin: userData.isAdmin,
-      avatar: userData.avatar,
+      avatarUrls: userData.avatarUrls,
     });
 
     if (userData.skills && userData.skills.length > 0) {

@@ -12,7 +12,7 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsString()
-  avatar?: string;
+  avatarUrls?: string[];
 
   @IsString()
   username!: string;

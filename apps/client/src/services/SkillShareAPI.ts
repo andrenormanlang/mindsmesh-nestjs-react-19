@@ -34,7 +34,7 @@ export const register = async (
   username: string, 
   password: string, 
   email: string, 
-  avatar: File | null, 
+  avatarUrls: File [] | null, 
   skills: { title: string; description: string; price: number; isAvailable: boolean }[] = []
 ): Promise<User> => {
   const formData = new FormData();
@@ -43,8 +43,10 @@ export const register = async (
   formData.append('password', password);
   formData.append('email', email);
 
-  if (avatar) {
-    formData.append('avatar', avatar);
+  if (avatarUrls) {
+    avatarUrls.forEach((file, index) => {
+      formData.append(`avatarUrls[${index}]`, file);
+    });
   }
 
   if (skills && skills.length > 0) {

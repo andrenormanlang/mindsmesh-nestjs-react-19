@@ -19,8 +19,8 @@ export class User {
   @Column({ default: 'user' })
   role!: string;
 
-  @Column({ nullable: true })  // Make sure this field is nullable
-  avatar?: string;  // Add avatar column to store the Cloudinary URL
+  @Column("simple-array", { nullable: true })  // Make sure this field is nullable
+  avatarUrls?: string[];  // Add avatar column to store the Cloudinary URL
 
   @IsBoolean()
   @IsOptional()
