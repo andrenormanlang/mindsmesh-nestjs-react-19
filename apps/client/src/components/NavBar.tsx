@@ -22,6 +22,7 @@ const Navbar = () => {
         if (!profile) {
           throw new Error("No profile data found");
         }
+        console.log("Fetched profile", profile);
         setUser(profile);
       } catch (error) {
         console.error("Failed to fetch profile", error);
