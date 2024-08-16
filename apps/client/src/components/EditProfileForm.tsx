@@ -1,9 +1,29 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { updateProfile } from "../services/SkillShareAPI";
-import { Input } from "../../@/components/ui/input";
+import { useForm, Controller } from "react-hook-form";
 import { Button } from "../../@/components/ui/button";
+import { Input } from "../../@/components/ui/input";
+import { Label } from "../../@/components/ui/label";
+import { Textarea } from "../../@/components/ui/textarea";
+import EditSkillsForm from "./EditSkillsForm";
+import DeleteImage from "./DeleteImage";
 import { User } from "../types/types";
+import { updateProfile, updateSkill } from "../services/SkillShareAPI"; // Import API service
+
+type ProfileFormData = {
+  username: string;
+  profile: {
+    bio: string;
+    location: string;
+  };
+  avatarUrls: string[];
+  skills: {
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    isAvailable: boolean;
+  }[];
+};
 
 type EditProfileFormProps = {
   user: User;
@@ -11,8 +31,10 @@ type EditProfileFormProps = {
 };
 
 const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
-  const navigate = useNavigate();
-  const [userData, setUserData] = useState({
+  const [isSkillModalOpen, setIsSkillModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<number | null>(null);
+  const [userData, setUserData] = useState<ProfileFormData>({
     username: user.username || "",
     profile: {
       bio: user.profile?.bio || "",
@@ -24,151 +46,167 @@ const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
 
   useEffect(() => {
     if (user) {
-        console.log('Populating form with user data:', user);
-        setUserData({
-            username: user.username || "",
-            profile: {
-                bio: user.profile?.bio || "",
-                location: user.profile?.location || "",
-            },
-            skills: user.skills || [],
-            avatarUrls: user.avatarUrls || [],
-        });
+      setUserData({
+        username: user.username || "",
+        profile: {
+          bio: user.profile?.bio || "",
+          location: user.profile?.location || "",
+        },
+        skills: user.skills || [],
+        avatarUrls: user.avatarUrls || [],
+      });
     }
-}, [user]);
+  }, [user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUserData({
-      ...userData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUserData({
-      ...userData,
-      profile: {
-        ...userData.profile,
-        [e.target.name]: e.target.value,
-      },
-    });
-  };
-
-  const handleSkillChange = (index: number, field: string, value: string | number | boolean) => {
-    const newSkills = [...userData.skills];
-    newSkills[index] = { ...newSkills[index], [field]: value };
-    setUserData({ ...userData, skills: newSkills });
-  };
+  const { control, handleSubmit } = useForm<ProfileFormData>({
+    defaultValues: userData,
+  });
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const avatarUrls = Array.from(e.target.files).map(file => URL.createObjectURL(file));
-      setUserData({ ...userData, avatarUrls });
+      const avatarUrls = Array.from(e.target.files).map((file) =>
+        URL.createObjectURL(file)
+      );
+      setUserData({ ...userData, avatarUrls: [...userData.avatarUrls, ...avatarUrls] });
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    await updateProfile(userData);
-    navigate(`/profile/${user.id}`);
-    onClose(); // Close the modal after saving
+  const handleDeleteImageRequest = (index: number) => {
+    setImageToDelete(index);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteImage = () => {
+    if (imageToDelete !== null) {
+      const newAvatarUrls = userData.avatarUrls.filter((_, i) => i !== imageToDelete);
+      setUserData({ ...userData, avatarUrls: newAvatarUrls });
+      setImageToDelete(null);
+      setIsModalOpen(false);
+    }
+  };
+
+  const handleMainSubmit = async (data: ProfileFormData) => {
+    try {
+      const updatedUser = await updateProfile({
+        id: user.id,
+        username: data.username,
+        profile: {
+          bio: data.profile.bio,
+          location: data.profile.location,
+        },
+        avatarUrls: data.avatarUrls,
+      });
+      console.log("Profile updated successfully:", updatedUser);
+      onClose();
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    }
+  };
+
+  const handleSkillSubmit = async (data: { skills: ProfileFormData['skills'] }) => {
+    try {
+      for (const skill of data.skills) {
+        await updateSkill(skill.id, {
+          title: skill.title,
+          description: skill.description,
+          price: skill.price,
+          isAvailable: skill.isAvailable,
+        });
+      }
+      console.log("Skills updated successfully");
+      setIsSkillModalOpen(false);
+    } catch (error) {
+      console.error("Failed to update skills:", error);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Form fields remain the same */}
-      <div>
-        <label htmlFor="username">Username</label>
-        <Input
-          type="text"
-          name="username"
-          value={userData.username}
-          onChange={handleChange}
-          className="w-full"
-        />
-      </div>
-      <div>
-        <label htmlFor="bio">Bio</label>
-        <Input
-          type="text"
-          name="bio"
-          value={userData.profile.bio}
-          onChange={handleProfileChange}
-          className="w-full"
-        />
-      </div>
-      <div>
-        <label htmlFor="location">Location</label>
-        <Input
-          type="text"
-          name="location"
-          value={userData.profile.location}
-          onChange={handleProfileChange}
-          className="w-full"
-        />
-      </div>
-      <div>
-        <label htmlFor="avatar">Upload Avatar</label>
-        <Input
-          type="file"
-          name="avatar"
-          multiple
-          onChange={handleAvatarUpload}
-          className="w-full"
-        />
-        <div className="flex space-x-2 mt-2">
-          {userData.avatarUrls.map((url, index) => (
-            <img key={index} src={url} alt={`Avatar ${index + 1}`} className="h-16 w-16 rounded-full" />
-          ))}
+    <>
+      <form onSubmit={handleSubmit(handleMainSubmit)} className="space-y-4">
+        <div>
+          <Label htmlFor="username">Username</Label>
+          <Controller
+            name="username"
+            control={control}
+            render={({ field }) => (
+              <Input {...field} placeholder="Username" className="w-full" />
+            )}
+          />
         </div>
-      </div>
-      <div>
-        <h3 className="text-lg font-semibold">Skills</h3>
-        {userData.skills.map((skill, index) => (
-          <div key={index} className="space-y-2">
-            <Input
-              type="text"
-              placeholder="Title"
-              value={skill.title}
-              onChange={(e) => handleSkillChange(index, "title", e.target.value)}
-              className="w-full"
-            />
-            <Input
-              type="text"
-              placeholder="Description"
-              value={skill.description}
-              onChange={(e) => handleSkillChange(index, "description", e.target.value)}
-              className="w-full"
-            />
-            <Input
-              type="number"
-              placeholder="Price"
-              value={skill.price}
-              onChange={(e) => handleSkillChange(index, "price", parseInt(e.target.value))}
-              className="w-full"
-            />
-            <Input
-              type="text"
-              placeholder="Category"
-              value={skill.category}
-              onChange={(e) => handleSkillChange(index, "category", e.target.value)}
-              className="w-full"
-            />
-            <label>
-              <input
-                type="checkbox"
-                checked={skill.isAvailable}
-                onChange={(e) => handleSkillChange(index, "isAvailable", e.target.checked)}
-              />
-              Available
-            </label>
+
+        <div>
+          <Label htmlFor="bio">Bio</Label>
+          <Controller
+            name="profile.bio"
+            control={control}
+            render={({ field }) => (
+              <Textarea {...field} placeholder="Bio" className="w-full" />
+            )}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="location">Location</Label>
+          <Controller
+            name="profile.location"
+            control={control}
+            render={({ field }) => (
+              <Input {...field} placeholder="Location" className="w-full" />
+            )}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="avatar">Project Images</Label>
+          <Input
+            type="file"
+            name="avatar"
+            multiple
+            onChange={handleAvatarUpload}
+            className="w-full"
+          />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-2">
+            {userData.avatarUrls.map((url, index) => (
+              <div key={index} className="relative">
+                <img
+                  src={url}
+                  alt={`Avatar ${index + 1}`}
+                  className="h-20 w-full object-cover rounded-md"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleDeleteImageRequest(index)}
+                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 m-1 hover:bg-red-700"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <Button type="submit" className="w-full">
-        Update Profile
-      </Button>
-    </form>
+        </div>
+
+        <Button type="button" onClick={() => setIsSkillModalOpen(true)} className="w-full">
+          Edit Skills
+        </Button>
+
+        <Button type="submit" className="w-full">
+          Update Profile
+        </Button>
+
+        <DeleteImage
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onDeleteConfirm={handleDeleteImage}
+        />
+      </form>
+
+      <EditSkillsForm
+        user={user}
+        isOpen={isSkillModalOpen}
+        onClose={() => setIsSkillModalOpen(false)}
+        onSubmit={handleSkillSubmit}
+      />
+    </>
   );
 };
 

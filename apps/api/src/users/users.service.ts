@@ -3,9 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from './createusersdto';
+import { CreateUserDto } from './createusers.dto';
 import { Skill } from './skill.entity';
 import { QueryFailedError } from 'typeorm';
+import { UpdateSkillDto } from './createskill.dto';
 
 @Injectable()
 export class UsersService {
@@ -79,6 +80,69 @@ export class UsersService {
 
     return this.usersRepository.save({ ...user, ...userDto });
   }
+
+  async updateSkills(userId: string, skills: UpdateSkillDto[]): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id: userId }, relations: ['skills'] });
+    
+    if (!user) throw new NotFoundException('User not found');
+  
+    // Assuming you want to replace all existing skills
+    await this.skillsRepository.delete({ user: { id: userId } });
+  
+    const updatedSkills = await this.skillsRepository.save(
+      skills.map(skillData => this.skillsRepository.create({ ...skillData, user })),
+    );
+  
+    user.skills = updatedSkills;
+    return this.usersRepository.save(user);
+  }
+
+  async updateSkill(skillId: string, updateSkillDto: UpdateSkillDto): Promise<Skill> {
+    const skill = await this.findSkillById(skillId);
+    if (!skill) {
+      throw new NotFoundException('Skill not found');
+    }
+  
+    Object.assign(skill, updateSkillDto);
+    return this.skillsRepository.save(skill);
+  }
+
+  async updateUserWithSkills(userId: string, userDto: CreateUserDto): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id: userId }, relations: ['skills'] });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (userDto.password) {
+      userDto.password = await bcrypt.hash(userDto.password, 10);
+    } else {
+      delete userDto.password;
+    }
+
+    if (userDto.skills && userDto.skills.length > 0) {
+        // Update the skills
+        const updatedSkills = await this.skillsRepository.save(
+            userDto.skills.map((skillData) => {
+                const existingSkill = user.skills.find(skill => skill.id === skillData.id);
+                if (existingSkill) {
+                    // Update existing skill
+                    return this.skillsRepository.create({ ...existingSkill, ...skillData });
+                } else {
+                    // Add new skill
+                    return this.skillsRepository.create({ ...skillData, user });
+                }
+            })
+        );
+        user.skills = updatedSkills;
+    }
+
+    return this.usersRepository.save({ ...user, ...userDto });
+}
+
+  
+
+  async findSkillById(id: string): Promise<Skill | undefined> {
+    return this.skillsRepository.findOne({ where: { id } });
+  }
+  
 
   async delete(id: string): Promise<void> {
     const result = await this.usersRepository.delete(id);

@@ -3,7 +3,7 @@ import { UsersService } from './users.service';
 import { User } from './user.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DeepPartial, DeleteResult, Repository } from 'typeorm';
-import { CreateUserDto } from './createusersdto';
+import { CreateUserDto } from './createusers.dto';
 import { Skill } from './skill.entity';
 import * as bcrypt from 'bcrypt';
 

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "../../@/components/ui/button";
 import { Input } from "../../@/components/ui/input";
 
-const DeleteAccountModal = ({ userEmail, onDeleteConfirm }: { userId: string; userEmail: string; onDeleteConfirm: () => void }) => {
+const DeleteAccountModal = ({ userEmail, onDeleteConfirm }: { userEmail: string; onDeleteConfirm: () => void }) => {
   const [emailInput, setEmailInput] = useState("");
 
   const handleConfirm = () => {
@@ -42,3 +42,4 @@ const DeleteAccountModal = ({ userEmail, onDeleteConfirm }: { userId: string; us
 };
 
 export default DeleteAccountModal;
+

@@ -1,10 +1,12 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
-import { CreateUserDto, CreateUsersDto } from './createusersdto';
-import { DeleteUsersDto } from './deletedto';
+import { CreateUserDto, CreateUsersDto } from './createusers.dto';
+import { DeleteUsersDto } from './delete.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from './cloudinary.service';
+import { UpdateSkillDto } from './createskill.dto';
+import { Skill } from './skill.entity';
 
 
 @Controller('users')
@@ -61,6 +63,24 @@ export class UsersController {
   @Put(':id')
   async update(@Param('id') id: string, @Body() userDto: User): Promise<User> {
     return this.usersService.update(id, userDto);
+  }
+
+  // @Put(':id/skills')
+  // async updateSkills(@Param('id') id: string, @Body() skills: UpdateSkillDto[]): Promise<User> {
+  //   return this.usersService.updateSkills(id, skills);
+  // }
+
+  @Put('skills/:id')
+  async updateSkill(
+    @Param('id') skillId: string,
+    @Body() updateSkillDto: UpdateSkillDto,
+  ): Promise<Skill> {
+    const skill = await this.usersService.findSkillById(skillId);
+    if (!skill) {
+      throw new NotFoundException('Skill not found');
+    }
+
+    return this.usersService.updateSkill(skillId, updateSkillDto);
   }
 
   @Delete('delete-bulk')
