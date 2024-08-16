@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { User, Skill, Lesson, Review, UserAuth } from '../types/types';
 
+
 const api = axios.create({
   baseURL: "http://localhost:3000/api",
   headers: {
@@ -23,6 +24,8 @@ export const login = async (username: string, password: string): Promise<User> =
   localStorage.setItem('token', response.data.access_token);
   return response.data;
 };
+
+
 
 export const logout = async (): Promise<void> => {
   localStorage.removeItem('token'); // Remove the JWT token

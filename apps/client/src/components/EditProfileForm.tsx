@@ -52,7 +52,7 @@ const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
     }
   }, [user]);
 
-  const { control, handleSubmit } = useForm<ProfileFormData>({
+  const { control, handleSubmit, formState: { errors } } = useForm<ProfileFormData>({
     defaultValues: userData,
   });
 
@@ -102,17 +102,19 @@ const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
   };
 
   return (
-    <>
-      <form onSubmit={handleSubmit(handleMainSubmit)} className="space-y-4">
+    <div className="p-4 bg-white shadow-lg rounded-lg max-w-xl mx-auto">
+      <form onSubmit={handleSubmit(handleMainSubmit)} className="space-y-6">
         <div>
           <Label htmlFor="username">Username</Label>
           <Controller
             name="username"
             control={control}
+            rules={{ required: "Username is required" }}
             render={({ field }) => (
               <Input {...field} placeholder="Username" className="w-full" />
             )}
           />
+          {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>}
         </div>
 
         <div>
@@ -120,10 +122,12 @@ const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
           <Controller
             name="profile.bio"
             control={control}
+            rules={{ required: "Bio is required" }}
             render={({ field }) => (
               <Textarea {...field} placeholder="Bio" className="w-full" />
             )}
           />
+          {errors.profile?.bio && <p className="text-red-500 text-sm mt-1">{errors.profile.bio.message}</p>}
         </div>
 
         <div>
@@ -148,7 +152,7 @@ const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
           />
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-2">
             {userData.avatarUrls.map((url, index) => (
-              <div key={index} className="relative">
+              <div key={index} className="relative group">
                 <img
                   src={url}
                   alt={`Avatar ${index + 1}`}
@@ -157,7 +161,7 @@ const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
                 <button
                   type="button"
                   onClick={() => handleDeleteImageRequest(index)}
-                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 m-1 hover:bg-red-700"
+                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 m-1 opacity-75 group-hover:opacity-100 transition-opacity"
                 >
                   &times;
                 </button>
@@ -166,11 +170,11 @@ const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
           </div>
         </div>
 
-        <Button type="button" onClick={() => setIsSkillModalOpen(true)} className="w-full">
+        <Button type="button" onClick={() => setIsSkillModalOpen(true)} className="w-full bg-blue-500 hover:bg-blue-600 text-white">
           Edit Skills
         </Button>
 
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white">
           Update Profile
         </Button>
 
@@ -187,8 +191,9 @@ const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
         onClose={() => setIsSkillModalOpen(false)}
         onSubmit={handleSkillSubmit}
       />
-    </>
+    </div>
   );
 };
 
 export default EditProfileForm;
+
