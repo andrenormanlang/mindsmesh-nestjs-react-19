@@ -14,7 +14,7 @@ async function bootstrap() {
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
   // Enable CORS to allow requests from the frontend
   app.enableCors({
-    origin: 'http://localhost:5173', // Frontend application URL
+    origin: '*', // Frontend application URL
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true, // Allows sending cookies and other credentials in requests
   });
