@@ -6,8 +6,8 @@ import { Label } from "../../@/components/ui/label";
 import { Textarea } from "../../@/components/ui/textarea";
 import EditSkillsForm from "./EditSkillsForm";
 import DeleteImage from "./DeleteImage";
-import { User } from "../types/types";
-import { updateProfile, updateSkill } from "../services/SkillShareAPI"; // Import API service
+import { User, Skill } from "../types/types";
+import { updateUserWithSkills } from "../services/SkillShareAPI"; // Import the updated API method
 
 type ProfileFormData = {
   username: string;
@@ -16,13 +16,7 @@ type ProfileFormData = {
     location: string;
   };
   avatarUrls: string[];
-  skills: {
-    id: string;
-    title: string;
-    description: string;
-    price: number;
-    isAvailable: boolean;
-  }[];
+  skills: Skill[];
 };
 
 type EditProfileFormProps = {
@@ -86,38 +80,25 @@ const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
   };
 
   const handleMainSubmit = async (data: ProfileFormData) => {
-    try {
-      const updatedUser = await updateProfile({
-        id: user.id,
-        username: data.username,
-        profile: {
-          bio: data.profile.bio,
-          location: data.profile.location,
-        },
-        avatarUrls: data.avatarUrls,
-      });
-      console.log("Profile updated successfully:", updatedUser);
-      onClose();
-    } catch (error) {
-      console.error("Failed to update profile:", error);
-    }
-  };
+    console.log("Main Profile Data:", data);
 
-  const handleSkillSubmit = async (data: { skills: ProfileFormData['skills'] }) => {
     try {
-      for (const skill of data.skills) {
-        await updateSkill(skill.id, {
-          title: skill.title,
-          description: skill.description,
-          price: skill.price,
-          isAvailable: skill.isAvailable,
-        });
-      }
-      console.log("Skills updated successfully");
-      setIsSkillModalOpen(false);
+        // Combine the user ID with the form data
+        const updatedData = { id: user.id, ...data };
+
+        // Submit the updated profile data to the backend
+        await updateUserWithSkills(updatedData);
+        console.log("Profile updated successfully");
+        onClose();
     } catch (error) {
-      console.error("Failed to update skills:", error);
+        console.error("Error updating profile:", error);
     }
+};
+
+  const handleSkillSubmit = async (data: { skills: Skill[] }) => {
+    console.log("Skills Data:", data.skills);
+    setUserData({ ...userData, skills: data.skills });
+    setIsSkillModalOpen(false);
   };
 
   return (

@@ -6,7 +6,7 @@ import { Textarea } from "../../@/components/ui/textarea";
 import { Switch } from "../../@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../@/components/ui/dialog";
 import { User, Skill } from "../types/types";
-import { updateSkill } from "../services/SkillShareAPI"; // Import the updateSkill API function
+import { updateUserWithSkills } from "../services/SkillShareAPI"; // Import your API function
 
 type SkillsModalProps = {
   user: User;
@@ -22,16 +22,13 @@ const EditSkillsForm = ({ user, isOpen, onClose, onSubmit }: SkillsModalProps) =
     },
   });
 
-  const handleSkillSubmit = async (data: { skills: Skill[] }) => {
+  const handleFormSubmit = async (formData: { skills: Skill[] }) => {
     try {
-      // Iterate over the skills and send update requests to the backend
-      for (const skill of data.skills) {
-        await updateSkill(skill.id, skill); // Assuming skill.id is available
-      }
-      onSubmit(data); // Callback to notify parent component
+      await updateUserWithSkills({ id: user.id, skills: formData.skills }); // Call the API to update skills
+      onSubmit(formData); // Pass the updated skills back to the parent component
+      onClose(); // Close the modal
     } catch (error) {
       console.error("Failed to update skills:", error);
-      // Optionally handle the error (e.g., show a message to the user)
     }
   };
 
@@ -41,8 +38,8 @@ const EditSkillsForm = ({ user, isOpen, onClose, onSubmit }: SkillsModalProps) =
         <DialogHeader>
           <DialogTitle>Edit Skills</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(handleSkillSubmit)} className="space-y-4">
-          {user.skills.map((skill, index) => (
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          {user.skills.map((_, index) => (
             <div key={index} className="space-y-2">
               <Controller
                 name={`skills.${index}.title`}
@@ -90,3 +87,4 @@ const EditSkillsForm = ({ user, isOpen, onClose, onSubmit }: SkillsModalProps) =
 };
 
 export default EditSkillsForm;
+

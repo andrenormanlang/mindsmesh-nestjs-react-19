@@ -122,6 +122,12 @@ export const deleteUser = async (userId: string): Promise<void> => {
   await api.delete(`/users/${userId}`);
 };
 
+export const updateUserWithSkills = async (profileData: Partial<User>): Promise<User> => {
+  const response = await api.put(`/users/${profileData.id}`, profileData);
+  return response.data;
+};
+
+
 // Skill Management
 
 export const createSkill = async (skillData: Partial<Skill>): Promise<Skill> => {
