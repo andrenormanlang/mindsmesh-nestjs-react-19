@@ -19,10 +19,11 @@ api.interceptors.request.use((config) => {
 });
 // Authentication and User Management
 
-export const login = async (username: string, password: string): Promise<User> => {
-  const response = await api.post("/auth/login", { username, password });
+export const login = async (email: string, password: string): Promise<User> => {
+  const response = await api.post("/auth/login", { email, password });
   localStorage.setItem('token', response.data.access_token);
-  return response.data;
+  const profile = await getProfile(); // Fetch the full profile after login
+  return profile;
 };
 
 
@@ -32,15 +33,20 @@ export const logout = async (): Promise<void> => {
   // You might want to do additional cleanup here
 };
 
-export const getProfile = async (): Promise<UserAuth> => {
+export const getProfile = async (): Promise<User> => {
   try {
     const response = await api.get('/auth/profile');
-    return response.data;
+    const profile: UserAuth = response.data;
+
+    // Now, fetch the full user data using the user ID (sub) from the JWT payload
+    const fullUserData = await getUserById(profile.sub);
+    return fullUserData;
   } catch (error) {
     console.error("Error fetching profile:", error);
     throw error;
   }
 };
+
 
 
 export const sendPasswordResetEmail = async (email: string): Promise<void> => {

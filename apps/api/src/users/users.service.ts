@@ -20,7 +20,8 @@ export class UsersService {
 
   async findByEmail(email: string): Promise<User | undefined> {
     return this.usersRepository.findOne({ where: { email } });
-  }
+}
+
 
   async create(userData: CreateUserDto): Promise<User> {
     const newUser = this.usersRepository.create({
@@ -169,4 +170,6 @@ export class UsersService {
     }
     return user;
   }
+
+  
 }
