@@ -14,7 +14,7 @@ import {
   getProfile,
   getUserById,
 } from "../services/SkillShareAPI";
-import { User, UserAuth } from "../types/types";
+import { User } from "../types/types";
 import { Star } from "lucide-react";
 import {
   Carousel,
@@ -55,10 +55,10 @@ const HomePage = () => {
         );
         setUsersWithSkills(usersWithSkills);
   
-        const profile: UserAuth = await getProfile();
+        const profile: User = await getProfile();
         console.log('Fetched Profile:', profile); // Log profile to see the returned profile data
   
-        const fullUserData = await getUserById(profile.sub);
+        const fullUserData = await getUserById(profile.id);
         console.log('Fetched User Data:', fullUserData); // Log fullUserData to confirm correct user data
         setCurrentUser(fullUserData); // Set the correct logged-in user
       } catch (error) {

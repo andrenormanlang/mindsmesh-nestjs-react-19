@@ -21,8 +21,9 @@ const Navbar = () => {
     const fetchData = async () => {
       try {
         const profile = await getProfile();
-        const userId = profile.sub;  // This is your user ID
+        const userId = profile.id;  // This is your user ID
         const fullUserData = await getUserById(userId);
+        console.log('Fetched User Data:', fullUserData);
         setUser(fullUserData);
       } catch (error) {
         console.error('Failed to fetch user data', error);
