@@ -25,6 +25,7 @@ const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false); // State for mobile menu
   const [isProfileOpen, setIsProfileOpen] = useState(false); // State for profile modal
+  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false); // State for register modal
 
   const navigate = useNavigate();
 
@@ -89,7 +90,7 @@ const Navbar = () => {
                 </DialogContent>
               </Dialog>
 
-              <Dialog>
+              <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="ghost" className="text-white">
                     Register
@@ -99,7 +100,9 @@ const Navbar = () => {
                   <DialogHeader>
                     <DialogTitle>Register</DialogTitle>
                   </DialogHeader>
-                  <RegisterForm />
+                  <RegisterForm
+                    onClose={() => setIsRegisterDialogOpen(false)} // Pass the close function to the form
+                  />
                 </DialogContent>
               </Dialog>
             </>
@@ -166,7 +169,7 @@ const Navbar = () => {
                 </DialogContent>
               </Dialog>
 
-              <Dialog>
+              <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
@@ -180,7 +183,9 @@ const Navbar = () => {
                   <DialogHeader>
                     <DialogTitle>Register</DialogTitle>
                   </DialogHeader>
-                  <RegisterForm />
+                  <RegisterForm
+                    onClose={() => setIsRegisterDialogOpen(false)} // Pass the close function to the form
+                  />
                 </DialogContent>
               </Dialog>
             </>

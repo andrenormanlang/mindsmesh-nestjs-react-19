@@ -76,8 +76,8 @@ export const register = async (
   formData.append('email', email);
 
   if (avatarUrls) {
-    avatarUrls.forEach((file, index) => {
-      formData.append(`avatarUrls[${index}]`, file);
+    avatarUrls.forEach((file) => {
+      formData.append(`avatarUrls`, file);
     });
   }
 
@@ -131,9 +131,13 @@ export const deleteUser = async (userId: string): Promise<void> => {
   await api.delete(`/users/${userId}`);
 };
 
-export const updateUserWithSkills = async (profileData: Partial<User>): Promise<User> => {
-  const response = await api.put(`/users/${profileData.id}`, profileData);
-  return response.data;
+export const updateUserWithSkills = async (data: { id: string; username?: string; avatarUrls?: string[]; skills: Skill[] }): Promise<User> => {
+  try {
+    const response = await axios.put(`/api/users/${data.id}`, data); 
+    return response.data;
+  } catch (error) {
+    throw new Error(`Failed to update user profile due to: ${(error as Error).message}`);
+  }
 };
 
 

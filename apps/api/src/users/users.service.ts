@@ -50,15 +50,34 @@ export class UsersService {
     }
   }
 
+  // async createBulk(usersData: CreateUserDto[]): Promise<User[]> {
+  //   const hashedUsers = await Promise.all(
+  //     usersData.map(async (user) => {
+  //       const hashedPassword = await bcrypt.hash(user.password, 10);
+  //       return this.usersRepository.create({ ...user, password: hashedPassword });
+  //     }),
+  //   );
+  //   return this.usersRepository.save(hashedUsers);
+  // }
+
   async createBulk(usersData: CreateUserDto[]): Promise<User[]> {
+    console.log('Received usersData:', usersData);
+
+    if (!usersData || !Array.isArray(usersData)) {
+        console.error('usersData is not an array:', usersData);
+        throw new Error('usersData should be an array');
+    }
+
     const hashedUsers = await Promise.all(
-      usersData.map(async (user) => {
-        const hashedPassword = await bcrypt.hash(user.password, 10);
-        return this.usersRepository.create({ ...user, password: hashedPassword });
-      }),
+        usersData.map(async (user) => {
+            user.password = await bcrypt.hash(user.password, 10);
+            return this.usersRepository.create(user);
+        }),
     );
     return this.usersRepository.save(hashedUsers);
-  }
+}
+
+
 
   async update(id: string, userDto: CreateUserDto): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id }, relations: ['skills'] });

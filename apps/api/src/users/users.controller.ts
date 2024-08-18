@@ -1,9 +1,9 @@
-import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, Param, Post, Put, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
 import { CreateUserDto, CreateUsersDto } from './createusers.dto';
 import { DeleteUsersDto } from './delete.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from './cloudinary.service';
 
 
@@ -15,14 +15,62 @@ export class UsersController {
     private readonly cloudinaryService: CloudinaryService, // Inject CloudinaryService
   ) {}
 
-  @Get()
-  async findAll(): Promise<User[]> {
-    return this.usersService.findAll();
-  }
-  @Post('bulk-create')
-  async createBulk(@Body() createUsersDto: CreateUsersDto) {
-    return this.usersService.createBulk(createUsersDto.users);
-  }
+@Get()
+async findAll(): Promise<User[]> {
+  return this.usersService.findAll();
+}
+  
+@Post('bulk-create')
+@UseInterceptors(FilesInterceptor('avatarUrls', 4))  // Assume up to 4 files
+async createBulk(
+    @UploadedFiles() avatars: Express.Multer.File[], 
+    @Body() body: any  // Use raw body instead of DTO
+) {
+    try {
+        console.log('Received files:', avatars);
+        console.log('Received Body:', body);
+
+        // Manually parse the body to fit the expected DTO structure
+        const createUsersDto: CreateUsersDto = {
+            users: Array.isArray(body.username) ? body.username.map((_, index) => ({
+                username: body.username[index],
+                email: body.email[index],
+                password: body.password[index],
+                avatarUrls: []  // This will be populated with Cloudinary URLs
+            })) : [{
+                username: body.username,
+                email: body.email,
+                password: body.password,
+                avatarUrls: []
+            }]
+        };
+
+        console.log('Parsed DTO:', createUsersDto);
+
+        // Handle file upload logic
+        if (avatars && avatars.length > 0) {
+            const uploadResults = await Promise.all(
+                avatars.map(file => this.cloudinaryService.uploadImage(file))
+            );
+            console.log('Uploaded avatars:', uploadResults);
+
+            createUsersDto.users.forEach((userDto, index) => {
+                userDto.avatarUrls = uploadResults.map(result => result.secure_url);
+            });
+        }
+
+        // Continue with bulk creation
+        const createdUsers = await this.usersService.createBulk(createUsersDto.users);
+        console.log('Users successfully created:', createdUsers);
+        return createdUsers;
+
+    } catch (error) {
+        console.error('Error in createBulk:', error);
+        throw new InternalServerErrorException('An error occurred during bulk user creation.');
+    }
+}
+
+
 
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<User | undefined> {
@@ -41,22 +89,34 @@ export class UsersController {
 
 
   @Post('register')
-  @UseInterceptors(FileInterceptor('avatar')) // Use FileInterceptor for file upload
-  async register(
-    @Body() createUserDto: CreateUserDto,
-    @UploadedFiles() avatars: Express.Multer.File[], // Handle the uploaded file
-  ) {
+@UseInterceptors(FilesInterceptor('avatarUrls', 4))  // Ensure this matches the field name from the frontend
+async register(
+  @Body() createUserDto: CreateUserDto,
+  @UploadedFiles() avatars: Express.Multer.File[],
+) {
+  try {
+    console.log('Incoming registration data:', createUserDto); // Log the body data
+    console.log('Uploaded files:', avatars); // Log the uploaded files
+
     if (avatars && avatars.length > 0) {
-      // Upload avatar to Cloudinary and get the URL
-      const uploadResults = await Promise.all(
-        avatars.map(file => this.cloudinaryService.uploadImage(file))
-      );
-      createUserDto.avatarUrls = uploadResults.map(result => result.secure_url);
-      console.log('Avatar uploaded successfully:', uploadResults);
-  }  
-    return this.usersService.create(createUserDto);
+  try {
+    console.log('Attempting to upload avatars:', avatars); // Log the raw files before upload
+    const uploadResults = await Promise.all(
+      avatars.map(file => this.cloudinaryService.uploadImage(file))
+    );
+    createUserDto.avatarUrls = uploadResults.map(result => result.secure_url);
+    console.log('Uploaded avatars:', createUserDto.avatarUrls); // Log the URLs from Cloudinary
+  } catch (error) {
+    console.error('Error uploading avatars:', error); // Log any errors during the upload
   }
-  
+}
+    return this.usersService.create(createUserDto);
+  } catch (error) {
+    console.error('Error during user registration:', error.message);
+    throw new BadRequestException('Registration failed due to file upload error.');
+  }
+}
+
 
 
   @Put(':id')
