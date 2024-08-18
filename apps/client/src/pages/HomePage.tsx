@@ -54,33 +54,30 @@ const HomePage = () => {
           (user) => user.skills && user.skills.length > 0
         );
         setUsersWithSkills(usersWithSkills);
-  
+
         const profile: User = await getProfile();
-        console.log('Fetched Profile:', profile); // Log profile to see the returned profile data
-  
+        console.log("Fetched Profile:", profile); // Log profile to see the returned profile data
+
         const fullUserData = await getUserById(profile.id);
-        console.log('Fetched User Data:', fullUserData); // Log fullUserData to confirm correct user data
+        console.log("Fetched User Data:", fullUserData); // Log fullUserData to confirm correct user data
         setCurrentUser(fullUserData); // Set the correct logged-in user
       } catch (error) {
         console.error("Failed to fetch users or profile", error);
       }
     };
-  
+
     fetchUsers();
-  
+
     const handleResize = () => {
       setIsLargeScreen(window.innerWidth >= 1024);
     };
-  
+
     window.addEventListener("resize", handleResize);
-  
+
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, []);
-  
-  console.log("Current User:", currentUser);
-
+  }, [])
   const handleDeleteAccount = async (userId: string) => {
     if (
       window.confirm(
@@ -225,6 +222,7 @@ const HomePage = () => {
             <EditProfileForm
               user={selectedUser}
               onClose={() => setIsEditModalOpen(false)}
+              setUser={setCurrentUser} // Ensure this line is added
             />
           )}
         </DialogContent>

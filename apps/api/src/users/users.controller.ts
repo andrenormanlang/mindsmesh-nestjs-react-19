@@ -5,8 +5,7 @@ import { CreateUserDto, CreateUsersDto } from './createusers.dto';
 import { DeleteUsersDto } from './delete.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from './cloudinary.service';
-import { UpdateSkillDto } from './createskill.dto';
-import { Skill } from './skill.entity';
+
 
 
 @Controller('users')
@@ -70,18 +69,6 @@ export class UsersController {
   //   return this.usersService.updateSkills(id, skills);
   // }
 
-  @Put('skills/:id')
-  async updateSkill(
-    @Param('id') skillId: string,
-    @Body() updateSkillDto: UpdateSkillDto,
-  ): Promise<Skill> {
-    const skill = await this.usersService.findSkillById(skillId);
-    if (!skill) {
-      throw new NotFoundException('Skill not found');
-    }
-
-    return this.usersService.updateSkill(skillId, updateSkillDto);
-  }
 
   @Delete('delete-bulk')
   async deleteBulk(@Body() deleteUsersDto: DeleteUsersDto): Promise<void> {

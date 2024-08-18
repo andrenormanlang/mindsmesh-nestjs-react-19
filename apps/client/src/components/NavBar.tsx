@@ -2,9 +2,20 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getProfile, getUserById, logout } from "../services/SkillShareAPI";
 import { User } from "../types/types";
-import { Button } from '../../@/components/ui/button';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../../@/components/ui/dropdown-menu';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from  '../../@/components/ui/dialog';
+import { Button } from "../../@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "../../@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../@/components/ui/dialog";
 import { HamburgerMenuIcon, Cross1Icon } from "@radix-ui/react-icons";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
@@ -21,18 +32,18 @@ const Navbar = () => {
     const fetchData = async () => {
       try {
         const profile = await getProfile();
-        const userId = profile.id;  // This is your user ID
+        const userId = profile.id; // This is your user ID
         const fullUserData = await getUserById(userId);
-        console.log('Fetched User Data:', fullUserData);
+        console.log("Fetched User Data:", fullUserData);
         setUser(fullUserData);
       } catch (error) {
-        console.error('Failed to fetch user data', error);
+        console.error("Failed to fetch user data", error);
       }
     };
 
     fetchData();
   }, []);
-  
+
   const handleLogout = async () => {
     await logout(); // Assume logout function removes token and handles other cleanup
     setUser(null); // Reset the user state
@@ -101,7 +112,11 @@ const Navbar = () => {
             className="text-white"
             onClick={() => setMenuOpen(!menuOpen)}
           >
-            {menuOpen ? <Cross1Icon className="h-6 w-6" /> : <HamburgerMenuIcon className="h-6 w-6" />}
+            {menuOpen ? (
+              <Cross1Icon className="h-6 w-6" />
+            ) : (
+              <HamburgerMenuIcon className="h-6 w-6" />
+            )}
           </Button>
         </div>
       </div>
@@ -178,7 +193,13 @@ const Navbar = () => {
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
           </DialogHeader>
-          {user && <EditProfileForm user={user} onClose={() => setIsProfileOpen(false)} />}
+          {user && (
+            <EditProfileForm
+              user={user}
+              onClose={() => setIsProfileOpen(false)}
+              setUser={setUser}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </nav>

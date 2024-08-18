@@ -1,199 +1,114 @@
-import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Button } from "../../@/components/ui/button";
 import { Input } from "../../@/components/ui/input";
 import { Label } from "../../@/components/ui/label";
 import { Textarea } from "../../@/components/ui/textarea";
-import EditSkillsForm from "./EditSkillsForm";
-import DeleteImage from "./DeleteImage";
+import { Switch } from "../../@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../@/components/ui/dialog";
 import { User, Skill } from "../types/types";
-import { updateUserWithSkills } from "../services/SkillShareAPI"; // Import the updated API method
-
-type ProfileFormData = {
-  username: string;
-  profile: {
-    bio: string;
-    location: string;
-  };
-  avatarUrls: string[];
-  skills: Skill[];
-};
+import { updateUserWithSkills } from "../services/SkillShareAPI"; // Import your API function
 
 type EditProfileFormProps = {
   user: User;
+  setUser: (user: User) => void; 
   onClose: () => void;
 };
 
-const EditProfileForm = ({ user, onClose }: EditProfileFormProps) => {
-  const [isSkillModalOpen, setIsSkillModalOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [imageToDelete, setImageToDelete] = useState<number | null>(null);
-  const [userData, setUserData] = useState<ProfileFormData>({
-    username: user.username || "",
-    profile: {
-      bio: user.profile?.bio || "",
-      location: user.profile?.location || "",
+const EditProfileForm = ({ user, setUser, onClose }: EditProfileFormProps) => {
+  const { control, handleSubmit, formState: { errors } } = useForm<{ skills: Skill[] }>({
+    defaultValues: {
+      skills: user.skills || [],
     },
-    skills: user.skills || [],
-    avatarUrls: user.avatarUrls || [],
   });
 
-  useEffect(() => {
-    if (user) {
-      setUserData({
-        username: user.username || "",
-        profile: {
-          bio: user.profile?.bio || "",
-          location: user.profile?.location || "",
-        },
-        skills: user.skills || [],
-        avatarUrls: user.avatarUrls || [],
-      });
-    }
-  }, [user]);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<ProfileFormData>({
-    defaultValues: userData,
-  });
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const avatarUrls = Array.from(e.target.files).map((file) =>
-        URL.createObjectURL(file)
-      );
-      setUserData({ ...userData, avatarUrls: [...userData.avatarUrls, ...avatarUrls] });
-    }
-  };
-
-  const handleDeleteImageRequest = (index: number) => {
-    setImageToDelete(index);
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteImage = () => {
-    if (imageToDelete !== null) {
-      const newAvatarUrls = userData.avatarUrls.filter((_, i) => i !== imageToDelete);
-      setUserData({ ...userData, avatarUrls: newAvatarUrls });
-      setImageToDelete(null);
-      setIsModalOpen(false);
-    }
-  };
-
-  const handleMainSubmit = async (data: ProfileFormData) => {
-    console.log("Main Profile Data:", data);
-
+  const handleFormSubmit = async (formData: { skills: Skill[] }) => {
     try {
-        // Combine the user ID with the form data
-        const updatedData = { id: user.id, ...data };
-
-        // Submit the updated profile data to the backend
-        await updateUserWithSkills(updatedData);
-        console.log("Profile updated successfully");
-        onClose();
+      const updatedUser = await updateUserWithSkills({ id: user.id, skills: formData.skills }); 
+      setUser(updatedUser); 
+      onClose();
     } catch (error) {
-        console.error("Error updating profile:", error);
+      console.error("Failed to update skills:", error);
     }
-};
-
-  const handleSkillSubmit = async (data: { skills: Skill[] }) => {
-    console.log("Skills Data:", data.skills);
-    setUserData({ ...userData, skills: data.skills });
-    setIsSkillModalOpen(false);
   };
 
   return (
-    <div className="p-4 bg-white shadow-lg rounded-lg max-w-xl mx-auto">
-      <form onSubmit={handleSubmit(handleMainSubmit)} className="space-y-6">
-        <div>
-          <Label htmlFor="username">Username</Label>
-          <Controller
-            name="username"
-            control={control}
-            rules={{ required: "Username is required" }}
-            render={({ field }) => (
-              <Input {...field} placeholder="Username" className="w-full" />
-            )}
-          />
-          {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>}
-        </div>
-
-        <div>
-          <Label htmlFor="bio">Bio</Label>
-          <Controller
-            name="profile.bio"
-            control={control}
-            rules={{ required: "Bio is required" }}
-            render={({ field }) => (
-              <Textarea {...field} placeholder="Bio" className="w-full" />
-            )}
-          />
-          {errors.profile?.bio && <p className="text-red-500 text-sm mt-1">{errors.profile.bio.message}</p>}
-        </div>
-
-        <div>
-          <Label htmlFor="location">Location</Label>
-          <Controller
-            name="profile.location"
-            control={control}
-            render={({ field }) => (
-              <Input {...field} placeholder="Location" className="w-full" />
-            )}
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="avatar">Project Images</Label>
-          <Input
-            type="file"
-            name="avatar"
-            multiple
-            onChange={handleAvatarUpload}
-            className="w-full"
-          />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-2">
-            {userData.avatarUrls.map((url, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={url}
-                  alt={`Avatar ${index + 1}`}
-                  className="h-20 w-full object-cover rounded-md"
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-h-[90vh] max-w-3xl w-full overflow-y-auto p-4 space-y-4">
+        <DialogHeader>
+          <DialogTitle>Edit Skills</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+          {user.skills.map((_, index) => (
+            <div key={index} className="p-4 bg-white shadow-md rounded-lg space-y-4">
+              <div>
+                <Label htmlFor={`skills.${index}.title`}>Title</Label>
+                <Controller
+                  name={`skills.${index}.title`}
+                  control={control}
+                  rules={{ required: "Title is required" }}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="Title" className="w-full" />
+                  )}
                 />
-                <button
-                  type="button"
-                  onClick={() => handleDeleteImageRequest(index)}
-                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 m-1 opacity-75 group-hover:opacity-100 transition-opacity"
-                >
-                  &times;
-                </button>
+                {errors.skills?.[index]?.title && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.skills[index].title.message}
+                  </p>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
+              
+              <div>
+                <Label htmlFor={`skills.${index}.description`}>Description</Label>
+                <Controller
+                  name={`skills.${index}.description`}
+                  control={control}
+                  render={({ field }) => (
+                    <Textarea {...field} placeholder="Description" className="w-full" />
+                  )}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor={`skills.${index}.price`}>Price</Label>
+                <Controller
+                  name={`skills.${index}.price`}
+                  control={control}
+                  rules={{ required: "Price is required" }}
+                  render={({ field }) => (
+                    <Input {...field} type="number" placeholder="Price" className="w-full" />
+                  )}
+                />
+                {errors.skills?.[index]?.price && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.skills[index].price.message}
+                  </p>
+                )}
+              </div>
 
-        <Button type="button" onClick={() => setIsSkillModalOpen(true)} className="w-full bg-blue-500 hover:bg-blue-600 text-white">
-          Edit Skills
-        </Button>
-
-        <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white">
-          Update Profile
-        </Button>
-
-        <DeleteImage
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onDeleteConfirm={handleDeleteImage}
-        />
-      </form>
-
-      <EditSkillsForm
-        user={user}
-        isOpen={isSkillModalOpen}
-        onClose={() => setIsSkillModalOpen(false)}
-        onSubmit={handleSkillSubmit}
-      />
-    </div>
+              <div className="flex items-center space-x-2">
+                <Label htmlFor={`skills.${index}.isAvailable`} className="mr-2">Available</Label>
+                <Controller
+                  name={`skills.${index}.isAvailable`}
+                  control={control}
+                  render={({ field }) => (
+                    <Switch
+                      checked={field.value || false}
+                      onCheckedChange={field.onChange}
+                    />
+                  )}
+                />
+              </div>
+            </div>
+          ))}
+          <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white">
+            Update Skills
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 
 export default EditProfileForm;
-

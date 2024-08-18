@@ -22,9 +22,10 @@ const EditSkillsForm = ({ user, isOpen, onClose, onSubmit }: SkillsModalProps) =
     },
   });
 
+
   const handleFormSubmit = async (formData: { skills: Skill[] }) => {
     try {
-      await updateUserWithSkills({ id: user.id, skills: formData.skills }); // Call the API to update skills
+      await updateUserWithSkills({ id: user.id, skills: formData.skills }); // Update skills via API
       onSubmit(formData); // Pass the updated skills back to the parent component
       onClose(); // Close the modal
     } catch (error) {
