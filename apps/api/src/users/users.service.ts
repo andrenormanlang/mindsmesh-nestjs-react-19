@@ -25,35 +25,42 @@ export class UsersService {
 }
 
 
-  async create(userData: CreateUserDto): Promise<User> {
-    const newUser = this.usersRepository.create({
-      email: userData.email,
-      username: userData.username,
-      password: await bcrypt.hash(userData.password, 10),
-      isAdmin: userData.isAdmin,
-      avatarUrls: userData.avatarUrls,
+async create(userData: CreateUserDto): Promise<User> {
+  const newUser = this.usersRepository.create({
+    email: userData.email,
+    username: userData.username,
+    password: await bcrypt.hash(userData.password, 10),
+    isAdmin: userData.isAdmin,
+    avatarUrls: userData.avatarUrls,
+  });
+
+  if (userData.skills && userData.skills.length > 0) {
+    console.log('Processing skills:', userData.skills); // Log the skills data
+
+    userData.skills = userData.skills.map(skill => {
+      if (!skill.id || skill.id === 'undefined' || skill.id.length === 0) {
+        skill.id = uuidv4();  // Assign a new UUID
+      }
+      return skill;
     });
 
-    if (userData.skills && userData.skills.length > 0) {
-      userData.skills = userData.skills.map(skill => {
-        if (!skill.id || skill.id.length === 0) {
-          skill.id = uuidv4();  // Assign a new UUID
-        }
-        return skill;
-      });
-    }
-
-    try {
-      return await this.usersRepository.save(newUser);
-    } catch (error) {
-      if (error instanceof QueryFailedError) {
-        if (error.message.includes('duplicate key value') && error.message.includes('user_email_key')) {
-          throw new ConflictException('A user with this email already exists.');
-        }
-      }
-      throw new InternalServerErrorException('An unexpected error occurred while creating the user.');
-    }
+    newUser.skills = await this.skillsRepository.save(userData.skills);
+    console.log('Saved skills:', newUser.skills); // Log the saved skills
   }
+
+  try {
+    return await this.usersRepository.save(newUser);
+  } catch (error) {
+    console.error('Error saving user:', error); // Log the error
+    if (error instanceof QueryFailedError) {
+      if (error.message.includes('duplicate key value') && error.message.includes('user_email_key')) {
+        throw new ConflictException('A user with this email already exists.');
+      }
+    }
+    throw new InternalServerErrorException('An unexpected error occurred while creating the user.');
+  }
+}
+
 
   // async createBulk(usersData: CreateUserDto[]): Promise<User[]> {
   //   const hashedUsers = await Promise.all(

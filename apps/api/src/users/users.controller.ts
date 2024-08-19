@@ -69,8 +69,6 @@ async createBulk(
     }
 }
 
-
-
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<User | undefined> {
     if (!this.isValidUUID(id)) {
@@ -88,35 +86,33 @@ async createBulk(
 
 
   @Post('register')
-@UseInterceptors(FilesInterceptor('avatarUrls', 4))  // Ensure this matches the field name from the frontend
-async register(
-  @Body() createUserDto: CreateUserDto,
-  @UploadedFiles() avatars: Express.Multer.File[],
-) {
-  try {
-    console.log('Incoming registration data:', createUserDto); // Log the body data
+  @UseInterceptors(FilesInterceptor('avatarUrls', 4))
+  async register(
+    @Body() createUserDto: CreateUserDto,
+    @UploadedFiles() avatars: Express.Multer.File[],
+  ) {
+    console.log('Incoming registration data:', createUserDto); // Log the incoming data
     console.log('Uploaded files:', avatars); // Log the uploaded files
-
-    if (avatars && avatars.length > 0) {
-  try {
-    console.log('Attempting to upload avatars:', avatars); // Log the raw files before upload
-    const uploadResults = await Promise.all(
-      avatars.map(file => this.cloudinaryService.uploadImage(file))
-    );
-    createUserDto.avatarUrls = uploadResults.map(result => result.secure_url);
-    console.log('Uploaded avatars:', createUserDto.avatarUrls); // Log the URLs from Cloudinary
-  } catch (error) {
-    console.error('Error uploading avatars:', error); // Log any errors during the upload
+  
+    try {
+      // Process avatars if any
+      if (avatars && avatars.length > 0) {
+        const uploadResults = await Promise.all(
+          avatars.map(file => this.cloudinaryService.uploadImage(file))
+        );
+        createUserDto.avatarUrls = uploadResults.map(result => result.secure_url);
+        console.log('Uploaded avatars:', createUserDto.avatarUrls); // Log the URLs from Cloudinary
+      }
+  
+      // Log before creating the user
+      console.log('Creating user with data:', createUserDto);
+  
+      return this.usersService.create(createUserDto);
+    } catch (error) {
+      console.error('Error during user registration:', error.message);
+      throw new BadRequestException('Registration failed.');
+    }
   }
-}
-    return this.usersService.create(createUserDto);
-  } catch (error) {
-    console.error('Error during user registration:', error.message);
-    throw new BadRequestException('Registration failed due to file upload error.');
-  }
-}
-
-
 
 @Put(':id')
 @UseInterceptors(FilesInterceptor('avatarFiles', 4))  // Handles files

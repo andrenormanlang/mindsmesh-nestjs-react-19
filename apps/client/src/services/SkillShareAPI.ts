@@ -66,8 +66,8 @@ export const register = async (
   username: string, 
   password: string, 
   email: string, 
-  avatarUrls: File [] | null, 
-  skills: { title: string; description: string; price: number; isAvailable: boolean }[] = []
+  avatarUrls: File[] | null, 
+  skills: { title: string; description: string; price: number; isAvailable: boolean; id?: string }[] = []
 ): Promise<User> => {
   const formData = new FormData();
 
@@ -77,27 +77,28 @@ export const register = async (
 
   if (avatarUrls) {
     avatarUrls.forEach((file) => {
-      formData.append(`avatarUrls`, file);
+      formData.append('avatarUrls', file);
     });
   }
 
   if (skills && skills.length > 0) {
     skills.forEach((skill, index) => {
-      if (skill.title && skill.description && skill.price != null && skill.isAvailable != null) {
-        formData.append(`skills[${index}][title]`, skill.title);
-        formData.append(`skills[${index}][description]`, skill.description);
-        formData.append(`skills[${index}][price]`, skill.price.toString());
-        formData.append(`skills[${index}][isAvailable]`, skill.isAvailable.toString());
-      }
+      formData.append(`skills[${index}][title]`, skill.title);
+      formData.append(`skills[${index}][description]`, skill.description);
+      formData.append(`skills[${index}][price]`, skill.price.toString());
+      formData.append(`skills[${index}][isAvailable]`, skill.isAvailable.toString());
     });
   }
+
+  // Log the formData entries
+  formData.forEach((value, key) => {
+    console.log(`${key}: ${value}`);
+  });
 
   const response = await axios.post('/api/users/register', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
-
-    
   });
 
   localStorage.setItem('token', response.data.access_token); 
