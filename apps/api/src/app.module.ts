@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import typeorm from './config/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { SkillsModule } from './skills/skills.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AppService } from './app.service';
     }),
     AuthModule,
     UsersModule,
+    SkillsModule,
   ],
   controllers: [AppController],  // Example global controller
   providers: [AppService],  // Example global service

@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { User } from './user.entity';
-import { IsNumber } from 'class-validator';
+import { User } from '../users/user.entity';
 
 @Entity()
 export class Skill {
@@ -14,12 +13,11 @@ export class Skill {
   description!: string;
 
   @Column('float')
-  @IsNumber()
   price!: number;
 
   @Column({ default: true })
   isAvailable!: boolean;
 
-  @ManyToOne(() => User, (user) => user.skills, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.skills, { onDelete: 'CASCADE' })  // Define the relationship
   user!: User;
 }

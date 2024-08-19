@@ -1,6 +1,7 @@
 import { IsBoolean, IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { Skill } from '../skills/skills.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Skill } from './skill.entity';
+
 
 @Entity()
 export class User {
@@ -26,7 +27,7 @@ export class User {
   @IsOptional()
   isAdmin: boolean = false; // Default to false
 
-  @OneToMany(() => Skill, (skill) => skill.user, { cascade: true })
+  @OneToMany(() => Skill, (skill) => skill.user, { cascade: true })  // Define the relationship
   skills!: Skill[];
 }
 
