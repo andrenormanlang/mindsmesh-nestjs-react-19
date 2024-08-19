@@ -245,7 +245,7 @@ const HomePage = () => {
 
       {/* View User Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="w-full sm:max-w-[450px] p-0 m-0">
+        <DialogContent className="w-full sm:max-w-[700px] p-4 m-0">
           {selectedCardData && <UserDetailCard user={selectedCardData} />}
         </DialogContent>
       </Dialog>

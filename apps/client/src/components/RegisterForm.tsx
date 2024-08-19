@@ -154,7 +154,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <>
-      <div className="h-[70vh] overflow-y-auto"> {/* Scrollable container */}
+      <div className="overflow-y-auto"> {/* Scrollable container */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <Label htmlFor="username">Username</Label>
@@ -262,13 +262,12 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
               key={index}
               className="flex justify-between items-center p-2 bg-gray-100 rounded mb-2"
             >
-              <span>{skill.title}</span>
-              <div>
+             <span className="truncate max-w-xs">{skill.title}</span>
+              <div className="flex space-x-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => handleEditSkill(index)}
-                  className="mr-2"
                 >
                   Edit
                 </Button>
