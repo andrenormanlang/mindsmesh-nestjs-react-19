@@ -136,15 +136,14 @@ const HomePage = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4 sm:p-8">
-        {usersWithSkills.map((user) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4 sm:p-8">        {usersWithSkills.map((user) => (
           <Card
             key={user.id}
             className="bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
           >
-            <CardHeader className="p-0 relative overflow-hidden">
-              {user.avatarUrls && user.avatarUrls.length > 0 ? (
-                <div className="relative w-full h-40 sm:h-56">
+            <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
+            {user.avatarUrls && user.avatarUrls.length > 0 ? (
+                <div className="relative w-full h-full">
                   <Carousel className="relative">
                     <CarouselContent>
                       {user.avatarUrls.map((url, index) => (
@@ -153,6 +152,7 @@ const HomePage = () => {
                             src={url}
                             alt={`${user.username}'s image ${index + 1}`}
                             className="w-full h-full object-contain rounded-lg"
+                            // className="w-full h-80 object-cover"
                           />
                         </CarouselItem>
                       ))}
