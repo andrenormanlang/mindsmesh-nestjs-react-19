@@ -5,8 +5,7 @@ import { CreateUserDto, CreateUsersDto } from './createusers.dto';
 import { DeleteUsersDto } from './delete.dto';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from './cloudinary.service';
-
-
+import { UpdateUserDto } from './update.dto';
 
 @Controller('users')
 export class UsersController {
@@ -119,10 +118,31 @@ async register(
 
 
 
-  @Put(':id')
-  async update(@Param('id') id: string, @Body() userDto: User): Promise<User> {
-    return this.usersService.update(id, userDto);
+@Put(':id')
+@UseInterceptors(FilesInterceptor('avatarFiles', 4))  // Handles files
+async update(
+  @Param('id') id: string,
+  @Body() userDto: UpdateUserDto,  // Expects DTO with URLs and files
+  @UploadedFiles() avatarFiles: Express.Multer.File[],
+): Promise<User> {
+  if (avatarFiles && avatarFiles.length > 0) {
+    try {
+      console.log('Attempting to upload avatars:', avatarFiles); 
+      const uploadResults = await Promise.all(
+        avatarFiles.map(file => this.cloudinaryService.uploadImage(file))
+      );
+      const uploadedUrls = uploadResults.map(result => result.secure_url);
+      userDto.avatarUrls = [...(userDto.avatarUrls || []), ...uploadedUrls];
+    } catch (error) {
+      console.error('Error uploading avatars:', error);
+    }
   }
+
+  // Continue processing with other data
+  return this.usersService.update(id, userDto);
+}
+
+
 
   // @Put(':id/skills')
   // async updateSkills(@Param('id') id: string, @Body() skills: UpdateSkillDto[]): Promise<User> {

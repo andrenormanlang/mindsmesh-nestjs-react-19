@@ -1,21 +1,17 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Button } from "../../@/components/ui/button";
-import { Input } from "../..//@/components/ui/input";
+import { Input } from "../../@/components/ui/input";
 import { Label } from "../../@/components/ui/label";
 import { Dialog } from "../../@/components/ui/dialog";
 import { Skill, User } from "../types/types";
 import EditSkillsForm from "./EditSkillsForm";
 import { updateUserWithSkills } from "../services/SkillShareAPI";
-
+import DeleteImage from "./DeleteImage";
 
 type ProfileFormData = {
   username: string;
-  profile: {
-    bio: string;
-    location: string;
-  };
-  avatarUrls: string[];
+  avatarFiles: File[]; // Store the newly uploaded files
   skills: Skill[];
 };
 
@@ -27,40 +23,68 @@ type EditProfileFormProps = {
 
 const EditProfileForm = ({ user, setUser, onClose }: EditProfileFormProps) => {
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
-  const { control, handleSubmit, getValues, setValue } = useForm<ProfileFormData>({
-    defaultValues: {
-      username: user.username,
-      avatarUrls: user.avatarUrls,
-      skills: user.skills,
-    },
-  });
+  const [existingAvatarUrls, setExistingAvatarUrls] = useState<string[]>(
+    user.avatarUrls || []
+  );
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // Modal visibility state
+  const [targetDeleteIndex, setTargetDeleteIndex] = useState<number | null>(null); // Index of image to delete
 
-  const handleFormSubmit = async (data: ProfileFormData) => {
-    try {
-      const updatedUser = await updateUserWithSkills({
-        id: user.id,
-        username: data.username,
-        avatarUrls: data.avatarUrls,
-        skills: data.skills,  // Now using skills from form data
-      });
-      setUser(updatedUser);
-      onClose();
-    } catch (error) {
-      console.error("Failed to update profile:", error);
-    }
-  };
+  const { control, handleSubmit, getValues, setValue } =
+    useForm<ProfileFormData>({
+      defaultValues: {
+        username: user.username,
+        avatarFiles: [],
+        skills: user.skills,
+      },
+    });
 
+    const handleFormSubmit = async (data: ProfileFormData) => {
+      try {
+        const updatedUser = await updateUserWithSkills({
+          id: user.id,
+          username: data.username,
+          avatarUrls: existingAvatarUrls, // Only pass existing URLs
+          avatarFiles: data.avatarFiles,  // Only pass new files
+          skills: data.skills,
+        });
+    
+        setUser(updatedUser);
+        onClose();
+      } catch (error) {
+        console.error("Failed to update profile:", error);
+      }
+    };
+    
+    
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const avatarUrls = Array.from(e.target.files).map(file => URL.createObjectURL(file));
-      setValue("avatarUrls", [...getValues("avatarUrls"), ...avatarUrls]);
+      const files = Array.from(e.target.files);
+      setValue("avatarFiles", [...getValues("avatarFiles"), ...files]); // Store new files
     }
   };
 
   const handleDeleteImageRequest = (index: number) => {
-    const updatedAvatars = getValues("avatarUrls").filter((_, i) => i !== index);
-    setValue("avatarUrls", updatedAvatars);
+    setTargetDeleteIndex(index); // Set the target index
+    setIsDeleteModalOpen(true); // Open the modal
   };
+
+  const confirmDeleteImage = () => {
+    if (targetDeleteIndex !== null) {
+      if (targetDeleteIndex < existingAvatarUrls.length) {
+        // Remove from existing URLs
+        const updatedUrls = existingAvatarUrls.filter((_, i) => i !== targetDeleteIndex);
+        setExistingAvatarUrls(updatedUrls);
+      } else {
+        // Remove from newly added files
+        const newIndex = targetDeleteIndex - existingAvatarUrls.length;
+        const updatedFiles = getValues("avatarFiles").filter((_, i) => i !== newIndex);
+        setValue("avatarFiles", updatedFiles);
+      }
+      setIsDeleteModalOpen(false); // Close the modal after deletion
+      setTargetDeleteIndex(null);  // Reset the target index
+    }
+  };
+  
 
   return (
     <>
@@ -80,8 +104,9 @@ const EditProfileForm = ({ user, setUser, onClose }: EditProfileFormProps) => {
         <div>
           <Label htmlFor="avatar">Avatar Images</Label>
           <Input type="file" multiple onChange={handleAvatarUpload} />
+          <div>
           <div className="grid grid-cols-2 gap-4 mt-2">
-            {getValues("avatarUrls").map((url, index) => (
+            {[...existingAvatarUrls, ...getValues("avatarFiles").map(file => URL.createObjectURL(file))].map((url, index) => (
               <div key={index} className="relative">
                 <img src={url} alt={`Avatar ${index + 1}`} className="h-20 w-full object-cover rounded-md" />
                 <Button
@@ -95,20 +120,38 @@ const EditProfileForm = ({ user, setUser, onClose }: EditProfileFormProps) => {
             ))}
           </div>
         </div>
+        </div>
 
-        <Button type="button" onClick={() => setIsSkillsModalOpen(true)} className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+        <Button
+          type="button"
+          onClick={() => setIsSkillsModalOpen(true)}
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+        >
           Edit Skills
         </Button>
 
-        <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white">
+        <Button
+          type="submit"
+          className="w-full bg-green-500 hover:bg-green-600 text-white"
+        >
           Update Profile
         </Button>
       </form>
 
       {/* Skills Modal */}
       <Dialog open={isSkillsModalOpen} onOpenChange={setIsSkillsModalOpen}>
-        <EditSkillsForm user={user} setUser={setUser} onClose={() => setIsSkillsModalOpen(false)} />
+        <EditSkillsForm
+          user={user}
+          setUser={setUser}
+          onClose={() => setIsSkillsModalOpen(false)}
+        />
       </Dialog>
+
+      <DeleteImage 
+        isOpen={isDeleteModalOpen} 
+        onClose={() => setIsDeleteModalOpen(false)} 
+        onDeleteConfirm={confirmDeleteImage} 
+      />
     </>
   );
 };

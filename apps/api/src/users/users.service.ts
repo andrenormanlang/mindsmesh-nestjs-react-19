@@ -5,7 +5,9 @@ import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './createusers.dto';
 import { Skill } from './skill.entity';
+import { v4 as uuidv4 } from 'uuid';
 import { QueryFailedError } from 'typeorm';
+import { UpdateUserDto } from './update.dto';
 
 
 @Injectable()
@@ -33,9 +35,12 @@ export class UsersService {
     });
 
     if (userData.skills && userData.skills.length > 0) {
-      newUser.skills = await this.skillsRepository.save(
-        userData.skills.map((skillData) => this.skillsRepository.create(skillData)),
-      );
+      userData.skills = userData.skills.map(skill => {
+        if (!skill.id || skill.id.length === 0) {
+          skill.id = uuidv4();  // Assign a new UUID
+        }
+        return skill;
+      });
     }
 
     try {
@@ -77,28 +82,37 @@ export class UsersService {
     return this.usersRepository.save(hashedUsers);
 }
 
+async update(id: string, userDto: UpdateUserDto): Promise<User> {
+  const user = await this.usersRepository.findOne({ where: { id }, relations: ['skills'] });
+  if (!user) throw new NotFoundException('User not found');
 
-
-  async update(id: string, userDto: CreateUserDto): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id }, relations: ['skills'] });
-    if (!user) throw new NotFoundException('User not found');
-
-    if (userDto.password) {
-      userDto.password = await bcrypt.hash(userDto.password, 10);
-    } else {
-      delete userDto.password;
-    }
-
-    if (userDto.skills && userDto.skills.length > 0) {
-      const newSkills = await this.skillsRepository.save(
-        userDto.skills.map((skillData) => this.skillsRepository.create(skillData)),
-      );
-      user.skills = [...user.skills, ...newSkills];
-    }
-
-    return this.usersRepository.save({ ...user, ...userDto });
+  // Hash password if provided
+  if (userDto.password) {
+    userDto.password = await bcrypt.hash(userDto.password, 10);
   }
 
+  // Update the avatarUrls by replacing old URLs with the new ones
+  if (userDto.avatarUrls) {
+    // Replace the user's avatar URLs with the new array (possibly after some filtering/processing)
+    user.avatarUrls = userDto.avatarUrls;
+  }
+
+  // Append any new skills provided
+  if (userDto.skills && userDto.skills.length > 0) {
+    const newSkills = await this.skillsRepository.save(
+      userDto.skills.map((skillData) => this.skillsRepository.create(skillData)),
+    );
+    user.skills = [...user.skills, ...newSkills];
+  }
+
+  // Update other fields if provided
+  if (userDto.email !== undefined) user.email = userDto.email;
+  if (userDto.username !== undefined) user.username = userDto.username;
+  if (userDto.role !== undefined) user.role = userDto.role;
+  if (userDto.isAdmin !== undefined) user.isAdmin = userDto.isAdmin;
+
+  return this.usersRepository.save(user);
+}
 
   async delete(id: string): Promise<void> {
     const result = await this.usersRepository.delete(id);

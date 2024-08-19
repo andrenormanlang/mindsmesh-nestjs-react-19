@@ -23,7 +23,7 @@ export type UserAuth = {
     description: string;
     price: number;
     isAvailable: boolean; 
-    category: string; 
+    // category: string; 
   };
 
   export type RegisterFormData = {
@@ -34,6 +34,7 @@ export type UserAuth = {
   }
   
   export type SkillData = {
+    id?: string;
     title: string;
     description: string;
     price: number;

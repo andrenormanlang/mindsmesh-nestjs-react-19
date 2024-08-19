@@ -131,14 +131,49 @@ export const deleteUser = async (userId: string): Promise<void> => {
   await api.delete(`/users/${userId}`);
 };
 
-export const updateUserWithSkills = async (data: { id: string; username?: string; avatarUrls?: string[]; skills: Skill[] }): Promise<User> => {
+export const updateUserWithSkills = async (data: { id: string; username?: string; avatarUrls?: string[]; avatarFiles?: File[]; skills?: Skill[] }): Promise<User> => {
+  const formData = new FormData();
+
+  if (data.username) formData.append('username', data.username);
+  
+  // Add avatar URLs (existing)
+  if (data.avatarUrls) {
+    data.avatarUrls.forEach(url => {
+      formData.append('avatarUrls[]', url); // Ensure proper form data format
+    });
+  }
+
+  // Add avatar files (new uploads)
+  if (data.avatarFiles) {
+    data.avatarFiles.forEach(file => {
+      formData.append('avatarFiles', file);
+    });
+  }
+
+  // Add skills
+  if (data.skills) {
+    data.skills.forEach((skill, index) => {
+      formData.append(`skills[${index}][id]`, skill.id);
+      formData.append(`skills[${index}][title]`, skill.title);
+      formData.append(`skills[${index}][description]`, skill.description);
+      formData.append(`skills[${index}][price]`, skill.price.toString());
+      formData.append(`skills[${index}][isAvailable]`, skill.isAvailable.toString());
+    });
+  }
+
   try {
-    const response = await axios.put(`/api/users/${data.id}`, data); 
+    const response = await axios.put(`/api/users/${data.id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   } catch (error) {
     throw new Error(`Failed to update user profile due to: ${(error as Error).message}`);
   }
 };
+
+
 
 
 // Skill Management

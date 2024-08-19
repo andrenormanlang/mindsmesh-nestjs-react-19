@@ -1,14 +1,1 @@
-{ "name": "mindsmesh",
-  "packageManager": "npm@10.8.2",
-  "devDependencies": {
-    "turbo": "^2.0.12"
-  },
-  "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "start": "node apps/api/dist/main"
-  },
-  "workspaces": [
-    "apps/*"
-  ]
-}
+{"name":"mindsmesh","packageManager":"npm@10.8.2","devDependencies":{"@types/uuid":"^10.0.0","turbo":"^2.0.12"},"scripts":{"dev":"turbo run dev","build":"turbo run build","start":"node apps/api/dist/main"},"workspaces":["apps/*"]}
