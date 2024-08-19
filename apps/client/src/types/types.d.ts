@@ -18,7 +18,7 @@ export type UserAuth = {
   
   
   export type Skill = {
-    id: string;
+    id?: string;
     title: string;
     description: string;
     price: number;

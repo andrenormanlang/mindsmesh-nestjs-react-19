@@ -21,8 +21,11 @@ export class SkillsService {
       ...createSkillDto,
       user,  // Associate the skill with the user
     });
-    return this.skillsRepository.save(skill);
+    const savedSkill = await this.skillsRepository.save(skill);
+    console.log(`Created skill with ID ${savedSkill.id} for user ${userId}`);
+    return savedSkill;
   }
+  
 
   async findAll(userId: string): Promise<Skill[]> {
     return this.skillsRepository.find({ where: { user: { id: userId } } });  // Fetch skills for a specific user

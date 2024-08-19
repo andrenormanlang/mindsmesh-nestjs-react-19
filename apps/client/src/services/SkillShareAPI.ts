@@ -132,7 +132,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
   await api.delete(`/users/${userId}`);
 };
 
-export const updateUserWithSkills = async (data: { id: string; username?: string; avatarUrls?: string[]; avatarFiles?: File[]; skills?: Skill[] }): Promise<User> => {
+export const updateUser = async (data: { id: string; username?: string; avatarUrls?: string[]; avatarFiles?: File[]; skills?: Skill[] }): Promise<User> => {
   const formData = new FormData();
 
   if (data.username) formData.append('username', data.username);
@@ -151,16 +151,6 @@ export const updateUserWithSkills = async (data: { id: string; username?: string
     });
   }
 
-  // Add skills
-  if (data.skills) {
-    data.skills.forEach((skill, index) => {
-      formData.append(`skills[${index}][id]`, skill.id);
-      formData.append(`skills[${index}][title]`, skill.title);
-      formData.append(`skills[${index}][description]`, skill.description);
-      formData.append(`skills[${index}][price]`, skill.price.toString());
-      formData.append(`skills[${index}][isAvailable]`, skill.isAvailable.toString());
-    });
-  }
 
   try {
     const response = await axios.put(`/api/users/${data.id}`, formData, {
@@ -174,7 +164,33 @@ export const updateUserWithSkills = async (data: { id: string; username?: string
   }
 };
 
+export const addSkillToUser = async (userId: string, skillData: Partial<Skill>): Promise<Skill> => {
+  try {
+    const response = await api.post(`/users/${userId}/skills`, {
+      ...skillData,
+      price: skillData.price !== undefined ? parseFloat(skillData.price.toString()) : undefined,
+    });
 
+    if (!response.data.id) {
+      throw new Error("Failed to retrieve the skill ID after creation");
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error adding skill to user:", error);
+    throw error;
+  }
+};
+
+export const updateUserSkill = async (userId: string, skillId: string, skillData: Partial<Skill>): Promise<Skill> => {
+  const response = await api.put(`/users/${userId}/skills/${skillId}`, skillData);
+  return response.data;
+};
+
+
+export const deleteUserSkill = async (userId: string, skillId: string): Promise<void> => {
+  await api.delete(`/users/${userId}/skills/${skillId}`);
+};
 
 
 // Skill Management

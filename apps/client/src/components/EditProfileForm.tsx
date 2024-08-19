@@ -6,7 +6,7 @@ import { Label } from "../../@/components/ui/label";
 import { Dialog } from "../../@/components/ui/dialog";
 import { Skill, User } from "../types/types";
 import EditSkillsForm from "./EditSkillsForm";
-import { updateUserWithSkills } from "../services/SkillShareAPI";
+import { updateUser } from "../services/SkillShareAPI";
 import DeleteImage from "./DeleteImage";
 
 type ProfileFormData = {
@@ -40,12 +40,11 @@ const EditProfileForm = ({ user, setUser, onClose }: EditProfileFormProps) => {
 
     const handleFormSubmit = async (data: ProfileFormData) => {
       try {
-        const updatedUser = await updateUserWithSkills({
+        const updatedUser = await updateUser({
           id: user.id,
           username: data.username,
           avatarUrls: existingAvatarUrls, // Only pass existing URLs
           avatarFiles: data.avatarFiles,  // Only pass new files
-          skills: data.skills,
         });
     
         setUser(updatedUser);
