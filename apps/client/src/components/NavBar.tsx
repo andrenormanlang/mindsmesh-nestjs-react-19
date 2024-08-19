@@ -26,6 +26,7 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false); // State for mobile menu
   const [isProfileOpen, setIsProfileOpen] = useState(false); // State for profile modal
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false); // State for register modal
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false); // State for login modal
 
   const navigate = useNavigate();
 
@@ -76,7 +77,10 @@ const Navbar = () => {
             </DropdownMenu>
           ) : (
             <>
-              <Dialog>
+              <Dialog
+                open={isLoginDialogOpen}
+                onOpenChange={setIsLoginDialogOpen}
+              >
                 <DialogTrigger asChild>
                   <Button variant="ghost" className="text-white">
                     Login
@@ -90,7 +94,10 @@ const Navbar = () => {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
+              <Dialog
+                open={isRegisterDialogOpen}
+                onOpenChange={setIsRegisterDialogOpen}
+              >
                 <DialogTrigger asChild>
                   <Button variant="ghost" className="text-white">
                     Register
@@ -151,13 +158,15 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Dialog>
+              <Dialog
+                open={isLoginDialogOpen}
+                onOpenChange={(isOpen) => {
+                  setIsLoginDialogOpen(isOpen);
+                  if (isOpen) setMenuOpen(false); // Close the menu only when the dialog is opened
+                }}
+              >
                 <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="text-white"
-                    onClick={() => setMenuOpen(false)}
-                  >
+                  <Button variant="ghost" className="text-white">
                     Login
                   </Button>
                 </DialogTrigger>
@@ -169,22 +178,24 @@ const Navbar = () => {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
+              <Dialog
+                open={isRegisterDialogOpen}
+                onOpenChange={(isOpen) => {
+                  setIsRegisterDialogOpen(isOpen);
+                  if (isOpen) setMenuOpen(false); // Close the menu only when the dialog is opened
+                }}
+              >
                 <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="text-white"
-                    onClick={() => setMenuOpen(false)}
-                  >
+                  <Button variant="ghost" className="text-white">
                     Register
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w/[425px]">
+                <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
                     <DialogTitle>Register</DialogTitle>
                   </DialogHeader>
                   <RegisterForm
-                    onClose={() => setIsRegisterDialogOpen(false)} // Pass the close function to the form
+                    onClose={() => setIsRegisterDialogOpen(false)}
                   />
                 </DialogContent>
               </Dialog>
