@@ -77,17 +77,11 @@ const HomePage = () => {
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, [])
+  }, []);
   const handleDeleteAccount = async (userId: string) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete your account? This action is irreversible."
-      )
-    ) {
-      await deleteUser(userId);
-      setCurrentUser(null);
-      navigate("/");
-    }
+    await deleteUser(userId);
+    setCurrentUser(null);
+    navigate("/");
   };
 
   const openEditModal = (user: User) => {
@@ -136,13 +130,15 @@ const HomePage = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4 sm:p-8">        {usersWithSkills.map((user) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4 sm:p-8">
+        {" "}
+        {usersWithSkills.map((user) => (
           <Card
             key={user.id}
             className="bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
           >
             <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
-            {user.avatarUrls && user.avatarUrls.length > 0 ? (
+              {user.avatarUrls && user.avatarUrls.length > 0 ? (
                 <div className="relative w-full h-full">
                   <Carousel className="relative">
                     <CarouselContent>
@@ -229,18 +225,17 @@ const HomePage = () => {
       </Dialog>
 
       {/* Delete Account Modal */}
+      {/* Delete Account Modal */}
+      {/* Delete Account Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Confirm Account Deletion</DialogTitle>
-          </DialogHeader>
-          {selectedUser && (
-            <DeleteAccountModal
-              userEmail={selectedUser.email}
-              onDeleteConfirm={() => handleDeleteAccount(selectedUser.id)}
-            />
-          )}
-        </DialogContent>
+        {selectedUser && (
+          <DeleteAccountModal
+            userEmail={selectedUser.email}
+            onDeleteConfirm={() => handleDeleteAccount(selectedUser.id)}
+            isOpen={isDeleteModalOpen}
+            onClose={() => setIsDeleteModalOpen(false)}
+          />
+        )}
       </Dialog>
 
       {/* View User Modal */}
