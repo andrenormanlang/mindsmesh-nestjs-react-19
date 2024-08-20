@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.png";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.png";
+import DefaultImage from "../assets/default-image.jpg";
 import {
   Card,
   CardHeader,
@@ -159,7 +160,7 @@ const HomePage = () => {
                 </div>
               ) : (
                 <img
-                  src="https://via.placeholder.com/150"
+                  src={DefaultImage}
                   alt="Placeholder"
                   className="w-full h-full object-contain rounded-lg"
                 />
@@ -174,7 +175,11 @@ const HomePage = () => {
               </div>
               <div className="mt-4">
                 {user.skills.map((skill) => (
-                  <p key={skill.id} className="text-sm">
+                  <p
+                    key={skill.id}
+                    className="text-sm truncate whitespace-nowrap overflow-hidden text-ellipsis max-w-xs"
+                    title={skill.title} // Full text will be shown on hover
+                  >
                     {skill.title}
                   </p>
                 ))}
