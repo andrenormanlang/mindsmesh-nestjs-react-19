@@ -14,7 +14,6 @@ export class Skill {
   description!: string;
 
   @Column('float')
-  @IsNumber()
   price!: number;
 
   @Column({ default: true })
