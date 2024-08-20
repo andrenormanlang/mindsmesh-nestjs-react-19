@@ -170,7 +170,6 @@ const HomePage = () => {
               <div className="flex justify-between items-center">
                 <div className="ml-4">
                   <h3 className="text-lg font-semibold">{user.username}</h3>
-                  <p className="text-sm text-gray-500">Level 2</p>
                 </div>
               </div>
               <div className="mt-4">
@@ -186,10 +185,11 @@ const HomePage = () => {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between items-center">
-              <div className="flex items-center text-yellow-500">
+              {/* TODO ADD REVIEW LIKE COUNTER AND REVIEW AND TESTIMONIALS */}
+              {/* <div className="flex items-center text-yellow-500">
                 <Star className="w-4 h-4" />
                 <p className="ml-1 text-sm">4.9 (1k+)</p>
-              </div>
+              </div> */}
               <button
                 onClick={(e) => openViewModal(user, e)}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
