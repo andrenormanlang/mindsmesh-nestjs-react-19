@@ -12,7 +12,8 @@ import {
 import { Input } from "../../@/components/ui/input";
 import {
   deleteUser,
-  fetchUsersWithSkills, // Fetches users either with all skills or filtered by a query
+  fetchUsersWithSkills,
+  getProfile, // Fetches users either with all skills or filtered by a query
 } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import {
@@ -64,8 +65,7 @@ const HomePage = () => {
       console.log("Fetched users from API:", users);
   
       const usersWithSkills = users.filter((user: User) => {
-        console.log('User:', user);
-        console.log('Skills:', user.skills);
+        
         return user.skills && user.skills.length > 0;
       });
   
@@ -87,6 +87,20 @@ const HomePage = () => {
   useEffect(() => {
     loadUsersAndProfile();
   }, [debouncedSearchQuery]);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const userProfile = await getProfile(); // Assuming this function fetches the logged-in user's profile
+        setCurrentUser(userProfile);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+  
+    fetchCurrentUser();
+  }, []);
+  
 
   const handleDeleteAccount = async (userId: string) => {
     await deleteUser(userId);

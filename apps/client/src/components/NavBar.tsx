@@ -54,7 +54,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gray-800 p-4 sticky top-0 z-50">
+    <nav className="bg-gray-800 p-2 h-16 sticky top-0 z-50">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-white text-xl font-bold">
           {logo && <img src={logo} alt="MindsMesh" className="logo h-10" />}
@@ -133,7 +133,7 @@ const Navbar = () => {
       </div>
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden flex flex-col space-y-2 mt-4">
+        <div className="md:hidden flex flex-col space-y-2 mt-2">
           {user ? (
             <>
               <Button
