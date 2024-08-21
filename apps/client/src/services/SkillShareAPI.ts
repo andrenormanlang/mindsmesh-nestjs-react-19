@@ -1,17 +1,16 @@
-import axios from 'axios';
-import { User, Skill, Lesson, Review, UserAuth } from '../types/types';
-
+import axios from "axios";
+import { User, Skill, Lesson, Review, UserAuth } from "../types/types";
 
 const api = axios.create({
   baseURL: "http://localhost:3000/api",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Adding JWT token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -21,21 +20,19 @@ api.interceptors.request.use((config) => {
 
 export const login = async (email: string, password: string): Promise<User> => {
   const response = await api.post("/auth/login", { email, password });
-  localStorage.setItem('token', response.data.access_token);
+  localStorage.setItem("token", response.data.access_token);
   const profile = await getProfile(); // Fetch the full profile after login
   return profile;
 };
 
-
-
 export const logout = async (): Promise<void> => {
-  localStorage.removeItem('token'); // Remove the JWT token
+  localStorage.removeItem("token"); // Remove the JWT token
   // You might want to do additional cleanup here
 };
 
 export const getProfile = async (): Promise<User> => {
   try {
-    const response = await api.get('/auth/profile');
+    const response = await api.get("/auth/profile");
     const profile: UserAuth = response.data;
 
     // Now, fetch the full user data using the user ID (sub) from the JWT payload
@@ -47,37 +44,43 @@ export const getProfile = async (): Promise<User> => {
   }
 };
 
-
-
 export const sendPasswordResetEmail = async (email: string): Promise<void> => {
-  await api.post('/api/auth/forgot-password', { email });
+  await api.post("/api/auth/forgot-password", { email });
 };
 
 export const requestPasswordReset = async (email: string): Promise<void> => {
-  await axios.post('/api/auth/forgot-password', { email });
+  await axios.post("/api/auth/forgot-password", { email });
 };
 
-export const resetPassword = async (token: string, newPassword: string): Promise<void> => {
+export const resetPassword = async (
+  token: string,
+  newPassword: string
+): Promise<void> => {
   await api.post(`/api/auth/reset-password?token=${token}`, { newPassword });
 };
 
-
 export const register = async (
-  username: string, 
-  password: string, 
-  email: string, 
-  avatarUrls: File[] | null, 
-  skills: { title: string; description: string; price: number; isAvailable: boolean; id?: string }[] = []
+  username: string,
+  password: string,
+  email: string,
+  imageUrls: File[] | null,
+  skills: {
+    title: string;
+    description: string;
+    price: number;
+    isAvailable: boolean;
+    id?: string;
+  }[] = []
 ): Promise<User> => {
   const formData = new FormData();
 
-  formData.append('username', username);
-  formData.append('password', password);
-  formData.append('email', email);
+  formData.append("username", username);
+  formData.append("password", password);
+  formData.append("email", email);
 
-  if (avatarUrls) {
-    avatarUrls.forEach((file) => {
-      formData.append('avatarUrls', file);
+  if (imageUrls) {
+    imageUrls.forEach((file) => {
+      formData.append("imageUrls", file);
     });
   }
 
@@ -86,7 +89,10 @@ export const register = async (
       formData.append(`skills[${index}][title]`, skill.title);
       formData.append(`skills[${index}][description]`, skill.description);
       formData.append(`skills[${index}][price]`, skill.price.toString());
-      formData.append(`skills[${index}][isAvailable]`, skill.isAvailable.toString());
+      formData.append(
+        `skills[${index}][isAvailable]`,
+        skill.isAvailable.toString()
+      );
     });
   }
 
@@ -95,26 +101,26 @@ export const register = async (
     console.log(`${key}: ${value}`);
   });
 
-  const response = await axios.post('/api/users/register', formData, {
+  const response = await axios.post("/api/users/register", formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
 
-  localStorage.setItem('token', response.data.access_token); 
+  localStorage.setItem("token", response.data.access_token);
 
   return response.data;
 };
 
-
-export const updateProfile = async (profileData: Partial<User>): Promise<User> => {
+export const updateProfile = async (
+  profileData: Partial<User>
+): Promise<User> => {
   const response = await api.put(`/users/${profileData.id}`, profileData);
   return response.data;
 };
 
-
 export const getAllUsers = async (): Promise<User[]> => {
-  const response = await api.get('/users');
+  const response = await api.get("/users");
   return response.data;
 };
 
@@ -132,43 +138,56 @@ export const deleteUser = async (userId: string): Promise<void> => {
   await api.delete(`/users/${userId}`);
 };
 
-export const updateUser = async (data: { id: string; username?: string; avatarUrls?: string[]; avatarFiles?: File[]; skills?: Skill[] }): Promise<User> => {
+export const updateUser = async (data: {
+  id: string;
+  username?: string;
+  imageUrls?: string[];
+  avatarFiles?: File[];
+  skills?: Skill[];
+}): Promise<User> => {
   const formData = new FormData();
 
-  if (data.username) formData.append('username', data.username);
-  
+  if (data.username) formData.append("username", data.username);
+
   // Add avatar URLs (existing)
-  if (data.avatarUrls) {
-    data.avatarUrls.forEach(url => {
-      formData.append('avatarUrls[]', url); // Ensure proper form data format
+  if (data.imageUrls) {
+    data.imageUrls.forEach((url) => {
+      formData.append("imageUrls[]", url); // Ensure proper form data format
     });
   }
 
   // Add avatar files (new uploads)
   if (data.avatarFiles) {
-    data.avatarFiles.forEach(file => {
-      formData.append('avatarFiles', file);
+    data.avatarFiles.forEach((file) => {
+      formData.append("avatarFiles", file);
     });
   }
-
 
   try {
     const response = await axios.put(`/api/users/${data.id}`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
     return response.data;
   } catch (error) {
-    throw new Error(`Failed to update user profile due to: ${(error as Error).message}`);
+    throw new Error(
+      `Failed to update user profile due to: ${(error as Error).message}`
+    );
   }
 };
 
-export const addSkillToUser = async (userId: string, skillData: Partial<Skill>): Promise<Skill> => {
+export const addSkillToUser = async (
+  userId: string,
+  skillData: Partial<Skill>
+): Promise<Skill> => {
   try {
     const response = await api.post(`/users/${userId}/skills`, {
       ...skillData,
-      price: skillData.price !== undefined ? parseFloat(skillData.price.toString()) : undefined,
+      price:
+        skillData.price !== undefined
+          ? parseFloat(skillData.price.toString())
+          : undefined,
     });
 
     if (!response.data.id) {
@@ -182,26 +201,36 @@ export const addSkillToUser = async (userId: string, skillData: Partial<Skill>):
   }
 };
 
-export const updateUserSkill = async (userId: string, skillId: string, skillData: Partial<Skill>): Promise<Skill> => {
-  const response = await api.put(`/users/${userId}/skills/${skillId}`, skillData);
+export const updateUserSkill = async (
+  userId: string,
+  skillId: string,
+  skillData: Partial<Skill>
+): Promise<Skill> => {
+  const response = await api.put(
+    `/users/${userId}/skills/${skillId}`,
+    skillData
+  );
   return response.data;
 };
 
-
-export const deleteUserSkill = async (userId: string, skillId: string): Promise<void> => {
+export const deleteUserSkill = async (
+  userId: string,
+  skillId: string
+): Promise<void> => {
   await api.delete(`/users/${userId}/skills/${skillId}`);
 };
 
-
 // Skill Management
 
-export const createSkill = async (skillData: Partial<Skill>): Promise<Skill> => {
-  const response = await api.post('/skills', skillData);
+export const createSkill = async (
+  skillData: Partial<Skill>
+): Promise<Skill> => {
+  const response = await api.post("/skills", skillData);
   return response.data;
 };
 
 export const getAllSkills = async (): Promise<Skill[]> => {
-  const response = await api.get('/skills');
+  const response = await api.get("/skills");
   return response.data;
 };
 
@@ -210,7 +239,10 @@ export const getSkillById = async (skillId: string): Promise<Skill> => {
   return response.data;
 };
 
-export const updateSkill = async (skillId: string, skillData: Partial<Skill>): Promise<Skill> => {
+export const updateSkill = async (
+  skillId: string,
+  skillData: Partial<Skill>
+): Promise<Skill> => {
   const response = await api.put(`/skills/${skillId}`, skillData);
   return response.data;
 };
@@ -222,13 +254,15 @@ export const deleteSkill = async (skillId: string): Promise<void> => {
 
 // Booking Management
 
-export const bookLesson = async (lessonData: Partial<Lesson>): Promise<Lesson> => {
-  const response = await api.post('/lessons', lessonData);
+export const bookLesson = async (
+  lessonData: Partial<Lesson>
+): Promise<Lesson> => {
+  const response = await api.post("/lessons", lessonData);
   return response.data;
 };
 
 export const getAllBookings = async (): Promise<Lesson[]> => {
-  const response = await api.get('/bookings');
+  const response = await api.get("/bookings");
   return response.data;
 };
 
@@ -239,12 +273,16 @@ export const getBookingById = async (bookingId: string): Promise<Lesson> => {
 
 // Review Management
 
-export const leaveReview = async (reviewData: Partial<Review>): Promise<Review> => {
-  const response = await api.post('/reviews', reviewData);
+export const leaveReview = async (
+  reviewData: Partial<Review>
+): Promise<Review> => {
+  const response = await api.post("/reviews", reviewData);
   return response.data;
 };
 
-export const getReviewsForSkill = async (skillId: string): Promise<Review[]> => {
+export const getReviewsForSkill = async (
+  skillId: string
+): Promise<Review[]> => {
   const response = await api.get(`/reviews/skill/${skillId}`);
   return response.data;
 };
@@ -256,7 +294,10 @@ export const getReviewsByUser = async (userId: string): Promise<Review[]> => {
 
 // Admin Management
 
-export const manageUserRoles = async (userId: string, role: string): Promise<void> => {
+export const manageUserRoles = async (
+  userId: string,
+  role: string
+): Promise<void> => {
   const response = await api.put(`/admin/users/${userId}/role`, { role });
   return response.data;
 };

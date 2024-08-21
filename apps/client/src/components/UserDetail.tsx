@@ -20,7 +20,7 @@ const UserDetailCard: React.FC<UserDetailCardProps> = ({ user }) => {
         <CardHeader className="p-0 m-0 flex-shrink-0 relative">
           <Carousel className="w-full relative m-0 h-80">
             <CarouselContent>
-              {user.avatarUrls?.map((url, index) => (
+              {user.imageUrls?.map((url, index) => (
                 <CarouselItem key={index}>
                   <img
                     src={url}
@@ -44,7 +44,10 @@ const UserDetailCard: React.FC<UserDetailCardProps> = ({ user }) => {
           </h3>
           <ul className="space-y-4">
             {user.skills.map((skill) => (
-              <li key={skill.id} className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
+              <li
+                key={skill.id}
+                className="bg-white p-4 rounded-lg shadow-md border border-gray-200"
+              >
                 <span className="font-medium text-xl text-indigo-700">
                   {skill.title}
                 </span>

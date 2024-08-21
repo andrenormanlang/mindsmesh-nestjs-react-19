@@ -1,6 +1,13 @@
-import { IsBoolean, IsEmail, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsOptional,
+  IsString,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { Skill } from './skill.entity';  // Adjust the import path based on your project structure
+import { Skill } from './skill.entity'; // Adjust the import path based on your project structure
 
 export class UpdateUserDto {
   @IsEmail()
@@ -22,14 +29,14 @@ export class UpdateUserDto {
 
   @IsString({ each: true })
   @IsOptional()
-  avatarUrls?: string[];
+  imageUrls?: string[];
 
   @IsBoolean()
   @IsOptional()
   isAdmin?: boolean;
 
-  @ValidateNested({ each: true })  // Validate each item in the array
-  @Type(() => Skill)  // Transform plain object to Skill class instance
+  @ValidateNested({ each: true }) // Validate each item in the array
+  @Type(() => Skill) // Transform plain object to Skill class instance
   @IsOptional()
-  skills?: Skill[];  // Add the skills property to your DTO
+  skills?: Skill[]; // Add the skills property to your DTO
 }

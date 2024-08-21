@@ -26,14 +26,14 @@ export type RegisterFormData = {
   username: string;
   email: string;
   password: string;
-  avatarUrls?: File[];
+  imageUrls?: File[];
 };
 
 const registerSchema = z.object({
   username: z.string().min(1, "Username is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  avatarUrls: z.any().optional(),
+  imageUrls: z.any().optional(),
 });
 
 const RegisterForm = ({ onClose }: { onClose: () => void }) => {
@@ -57,7 +57,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
       username: "",
       email: "",
       password: "",
-      avatarUrls: undefined,
+      imageUrls: undefined,
     },
   });
 
@@ -93,7 +93,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
 
     if (selectedFiles.length > 0) {
       selectedFiles.forEach((file) => {
-        formData.append("avatarUrls", file);
+        formData.append("imageUrls", file);
       });
     }
 
@@ -154,7 +154,9 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <>
-      <div className="overflow-y-auto"> {/* Scrollable container */}
+      <div className="overflow-y-auto">
+        {" "}
+        {/* Scrollable container */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <Label htmlFor="username">Username</Label>
@@ -212,9 +214,9 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
               onChange={handleFileChange}
               className="w-full"
             />
-            {errors.avatarUrls && (
+            {errors.imageUrls && (
               <p className="text-red-500">
-                {(errors.avatarUrls as FieldError)?.message}
+                {(errors.imageUrls as FieldError)?.message}
               </p>
             )}
           </div>
@@ -253,7 +255,6 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
             <Button type="submit">Submit</Button>
           </div>
         </form>
-
         {/* Displaying the list of skills */}
         <div className="mt-4">
           <h3 className="font-semibold text-lg">Skills</h3>
@@ -262,7 +263,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
               key={index}
               className="flex justify-between items-center p-2 bg-gray-100 rounded mb-2"
             >
-             <span className="truncate max-w-xs">{skill.title}</span>
+              <span className="truncate max-w-xs">{skill.title}</span>
               <div className="flex space-x-2">
                 <Button
                   size="sm"
@@ -295,9 +296,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
           <SkillForm
             onAddSkill={handleAddSkill}
             initialSkill={
-              editingSkillIndex !== null
-                ? skills[editingSkillIndex]
-                : undefined
+              editingSkillIndex !== null ? skills[editingSkillIndex] : undefined
             }
           />
         </DialogContent>

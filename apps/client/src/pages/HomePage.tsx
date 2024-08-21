@@ -139,11 +139,11 @@ const HomePage = () => {
             className="bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
           >
             <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
-              {user.avatarUrls && user.avatarUrls.length > 0 ? (
+              {user.imageUrls && user.imageUrls.length > 0 ? (
                 <div className="relative w-full h-full">
                   <Carousel className="relative">
                     <CarouselContent>
-                      {user.avatarUrls.map((url, index) => (
+                      {user.imageUrls.map((url, index) => (
                         <CarouselItem key={index}>
                           <img
                             src={url}

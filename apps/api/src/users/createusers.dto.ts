@@ -1,4 +1,12 @@
-import { IsArray, IsBoolean, IsEmail, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEmail,
+  IsOptional,
+  IsString,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { Skill } from './skill.entity';
 
@@ -12,14 +20,14 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsArray()
-  avatarUrls?: string[];
+  imageUrls?: string[];
 
   @IsString()
   username!: string;
 
   @IsBoolean()
   @IsOptional()
-  isAdmin: boolean = false; 
+  isAdmin: boolean = false;
 
   @ValidateNested({ each: true })
   @Type(() => Skill)
@@ -27,7 +35,7 @@ export class CreateUserDto {
 }
 
 export class CreateUsersDto {
-    @ValidateNested({ each: true })
-    @Type(() => CreateUserDto)
-    users: CreateUserDto[];
-  }
+  @ValidateNested({ each: true })
+  @Type(() => CreateUserDto)
+  users: CreateUserDto[];
+}
