@@ -1,12 +1,23 @@
 import axios from "axios";
 import { User, Skill, Lesson, Review, UserAuth } from "../types/types";
 
+
 const api = axios.create({
-  baseURL: "http://localhost:3000/api",
+  baseURL: import.meta.env.VITE_BASE_URL || "http://localhost:3000/api", // Fallback to localhost if .env variable is not set
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+// const api = axios.create({
+//   baseURL: isLocalhost
+//     ? "http://localhost:3000/api"
+//     : "https://mindsmesh-nestjs-react-19-api.onrender.com/api",
+//   headers: {
+//     "Content-Type": "application/json",
+//   },
+// });
+
 
 // Adding JWT token to requests
 api.interceptors.request.use((config) => {
