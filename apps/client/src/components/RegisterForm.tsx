@@ -18,7 +18,7 @@ import {
   ToastDescription,
   ToastTitle,
 } from "../../@/components/ui/toast";
-import { register } from "../services/SkillShareAPI";
+import { register } from "../services/MindsMeshAPI";
 import { SkillData } from "../types/types";
 import SkillForm from "./SkillForm";
 

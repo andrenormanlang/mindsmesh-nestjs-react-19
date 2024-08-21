@@ -4,11 +4,7 @@
 
 Welcome to **MindsMesh** — an innovative online platform designed for creatives (slightly hipsters 🧑‍🎨), tech enthusiasts 💻, and developers 👩‍💻 to share their skills, offer lessons, and learn from others. The platform features user authentication, profile management, skill offerings, a booking system, and a review system. Additionally, it includes an admin dashboard for managing users, skills, and bookings, providing a seamless experience for both users and administrators.
 
-
-<p align="center">
-  <img src="/apps/client/public/Hipster-Chubby-Cat.png" alt="MindsMesh Cat" width="300"/>
-</p>
-
+![MindsMesh Cat](/apps/client/public/Hipster-Chubby-Cat.png)
 
 ## 🌟 Features
 
@@ -19,7 +15,7 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 
 ### 👤 User Profiles
 
-- **Profile Management:** Users can create and update profiles with bio, photo, skills offered, and reviews.
+- **Profile Management:** Users can create and update profiles with bio, photo, skills offered, and leave reviews to other users.
 - **Public Profiles:** Profiles are accessible publicly with user statistics.
 
 ### 🎯 Skill Offering
@@ -136,41 +132,40 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 - **TypeORM:** Mastering ORM tools for database interactions.
 - **Frontend Development:** Building responsive UIs with React/Angular.
 - **DevOps:** Containerization, CI/CD, and deployment practices.
-- **Advanced Features:** Real-time communication, payment processing.
+- **Advanced Features:** Real-time communication.
 
 ## 🚀 Getting Started
 
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/andrenormanlang/mindsmesh.git
+   git clone https://github.com/andrenormanlang/mindsmesh-nestjs-react-19.git
    ```
 
 2. **Install Dependencies:**
 
    ```bash
-   cd skillshare/backend
+   cd mindsmesh-nestjs-react-19/
    npm install
    ```
 
-   ```bash
-   cd skillshare/frontend
-   npm install
-   ```
 
 3. **Set Up Environment Variables:**
-   - Create a `.env` file and add your configuration.
+   - Create a `.env` file in mindsmesh-nestjs-react-19/apps/api/ and add your configuration for the following.
 
-   ```typescript
+   ```typescript 
    DATABASE_HOST=localhost
    DATABASE_PORT=5432
    DATABASE_USER=postgres
    DATABASE_PASSWORD=yourpassword
    DATABASE_NAME=mindsmesh
    JWT_SECRET=YourSuperSecretKey
+   CLOUDINARY_CLOUD_NAME=
+   CLOUDINARY_API_KEY=
+   CLOUDINARY_API_SECRET=
    ```
 
-4. **Create and Access a PostgreSQL Database by CLI:**
+4. **For Local Testing Create and Access a PostgreSQL Database by CLI:**
 
    ```bash
    # Connect to PostgreSQL

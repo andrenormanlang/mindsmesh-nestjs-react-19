@@ -16,8 +16,7 @@ import {
   addSkillToUser,
   updateUserSkill,
   deleteUserSkill,
-} from "../services/SkillShareAPI"; // Import the new API functions
-
+} from "../services/MindsMeshAPI"; // Import the new API functions
 
 type EditSkillsFormProps = {
   user: User;
@@ -43,20 +42,22 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
 
   const handleFormSubmit = async (data: { skills: Skill[] }) => {
     try {
-      const updatedSkills = await Promise.all(data.skills.map(async (skill) => {
-        const skillData = {
-          ...skill,
-          price: parseFloat(skill.price.toString()), // Ensure price is a number
-        };
-        if (skill.id) {
-          await updateUserSkill(user.id, skill.id, skillData); // Update existing skill
-          return skillData; // Return the skill to include in updatedSkills
-        } else {
-          const newSkill = await addSkillToUser(user.id, skillData); // Add new skill
-          return newSkill; // Return the new skill including the valid ID
-        }
-      }));
-  
+      const updatedSkills = await Promise.all(
+        data.skills.map(async (skill) => {
+          const skillData = {
+            ...skill,
+            price: parseFloat(skill.price.toString()), // Ensure price is a number
+          };
+          if (skill.id) {
+            await updateUserSkill(user.id, skill.id, skillData); // Update existing skill
+            return skillData; // Return the skill to include in updatedSkills
+          } else {
+            const newSkill = await addSkillToUser(user.id, skillData); // Add new skill
+            return newSkill; // Return the new skill including the valid ID
+          }
+        })
+      );
+
       const updatedUser = { ...user, skills: updatedSkills }; // Update the user object
       setUser(updatedUser);
       onClose();
@@ -64,8 +65,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
       console.error("Failed to update skills:", error);
     }
   };
-  
-  
+
   const handleAddSkill = () => {
     const newSkill: Skill = {
       title: "",
@@ -81,11 +81,11 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
   const handleDeleteSkill = async (index: number) => {
     const skillToDelete = skills[index];
     if (skillToDelete && skillToDelete.id) {
-        try {
-            await deleteUserSkill(user.id, skillToDelete.id); // Delete the skill if it exists on the server
-        } catch (error) {
-            console.error("Failed to delete skill:", error);
-        }
+      try {
+        await deleteUserSkill(user.id, skillToDelete.id); // Delete the skill if it exists on the server
+      } catch (error) {
+        console.error("Failed to delete skill:", error);
+      }
     }
 
     // Safely update the skills array
@@ -96,7 +96,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
     // Close the delete modal
     setIsDeleteModalOpen(false);
     setSkillToDelete(null);
-};
+  };
 
   return (
     <>
@@ -110,23 +110,22 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
               key={index}
               className="p-4 bg-white shadow-md rounded-lg space-y-4"
             >
-               <div>
+              <div>
                 <Label htmlFor={`skills.${index}.title`}>Title</Label>
                 <Controller
-                    name={`skills.${index}.title`}
-                    control={control}
-                    rules={{ required: "Title is required" }}
-                    render={({ field }) => (
-                        <Input {...field} placeholder="Title" className="w-full" />
-                    )}
+                  name={`skills.${index}.title`}
+                  control={control}
+                  rules={{ required: "Title is required" }}
+                  render={({ field }) => (
+                    <Input {...field} placeholder="Title" className="w-full" />
+                  )}
                 />
                 {errors.skills?.[index]?.title && (
-                    <p className="text-red-500 text-sm mt-1">
-                        {errors.skills[index].title?.message}
-                    </p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.skills[index].title?.message}
+                  </p>
                 )}
-            </div>
-
+              </div>
 
               <div>
                 <Label htmlFor={`skills.${index}.description`}>

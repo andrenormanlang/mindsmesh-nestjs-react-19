@@ -14,9 +14,9 @@ import {
   deleteUser,
   getProfile,
   getUserById,
-} from "../services/SkillShareAPI";
+} from "../services/MindsMeshAPI";
 import { User } from "../types/types";
-import { Star } from "lucide-react";
+// import { Star } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -33,7 +33,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
 import EditProfileForm from "../components/EditProfileForm";
-import DeleteAccountModal from "../components/DeleteConfirm";
+import DeleteAccountModal from "../components/DeleteAccountConfirm";
 import UserDetailCard from "../components/UserDetail";
 
 const HomePage = () => {

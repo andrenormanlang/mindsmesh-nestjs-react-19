@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getProfile, getUserById, logout } from "../services/SkillShareAPI";
+import { getProfile, getUserById, logout } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import { Button } from "../../@/components/ui/button";
 import {

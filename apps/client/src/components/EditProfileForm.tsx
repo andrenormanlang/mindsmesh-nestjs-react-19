@@ -6,8 +6,8 @@ import { Label } from "../../@/components/ui/label";
 import { Dialog } from "../../@/components/ui/dialog";
 import { Skill, User } from "../types/types";
 import EditSkillsForm from "./EditSkillsForm";
-import { updateUser } from "../services/SkillShareAPI";
-import DeleteImage from "./DeleteImage";
+import { updateUser } from "../services/MindsMeshAPI";
+import DeleteImage from "./DeleteImageConfirm";
 
 type ProfileFormData = {
   username: string;

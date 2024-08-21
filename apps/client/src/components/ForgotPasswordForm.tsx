@@ -1,19 +1,19 @@
-import { useState } from 'react';
-import { Button } from '../../@/components/ui/button';
-import { Input } from '../../@/components/ui/input';
-import { sendPasswordResetEmail } from '../services/SkillShareAPI';
+import { useState } from "react";
+import { Button } from "../../@/components/ui/button";
+import { Input } from "../../@/components/ui/input";
+import { sendPasswordResetEmail } from "../services/MindsMeshAPI";
 
 const ForgotPasswordForm = () => {
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleForgotPassword = async () => {
     try {
       await sendPasswordResetEmail(email);
-      setMessage('Password reset email sent. Please check your inbox.');
+      setMessage("Password reset email sent. Please check your inbox.");
     } catch (error) {
-      console.error('Failed to send password reset email:', error);
-      setMessage('Failed to send password reset email.');
+      console.error("Failed to send password reset email:", error);
+      setMessage("Failed to send password reset email.");
     }
   };
 

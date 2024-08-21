@@ -1,19 +1,29 @@
-import { useState } from 'react';
-import { Button } from '../../@/components/ui/button';
-import { Card, CardHeader, CardContent } from '../../@/components/ui/card';
-import { Input } from '../../@/components/ui/input';
-import { useNavigate } from 'react-router-dom';
-import { login, requestPasswordReset, resetPassword } from '../services/SkillShareAPI';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../@/components/ui/dialog';
+import { useState } from "react";
+import { Button } from "../../@/components/ui/button";
+import { Card, CardHeader, CardContent } from "../../@/components/ui/card";
+import { Input } from "../../@/components/ui/input";
+import { useNavigate } from "react-router-dom";
+import {
+  login,
+  requestPasswordReset,
+  resetPassword,
+} from "../services/MindsMeshAPI";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../../@/components/ui/dialog";
 
 const LoginForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [resetEmail, setResetEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [resetToken, setResetToken] = useState('');
-  const [resetError, setResetError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
   const navigate = useNavigate();
 
@@ -25,8 +35,8 @@ const LoginForm = () => {
         window.location.reload(); // Refresh the page to update the user state in Navbar
       }
     } catch (err) {
-      setError('Login failed. Please check your email and password.');
-      console.error('Login error:', err);
+      setError("Login failed. Please check your email and password.");
+      console.error("Login error:", err);
     }
   };
 
@@ -35,8 +45,8 @@ const LoginForm = () => {
       await requestPasswordReset(resetEmail);
       setResetSuccess(true);
     } catch (err) {
-      setResetError('Failed to request password reset. Please try again.');
-      console.error('Password reset request error:', err);
+      setResetError("Failed to request password reset. Please try again.");
+      console.error("Password reset request error:", err);
     }
   };
 
@@ -46,8 +56,8 @@ const LoginForm = () => {
       alert("Password reset successfully!");
       window.location.reload();
     } catch (err) {
-      setResetError('Failed to reset password. Please try again.');
-      console.error('Password reset error:', err);
+      setResetError("Failed to reset password. Please try again.");
+      console.error("Password reset error:", err);
     }
   };
 
@@ -95,11 +105,20 @@ const LoginForm = () => {
                   onChange={(e) => setResetEmail(e.target.value)}
                   className="w-full mt-4"
                 />
-                <Button className="mt-4 w-full" onClick={handlePasswordResetRequest}>
+                <Button
+                  className="mt-4 w-full"
+                  onClick={handlePasswordResetRequest}
+                >
                   Request Password Reset
                 </Button>
-                {resetError && <p className="text-red-500 text-center">{resetError}</p>}
-                {resetSuccess && <p className="text-green-500 text-center">Check your email for reset link.</p>}
+                {resetError && (
+                  <p className="text-red-500 text-center">{resetError}</p>
+                )}
+                {resetSuccess && (
+                  <p className="text-green-500 text-center">
+                    Check your email for reset link.
+                  </p>
+                )}
               </DialogContent>
             </Dialog>
             {/* Reset Password Modal */}
@@ -130,7 +149,9 @@ const LoginForm = () => {
                 <Button className="mt-4 w-full" onClick={handleResetPassword}>
                   Reset Password
                 </Button>
-                {resetError && <p className="text-red-500 text-center">{resetError}</p>}
+                {resetError && (
+                  <p className="text-red-500 text-center">{resetError}</p>
+                )}
               </DialogContent>
             </Dialog>
           </div>
