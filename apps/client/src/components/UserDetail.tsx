@@ -8,6 +8,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../../@/components/ui/carousel";
+import { Badge } from "../../@/components/ui/badge";
 
 interface UserDetailCardProps {
   user: User;
@@ -46,17 +47,26 @@ const UserDetailCard: React.FC<UserDetailCardProps> = ({ user }) => {
             {user.skills.map((skill) => (
               <li
                 key={skill.id}
-                className="bg-white p-4 rounded-lg shadow-md border border-gray-200"
+                className="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex justify-between items-center"
               >
-                <span className="font-medium text-xl text-indigo-700">
-                  {skill.title}
-                </span>
-                <p className="text-gray-600 mt-2 text-base">
-                  {skill.description}
-                </p>
-                <span className="text-green-600 font-semibold mt-2 block text-lg">
-                  ${skill.price}
-                </span>
+                <div>
+                  <span className="font-medium text-xl text-indigo-700">
+                    {skill.title}
+                  </span>
+                  <p className="text-gray-600 mt-2 text-base">
+                    {skill.description}
+                  </p>
+                  <span className="text-green-600 font-semibold mt-2 block text-lg">
+                    ${skill.price}
+                  </span>
+                </div>
+                <Badge
+                  className={`ml-4 ${
+                    skill.isAvailable ? "bg-green-500" : "bg-red-500"
+                  } text-white`}
+                >
+                  {skill.isAvailable ? "Available" : "Unavailable"}
+                </Badge>
               </li>
             ))}
           </ul>

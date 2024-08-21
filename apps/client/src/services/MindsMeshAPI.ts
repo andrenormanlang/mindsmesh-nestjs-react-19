@@ -44,6 +44,57 @@ export const getProfile = async (): Promise<User> => {
   }
 };
 
+export const fetchUsersWithSkills = async (query: string = ""): Promise<User[]> => {
+  try {
+    const endpoint = query.trim() ? "/skills/search" : "/users";
+    const response = await api.get(endpoint, {
+      params: query.trim() ? { q: query, t: Date.now() } : {},
+    });
+
+    const users = response.data;
+    console.log("Fetched users API:", users);
+
+    // Filter users that have skills
+    
+    return users;
+
+  } catch (error) {
+    console.error("Error fetching users with skills:", error);
+    throw error;
+  }
+};
+
+
+export const getAllSkillTitles = async (): Promise<{ title: string }[]> => {
+  try {
+    const response = await api.get("/skills/all");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching all skills:", error);
+    throw error;
+  }
+};
+
+export const searchUsersBySkill = async (query: string): Promise<User[]> => {
+  try {
+    const response = await api.get(`/skills/search`, { params: { q: query } });
+    return response.data;  // Assuming the response is an array of users with their skills
+  } catch (error) {
+    console.error("Error fetching users by skill:", error);
+    throw error;
+  }
+};
+
+
+
+export const getProfileWithFullUserData = async (): Promise<User> => {
+  const profileResponse = await api.get("/auth/profile");
+  const profile: UserAuth = profileResponse.data;
+
+  const fullUserResponse = await api.get(`/users/${profile.sub}`);
+  return fullUserResponse.data;
+};
+
 export const sendPasswordResetEmail = async (email: string): Promise<void> => {
   await api.post("/api/auth/forgot-password", { email });
 };

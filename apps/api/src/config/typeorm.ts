@@ -23,6 +23,9 @@ const config = {
     ssl: {
       rejectUnauthorized: false,
     },
+    connectionTimeoutMillis: 30000, // Set a timeout for database connections
+    idleTimeoutMillis: 30000,       // Set a timeout for idle connections
+    max: 10,                        // Set a maximum number of database connections
   },
 } as DataSourceOptions;
 

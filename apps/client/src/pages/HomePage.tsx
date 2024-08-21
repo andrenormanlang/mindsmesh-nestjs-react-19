@@ -10,13 +10,10 @@ import {
 } from "../../@/components/ui/card";
 import { Input } from "../../@/components/ui/input";
 import {
-  getAllUsers,
   deleteUser,
-  getProfile,
-  getUserById,
+  fetchUsersWithSkills, // Fetches users either with all skills or filtered by a query
 } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
-// import { Star } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -35,50 +32,56 @@ import { Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
 import EditProfileForm from "../components/EditProfileForm";
 import DeleteAccountModal from "../components/DeleteAccountConfirm";
 import UserDetailCard from "../components/UserDetail";
+import useDebounce from "../hooks/useDebounce";
 
 const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedCardData, setSelectedCardData] = useState<User | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const users = await getAllUsers();
-        const usersWithSkills = users.filter(
-          (user) => user.skills && user.skills.length > 0
-        );
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+
+  const loadUsersAndProfile = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const users = await fetchUsersWithSkills(debouncedSearchQuery.toLowerCase());
+  
+      console.log("Fetched users from API:", users);
+  
+      const usersWithSkills = users.filter((user: User) => {
+        console.log('User:', user);
+        console.log('Skills:', user.skills);
+        return user.skills && user.skills.length > 0;
+      });
+  
+      if (!usersWithSkills.length) {
+        setError("No users found with the given search query");
+      } else {
         setUsersWithSkills(usersWithSkills);
-
-        const profile: User = await getProfile();
-        console.log("Fetched Profile:", profile); // Log profile to see the returned profile data
-
-        const fullUserData = await getUserById(profile.id);
-        console.log("Fetched User Data:", fullUserData); // Log fullUserData to confirm correct user data
-        setCurrentUser(fullUserData); // Set the correct logged-in user
-      } catch (error) {
-        console.error("Failed to fetch users or profile", error);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch users or profile", error);
+      setError("Failed to fetch users or profile");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    loadUsersAndProfile();
+  }, [debouncedSearchQuery]);
 
-    fetchUsers();
-
-    const handleResize = () => {
-      setIsLargeScreen(window.innerWidth >= 1024);
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
   const handleDeleteAccount = async (userId: string) => {
     await deleteUser(userId);
     setCurrentUser(null);
@@ -100,6 +103,13 @@ const HomePage = () => {
     setSelectedCardData(user);
     setIsViewModalOpen(true);
   };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-700 to-green-900 text-white relative">
@@ -127,91 +137,96 @@ const HomePage = () => {
         <Input
           type="text"
           placeholder="Search for any service..."
-          className="w-11/12 sm:w-1/2 p-4 text-lg rounded-lg mb-8"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          className="w-11/12 sm:w-1/2 p-4 text-lg rounded-full mb-2 border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 shadow-lg placeholder-gray-400"
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4 sm:p-8">
-        {" "}
-        {usersWithSkills.map((user) => (
-          <Card
-            key={user.id}
-            className="bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
-          >
-            <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
-              {user.imageUrls && user.imageUrls.length > 0 ? (
-                <div className="relative w-full h-full">
-                  <Carousel className="relative">
-                    <CarouselContent>
-                      {user.imageUrls.map((url, index) => (
-                        <CarouselItem key={index}>
-                          <img
-                            src={url}
-                            alt={`${user.username}'s image ${index + 1}`}
-                            className="w-full h-full object-contain rounded-lg"
-                            // className="w-full h-80 object-cover"
-                          />
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="absolute top-1/2 left-0 transform -translate-y-1/2 z-10 p-2 bg-gray-800 text-white rounded-full shadow-lg" />
-                    <CarouselNext className="absolute top-1/2 right-0 transform -translate-y-1/2 z-10 p-2 bg-gray-800 text-white rounded-full shadow-lg" />
-                  </Carousel>
-                </div>
-              ) : (
-                <img
-                  src={DefaultImage}
-                  alt="Placeholder"
-                  className="w-full h-full object-contain rounded-lg"
-                />
-              )}
-            </CardHeader>
-            <CardContent className="pt-4">
-              <div className="flex justify-between items-center">
-                <div className="ml-4">
-                  <h3 className="text-lg font-semibold">{user.username}</h3>
-                </div>
-              </div>
-              <div className="mt-4">
-                {user.skills.map((skill) => (
-                  <p
-                    key={skill.id}
-                    className="text-sm truncate whitespace-nowrap overflow-hidden text-ellipsis max-w-xs"
-                    title={skill.title} // Full text will be shown on hover
-                  >
-                    {skill.title}
-                  </p>
-                ))}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between items-center">
-              {/* TODO ADD REVIEW LIKE COUNTER AND REVIEW AND TESTIMONIALS */}
-              {/* <div className="flex items-center text-yellow-500">
-                <Star className="w-4 h-4" />
-                <p className="ml-1 text-sm">4.9 (1k+)</p>
-              </div> */}
-              <button
-                onClick={(e) => openViewModal(user, e)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
-              >
-                View Details
-              </button>
-              {currentUser && currentUser.id === user.id && (
-                <div className="flex space-x-2">
-                  <Pencil1Icon
-                    className="w-5 h-5 text-gray-700 cursor-pointer hover:text-gray-900"
-                    onClick={() => openEditModal(user)}
+      {isLoading ? (
+        <div className="flex justify-center items-center py-8">
+          <p className="text-lg text-white">Loading...</p>
+        </div>
+      ) : error ? (
+        <div className="flex justify-center items-center py-8">
+          <p className="text-lg text-red-500">{error}</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4 sm:p-8">
+          {usersWithSkills.map((user) => (
+            <Card
+              key={user.id}
+              className="bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
+            >
+              <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
+                {user.imageUrls && user.imageUrls.length > 0 ? (
+                  <div className="relative w-full h-full">
+                    <Carousel className="relative">
+                      <CarouselContent>
+                        {user.imageUrls.map((url, index) => (
+                          <CarouselItem key={index}>
+                            <img
+                              src={url}
+                              alt={`${user.username}'s image ${index + 1}`}
+                              className="w-full h-full object-contain rounded-lg"
+                            />
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className="absolute top-1/2 left-0 transform -translate-y-1/2 z-10 p-2 bg-gray-800 text-white rounded-full shadow-lg" />
+                      <CarouselNext className="absolute top-1/2 right-0 transform -translate-y-1/2 z-10 p-2 bg-gray-800 text-white rounded-full shadow-lg" />
+                    </Carousel>
+                  </div>
+                ) : (
+                  <img
+                    src={DefaultImage}
+                    alt="Placeholder"
+                    className="w-full h-full object-contain rounded-lg"
                   />
-                  <TrashIcon
-                    className="w-5 h-5 text-red-500 cursor-pointer hover:text-red-700"
-                    onClick={() => openDeleteModal(user)}
-                  />
+                )}
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="flex justify-between items-center">
+                  <div className="ml-4">
+                    <h3 className="text-lg font-semibold">{user.username}</h3>
+                  </div>
                 </div>
-              )}
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+                <div className="mt-4">
+                  {user.skills.map((skill) => (
+                    <p
+                      key={skill.id}
+                      className="text-sm truncate whitespace-nowrap overflow-hidden text-ellipsis max-w-xs"
+                      title={skill.title} // Full text will be shown on hover
+                    >
+                      {skill.title}
+                    </p>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between items-center">
+                <button
+                  onClick={(e) => openViewModal(user, e)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
+                >
+                  View Details
+                </button>
+                {currentUser && currentUser.id === user.id && (
+                  <div className="flex space-x-2">
+                    <Pencil1Icon
+                      className="w-5 h-5 text-gray-700 cursor-pointer hover:text-gray-900"
+                      onClick={() => openEditModal(user)}
+                    />
+                    <TrashIcon
+                      className="w-5 h-5 text-red-500 cursor-pointer hover:text-red-700"
+                      onClick={() => openDeleteModal(user)}
+                    />
+                  </div>
+                )}
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Edit Profile Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
@@ -229,8 +244,6 @@ const HomePage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Account Modal */}
-      {/* Delete Account Modal */}
       {/* Delete Account Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         {selectedUser && (

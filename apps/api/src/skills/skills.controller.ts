@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
 import { SkillsService } from './skills.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
+import { Skill } from './skills.entity';
 
 @Controller('users/:userId/skills')
 export class SkillsController {
@@ -21,6 +22,7 @@ export class SkillsController {
   findOne(@Param('userId') userId: string, @Param('id') id: string) {
     return this.skillsService.findOne(userId, id);
   }
+
 
   @Put(':id')
   update(@Param('userId') userId: string, @Param('id') id: string, @Body() updateSkillDto: UpdateSkillDto) {
