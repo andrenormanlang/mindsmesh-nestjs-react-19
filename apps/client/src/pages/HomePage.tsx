@@ -37,7 +37,7 @@ import useDebounce from "../hooks/useDebounce";
 const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
+  const isLargeScreen = window.innerWidth >= 1024;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -47,6 +47,8 @@ const HomePage = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedCardData, setSelectedCardData] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResultPhrase, setSearchResultPhrase] = useState<string | null>(null);
+
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -54,6 +56,7 @@ const HomePage = () => {
   const loadUsersAndProfile = async () => {
     setIsLoading(true);
     setError(null);
+    setSearchResultPhrase(null); // Reset the phrase on new search
     try {
       const users = await fetchUsersWithSkills(debouncedSearchQuery.toLowerCase());
   
@@ -69,6 +72,7 @@ const HomePage = () => {
         setError("No users found with the given search query");
       } else {
         setUsersWithSkills(usersWithSkills);
+        setSearchResultPhrase(`You found ${usersWithSkills.length} user${usersWithSkills.length > 1 ? 's' : ''} with the skill "${debouncedSearchQuery}".`);
       }
     } catch (error) {
       console.error("Failed to fetch users or profile", error);
@@ -77,6 +81,7 @@ const HomePage = () => {
       setIsLoading(false);
     }
   };
+  
   
   useEffect(() => {
     loadUsersAndProfile();
@@ -142,6 +147,11 @@ const HomePage = () => {
           className="w-11/12 sm:w-1/2 p-4 text-lg rounded-full mb-2 border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 shadow-lg placeholder-gray-400"
         />
       </div>
+      {searchResultPhrase && (
+      <div className="flex justify-center items-center py-4">
+        <p className="text-lg text-white">{searchResultPhrase}</p>
+      </div>
+    )}
 
       {isLoading ? (
         <div className="flex justify-center items-center py-8">
