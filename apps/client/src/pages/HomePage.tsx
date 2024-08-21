@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.png";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.png";
 import DefaultImage from "../assets/default-image.jpg";
+
 import {
   Card,
   CardHeader,

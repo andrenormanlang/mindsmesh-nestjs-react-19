@@ -4,6 +4,8 @@
 
 Welcome to **MindsMesh** — an innovative online platform designed for creatives (slightly hipsters 🧑‍🎨), tech enthusiasts 💻, and developers 👩‍💻 to share their skills, offer lessons, and learn from others. The platform features user authentication, profile management, skill offerings, a booking system, and a review system. Additionally, it includes an admin dashboard for managing users, skills, and bookings, providing a seamless experience for both users and administrators.
 
+![MindsMesh logo](/apps/client/public/logo.svg)
+
 ![MindsMesh Cat](/apps/client/public/Hipster-Chubby-Cat.png)
 
 ## 🌟 Features
