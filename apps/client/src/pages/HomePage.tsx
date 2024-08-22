@@ -40,8 +40,7 @@ const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const isLargeScreen = window.innerWidth >= 1024;
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -56,8 +55,7 @@ const HomePage = () => {
 
 
   const loadUsersAndProfile = async () => {
-    setIsLoading(true);
-    setError(null);
+
     setSearchResultPhrase(null); // Reset the phrase on new search
     try {
       const users = await fetchUsersWithSkills(debouncedSearchQuery.toLowerCase());
@@ -69,18 +67,13 @@ const HomePage = () => {
         return user.skills && user.skills.length > 0;
       });
   
-      if (!usersWithSkills.length) {
-        setError("No users found with the given search query");
-      } else {
+
         setUsersWithSkills(usersWithSkills);
         setSearchResultPhrase(`You found ${usersWithSkills.length} user${usersWithSkills.length > 1 ? 's' : ''} with the skill "${debouncedSearchQuery}".`);
-      }
+      
     } catch (error) {
       console.error("Failed to fetch users or profile", error);
-      setError("Failed to fetch users or profile");
-    } finally {
-      setIsLoading(false);
-    }
+    } 
   };
   
   
@@ -168,15 +161,7 @@ const HomePage = () => {
       </div>
     )}
 
-      {isLoading ? (
-        <div className="flex justify-center items-center py-8">
-          <p className="text-lg text-white">Loading...</p>
-        </div>
-      ) : error ? (
-        <div className="flex justify-center items-center py-8">
-          <p className="text-lg text-red-500">{error}</p>
-        </div>
-      ) : (
+      
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4 sm:p-8">
           {usersWithSkills.map((user) => (
             <Card
@@ -251,7 +236,7 @@ const HomePage = () => {
             </Card>
           ))}
         </div>
-      )}
+    
 
       {/* Edit Profile Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
