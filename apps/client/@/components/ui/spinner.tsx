@@ -15,16 +15,23 @@ const spinnerVariants = cva('flex-col items-center justify-center', {
   },
 });
 
-const loaderVariants = cva('animate-spin text-primary', {
+const loaderVariants = cva('animate-spin', {
   variants: {
     size: {
-      small: 'size-6',
-      medium: 'size-8',
-      large: 'size-12',
+      small: 'w-6 h-6',    // Updated size classes for small
+      medium: 'w-12 h-12', // Updated size classes for medium
+      large: 'w-24 h-24',  // Updated size classes for large
+    },
+    color: {
+      primary: 'text-primary',
+      white: 'text-white',   // Add more color options
+      black: 'text-black',
+      contrast: 'text-red-500',  // Example of a high-contrast color
     },
   },
   defaultVariants: {
     size: 'medium',
+    color: 'primary',
   },
 });
 
@@ -35,12 +42,11 @@ interface SpinnerContentProps
   children?: React.ReactNode;
 }
 
-export function Spinner({ size, show, children, className }: SpinnerContentProps) {
+export function Spinner({ size, show, color, children, className }: SpinnerContentProps) {
   return (
     <span className={spinnerVariants({ show })}>
-      <Loader2 className={cn(loaderVariants({ size }), className)} />
+      <Loader2 className={cn(loaderVariants({ size, color }), className)} />
       {children}
     </span>
   );
 }
-
