@@ -8,6 +8,7 @@ import LoadingSpinner from "./helpers/LoadingSpinner"; // The spinner component
 const HomePage = React.lazy(() => import("./pages/HomePage")); // Lazy load the HomePage
 
 function App() {
+  
   return (
     <>
       <Router>

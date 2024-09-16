@@ -3,6 +3,7 @@ import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.png";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.png";
 import DefaultImage from "../assets/default-image.jpg";
 
+
 import {
   Card,
   CardHeader,
@@ -79,7 +80,7 @@ const HomePage = () => {
     } finally {
       setIsLoading(false); // Stop loading
     }
-  }
+  };
 
   useEffect(() => {
     loadUsersAndProfile();
@@ -134,15 +135,14 @@ const HomePage = () => {
           <img
             src={HipsterChubbyCat}
             alt="Hipster Chubby Cat"
-            className="ml-4 absolute top-0 left-0 transform -rotate-180 w-20 h-20 sm:w-32 sm:h-32 lg:w-48 lg:h-48"
+            className="ml-4 absolute top-0 left-0 transform -rotate-180 w-20 h-20 sm:w-32 sm:h-32 lg:w-48 lg:h-48 hover-slide-fade-left"
           />
           {/* Bottom Right Image */}
           <img
             src={HipsterChubbyCat2}
             alt="Hipster Chubby Cat 2"
-            className="mr-4 absolute bottom-0 right-0 w-28 h-28 sm:w-48 sm:h-48 lg:w-64 lg:h-64"
+            className="mr-4 absolute bottom-0 right-0 w-28 h-28 sm:w-48 sm:h-48 lg:w-64 lg:h-64 hover-slide-fade-right"
           />
-
           <div className="flex flex-col items-center py-16 sm:py-24 relative z-10 w-full">
             <h1
               className={`text-lg sm:text-xl lg:text-4xl font-bold mb-6 sm:mb-4 text-right sm:text-center lg:text-center transition-colors duration-500 ${

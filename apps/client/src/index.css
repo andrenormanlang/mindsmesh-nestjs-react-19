@@ -73,6 +73,19 @@
   }
 }
 
+/* Example navbar */
+.navbar {
+  position: relative;
+  z-index: 1000; /* Higher z-index than the images */
+}
+
+/* Example footer */
+.footer {
+  position: relative;
+  z-index: 1000; /* Higher z-index than the images */
+}
+
+
 @layer base {
   * {
     @apply border-border;
@@ -218,3 +231,5 @@ p, li, span {
   font-family: 'Quicksand', sans-serif; /* Ensuring body text uses Quicksand font */
   color: #555; /* Slightly lighter color for body text */
 }
+
+

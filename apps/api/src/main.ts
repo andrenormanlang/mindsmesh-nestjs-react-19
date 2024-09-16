@@ -10,8 +10,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   
   app.useGlobalPipes(new ValidationPipe());
-  app.use(bodyParser.json({ limit: '50mb' }));
-  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+  app.use(bodyParser.json({ limit: '10mb' }));
+  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
   // Enable CORS to allow requests from the frontend
   app.enableCors({
     origin: '*', // Frontend application URL
