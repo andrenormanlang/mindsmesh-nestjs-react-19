@@ -71,13 +71,13 @@ const Navbar: React.FC = () => {
     <nav
       className={`navbar  ${
         theme === "dark" ? "bg-gray-900" : "bg-gray-800"
-      } p-2 h-16 sticky top-0 z-50 transition-colors duration-500`}
+      } p-2 h-16  top-0 z-50 transition-colors duration-500`}
     >
       <div className="navbarContent container mx-auto flex justify-between items-center">
         {/* Logo and Brand Name */}
         <Link to="/" className="navbarTitle text-white text-xl font-bold flex items-center">
           {logo && <img src={logo} alt="MindsMesh" className="h-10 mr-2" />}
-          <span className="hidden sm:inline">MindsMesh</span>
+          <span className="hidden sm:inline"></span>
         </Link>
 
         {/* Menu Items and Theme Toggle */}

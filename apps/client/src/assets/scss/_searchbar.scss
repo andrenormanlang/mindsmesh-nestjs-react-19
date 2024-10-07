@@ -1,0 +1,43 @@
+/* Search Bar Styling */
+.search-bar {
+    width: 80%;
+    max-width: 600px;
+    padding: 10px 15px;
+    font-size: 18px;
+    border-radius: 25px;
+    border: 2px solid #1a1a1a; /* Darker border for contrast */
+    background-color: #fff; /* White background for better contrast */
+    color: #333; /* Dark text for readability */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    transition: all 0.3s ease; /* Smooth transition for focus state */
+    font-weight: 400; /* Regular weight for input text */
+    font-family: 'Quicksand', sans-serif; /* Ensuring Quicksand font is applied */
+  }
+  
+  /* Focus State Styling for Search Bar */
+  .search-bar:focus {
+    outline: none;
+    border-color: #007bff; /* Blue border on focus */
+    box-shadow: 0px 4px 12px rgba(0, 123, 255, 0.2); /* Enhanced shadow on focus */
+  }
+  
+  /* Placeholder Text Styling for Search Bar */
+  .search-bar::placeholder {
+    color: #aaa; /* Light gray placeholder */
+    font-weight: 300; /* Light weight for placeholder text */
+  }
+  
+  /* Search Bar Clear Button Styling */
+  .search-bar-clear {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 20px;
+    color: #888;
+  }
+  
+  .search-bar-clear:hover {
+    color: #333; /* Darker color on hover */
+  }
