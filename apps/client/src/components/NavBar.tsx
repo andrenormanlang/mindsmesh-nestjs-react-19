@@ -3,11 +3,6 @@ import React, { useState, useContext, useEffect } from "react";
 import { logout } from "../services/MindsMeshAPI";
 import { Button } from "../../@/shadcn/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-} from "../../@/shadcn/ui/dropdown-menu";
-import {
   Dialog,
   DialogTrigger,
   DialogContent,
@@ -27,7 +22,6 @@ import EditProfileForm from "./EditProfileForm";
 import logo from "../assets/logo.svg";
 import { UserContext } from "../contexts/UserContext";
 import { useGradient } from "../contexts/GradientContext";
-import MenuItem from "./MenuItem";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -40,10 +34,7 @@ const Navbar: React.FC = () => {
 
   const { user, setUser, refreshUser } = userContext;
 
-   // Log user to debug if the Navbar correctly detects user login state
-   console.log("Navbar: User context", user);
 
-  // State for mobile menu and dialogs
   const [menuOpen, setMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
@@ -81,35 +72,26 @@ const Navbar: React.FC = () => {
         {/* Menu Items and Theme Toggle */}
         <div className="flex items-center space-x-4">
           {/* Desktop Menu */}
-          <div className="hidden md:flex space-x-4">
+          <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    className="text-white flex items-center"
-                    variant="ghost"
-                    aria-label="User menu"
-                  >
-                    Welcome, {user.username}!
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="dropdownMenuContent bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-md shadow-lg w-48"
-                  sideOffset={5}
+              <>
+                <Button
+                  variant="ghost"
+                  className="text-white flex items-center"
+                  onClick={() => setIsProfileOpen(true)}
                 >
-                  <MenuItem
-                    icon={<PersonIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />}
-                    label="Profile"
-                    onClick={() => setIsProfileOpen(true)}
-                  />
-                  <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
-                  <MenuItem
-                    icon={<ExitIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />}
-                    label="Logout"
-                    onClick={handleLogout}
-                  />
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <PersonIcon className="h-5 w-5 mr-1" />
+                  Profile
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="text-white flex items-center"
+                  onClick={handleLogout}
+                >
+                  <ExitIcon className="h-5 w-5 mr-1" />
+                  Logout
+                </Button>
+              </>
             ) : (
               <>
                 {/* Login Dialog */}
