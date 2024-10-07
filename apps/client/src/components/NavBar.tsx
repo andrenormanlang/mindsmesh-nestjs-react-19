@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useState, useContext, useEffect } from "react";
 import { logout } from "../services/MindsMeshAPI";
-import { User } from "../types/types";
 import { Button } from "../../@/shadcn/ui/button";
 import {
   DropdownMenu,
@@ -21,6 +20,7 @@ import {
   LockClosedIcon,
   Pencil1Icon,
 } from "@radix-ui/react-icons";
+import { FaPalette } from "react-icons/fa";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import EditProfileForm from "./EditProfileForm";
@@ -40,6 +40,9 @@ const Navbar: React.FC = () => {
 
   const { user, setUser, refreshUser } = userContext;
 
+   // Log user to debug if the Navbar correctly detects user login state
+   console.log("Navbar: User context", user);
+
   // State for mobile menu and dialogs
   const [menuOpen, setMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -49,7 +52,8 @@ const Navbar: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      setUser(null);
+      localStorage.removeItem("user"); // Remove user from local storage on logout
+      setUser(null); // Update UserContext state
       navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -66,9 +70,7 @@ const Navbar: React.FC = () => {
   }, [menuOpen]);
 
   return (
-    <nav
-      className={`navbar   p-2 h-16  top-0 z-50 transition-colors duration-500`}
-    >
+    <nav className={`navbar p-2 h-16 top-0 z-50 transition-colors duration-500`}>
       <div className="navbarContent container mx-auto flex justify-between items-center">
         {/* Logo and Brand Name */}
         <Link to="/" className="navbarTitle text-white text-xl font-bold flex items-center">
@@ -96,17 +98,13 @@ const Navbar: React.FC = () => {
                   sideOffset={5}
                 >
                   <MenuItem
-                    icon={
-                      <PersonIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                    }
+                    icon={<PersonIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />}
                     label="Profile"
                     onClick={() => setIsProfileOpen(true)}
                   />
                   <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                   <MenuItem
-                    icon={
-                      <ExitIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                    }
+                    icon={<ExitIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />}
                     label="Logout"
                     onClick={handleLogout}
                   />
@@ -115,19 +113,13 @@ const Navbar: React.FC = () => {
             ) : (
               <>
                 {/* Login Dialog */}
-                <Dialog
-                  open={isLoginDialogOpen}
-                  onOpenChange={setIsLoginDialogOpen}
-                >
+                <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="text-white flex items-center"
-                    >
+                    <Button variant="ghost" className="text-white flex items-center">
                       <LockClosedIcon className="h-5 w-5 mr-1" /> Login
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
+                  <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle>Login</DialogTitle>
                     </DialogHeader>
@@ -136,19 +128,13 @@ const Navbar: React.FC = () => {
                 </Dialog>
 
                 {/* Register Dialog */}
-                <Dialog
-                  open={isRegisterDialogOpen}
-                  onOpenChange={setIsRegisterDialogOpen}
-                >
+                <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="text-white flex items-center"
-                    >
+                    <Button variant="ghost" className="text-white flex items-center">
                       <Pencil1Icon className="h-5 w-5 mr-1" /> Register
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
+                  <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle>Register</DialogTitle>
                     </DialogHeader>
@@ -164,10 +150,8 @@ const Navbar: React.FC = () => {
             onClick={toggleGradient}
             className="bg-blue-500 text-white px-4 py-2 rounded transition-all duration-300 hover:bg-blue-600"
           >
-            Toggle Gradient
+            <FaPalette />
           </button>
-          
-          
 
           {/* Mobile Menu Toggle */}
           <div className="hamburgerIcon md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
@@ -224,7 +208,7 @@ const Navbar: React.FC = () => {
                   Login
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
+              <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                   <DialogTitle>Login</DialogTitle>
                 </DialogHeader>
@@ -249,7 +233,7 @@ const Navbar: React.FC = () => {
                   Register
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
+              <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                   <DialogTitle>Register</DialogTitle>
                 </DialogHeader>
@@ -262,7 +246,7 @@ const Navbar: React.FC = () => {
 
       {/* Profile Edit Modal */}
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
           </DialogHeader>
@@ -270,7 +254,7 @@ const Navbar: React.FC = () => {
             <EditProfileForm
               user={user}
               onClose={() => setIsProfileOpen(false)}
-              setUser={(updatedUser: User) => {
+              setUser={(updatedUser) => {
                 setUser(updatedUser);
                 setIsProfileOpen(false);
                 refreshUser();

@@ -2,12 +2,11 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
 const gradients = [
-  "linear-gradient(to bottom, #3498db, #2ecc71)",
-  "linear-gradient(to bottom, #e74c3c, #f39c12)",
-  "linear-gradient(to bottom, #9b59b6, #34495e)",
-  "linear-gradient(to bottom, #1abc9c, #16a085)",
+  "linear-gradient(to bottom, #005f73, #0a9396)", 
+  "linear-gradient(to bottom, #3a0ca3, #f72585)", 
+  "linear-gradient(to bottom, #ff7f11, #ff206e)", 
+  "linear-gradient(to bottom, #4361ee, #4cc9f0)", 
 ];
-
 type GradientContextType = {
   gradientIndex: number;
   toggleGradient: () => void;

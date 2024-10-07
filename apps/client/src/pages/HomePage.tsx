@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { FaPalette } from "react-icons/fa"; // New icon for gradient toggle
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.png";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.png";
 import DefaultImage from "../assets/default-image.jpg";
@@ -13,7 +14,6 @@ import { Input } from "../../@/shadcn/ui/input";
 import {
   deleteUser,
   fetchUsersWithSkills,
-  getProfile,
 } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import {
@@ -37,12 +37,19 @@ import UserDetailCard from "../components/UserDetail";
 import useDebounce from "../hooks/useDebounce";
 import LoadingSpinner from "../helpers/LoadingSpinner";
 import { useGradient } from "../contexts/GradientContext";
+import { UserContext } from "../contexts/UserContext";
 
 const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false); // New loading state
   const isLargeScreen = window.innerWidth >= 1024;
+  const userContext = useContext(UserContext);
+
+  if (!userContext) {
+    throw new Error("UserContext must be used within a UserProvider");
+  }
+
+  const { user, refreshUser } = userContext;
 
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -62,11 +69,10 @@ const HomePage = () => {
     setIsLoading(true);
     setSearchResultPhrase(null); // Reset the phrase on new search
     try {
-      const users = await fetchUsersWithSkills(
-        debouncedSearchQuery.toLowerCase()
-      );
+      // Fetching users with skills
+      const users = await fetchUsersWithSkills(debouncedSearchQuery.toLowerCase());
 
-      console.log("Fetched users from API:", users);
+      console.log("HomePage: Fetched users from API:", users);
 
       const usersWithSkills = users.filter((user: User) => {
         return user.skills && user.skills.length > 0;
@@ -78,6 +84,9 @@ const HomePage = () => {
           usersWithSkills.length > 1 ? "s" : ""
         } with the skill "${debouncedSearchQuery}".`
       );
+
+      // Refresh user profile from the context
+      await refreshUser();
     } catch (error) {
       console.error("Failed to fetch users or profile", error);
     } finally {
@@ -89,22 +98,9 @@ const HomePage = () => {
     loadUsersAndProfile();
   }, [debouncedSearchQuery]);
 
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const userProfile = await getProfile(); // Assuming this function fetches the logged-in user's profile
-        setCurrentUser(userProfile);
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-
-    fetchCurrentUser();
-  }, []);
-
   const handleDeleteAccount = async (userId: string) => {
     await deleteUser(userId);
-    setCurrentUser(null);
+    setSelectedUser(null);
     navigate("/");
   };
 
@@ -164,7 +160,6 @@ const HomePage = () => {
               onChange={handleSearchChange}
               className="w-11/12 sm:w-1/2 p-4 text-lg rounded-full mb-2 border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 shadow-lg placeholder-gray-400"
             />
-            
           </div>
           {searchResultPhrase && (
             <div className="flex justify-center items-center py-4">
@@ -216,7 +211,7 @@ const HomePage = () => {
                       <p
                         key={skill.id}
                         className="text-sm truncate whitespace-nowrap overflow-hidden text-ellipsis max-w-xs"
-                        title={skill.title} // Full text will be shown on hover
+                        title={skill.title}
                       >
                         {skill.title}
                       </p>
@@ -230,7 +225,7 @@ const HomePage = () => {
                   >
                     View Details
                   </button>
-                  {currentUser && currentUser.id === user.id && (
+                  {userContext.user && userContext.user.id === user.id && (
                     <div className="flex space-x-2">
                       <Pencil1Icon
                         className="w-5 h-5 text-gray-700 cursor-pointer hover:text-gray-900"
@@ -259,7 +254,7 @@ const HomePage = () => {
             <EditProfileForm
               user={selectedUser}
               onClose={() => setIsEditModalOpen(false)}
-              setUser={setCurrentUser} // Ensure this line is added
+              setUser={userContext.setUser}
             />
           )}
         </DialogContent>

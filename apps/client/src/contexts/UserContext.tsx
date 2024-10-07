@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { User } from "../types/types";
+import { getProfile } from "../services/MindsMeshAPI";
 
 interface UserContextProps {
   user: User | null;
@@ -7,25 +8,32 @@ interface UserContextProps {
   refreshUser: () => void;
 }
 
-export const UserContext = createContext<UserContextProps | undefined>(undefined);
-
 interface UserProviderProps {
   children: ReactNode;
 }
+
+export const UserContext = createContext<UserContextProps | undefined>(undefined);
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Simulate loading the user from an API or local storage.
+    // Load the user from localStorage on initial mount.
     const savedUser = JSON.parse(localStorage.getItem("user") || "null");
     if (savedUser) {
       setUser(savedUser);
     }
   }, []);
 
-  const refreshUser = () => {
-    // Simulate refreshing user data (e.g., refetching from an API).
+  const refreshUser = async () => {
+    try {
+      // Fetch the user's profile from the server.
+      const userProfile = await getProfile();
+      setUser(userProfile);
+      console.log("UserProvider: Refreshed user profile", userProfile);
+    } catch (error) {
+      console.error("UserProvider: Error refreshing user profile", error);
+    }
   };
 
   return (
