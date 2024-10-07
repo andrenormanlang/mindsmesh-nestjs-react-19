@@ -1,14 +1,14 @@
 import React from "react";
 import { User } from "../types/types";
-import { Card, CardContent, CardHeader } from "../../@/components/ui/card";
+import { Card, CardContent, CardHeader } from "../../@/shadcn/ui/card";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "../../@/components/ui/carousel";
-import { Badge } from "../../@/components/ui/badge";
+} from "../../@/shadcn/ui/carousel";
+import { Badge } from "../../@/shadcn/ui/badge";
 
 interface UserDetailCardProps {
   user: User;

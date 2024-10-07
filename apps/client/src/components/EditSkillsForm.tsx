@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Button } from "../../@/components/ui/button";
-import { Input } from "../../@/components/ui/input";
-import { Label } from "../../@/components/ui/label";
-import { Textarea } from "../../@/components/ui/textarea";
-import { Switch } from "../../@/components/ui/switch";
+import { Button } from "../../@/shadcn/ui/button";
+import { Input } from "../../@/shadcn/ui/input";
+import { Label } from "../../@/shadcn/ui/label";
+import { Textarea } from "../../@/shadcn/ui/textarea";
+import { Switch } from "../../@/shadcn/ui/switch";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../../@/components/ui/dialog";
+} from "../../@/shadcn/ui/dialog";
 import { User, Skill } from "../types/types";
 import {
   addSkillToUser,

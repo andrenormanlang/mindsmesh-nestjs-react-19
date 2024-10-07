@@ -5,6 +5,7 @@ import React, { Suspense } from "react";
 import LoadingSpinner from "./helpers/LoadingSpinner"; // The spinner component
 import ErrorBoundary from "./helpers/ErrorBoundary"; // Assume you create an error boundary component
 import { UserProvider } from "./contexts/UserContext"; // Import UserProvider
+import "./App.css";
 
 const HomePage = React.lazy(() => import("./pages/HomePage")); // Lazy load the HomePage
 

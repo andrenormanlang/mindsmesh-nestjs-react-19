@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Button } from "../../@/components/ui/button";
-import { Input } from "../../@/components/ui/input";
-import { Label } from "../../@/components/ui/label";
-import { Dialog } from "../../@/components/ui/dialog";
+import { Button } from "../../@/shadcn/ui/button";
+import { Input } from "../../@/shadcn/ui/input";
+import { Label } from "../../@/shadcn/ui/label";
+import { Dialog } from "../../@/shadcn/ui/dialog";
 import { Skill, User } from "../types/types";
 import EditSkillsForm from "./EditSkillsForm";
 import { updateUser } from "../services/MindsMeshAPI";

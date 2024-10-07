@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button } from "../../@/components/ui/button";
-import { Card, CardHeader, CardContent } from "../../@/components/ui/card";
-import { Input } from "../../@/components/ui/input";
+import { Button } from "../../@/shadcn/ui/button";
+import { Card, CardContent } from "../../@/shadcn/ui/card";
+import { Input } from "../../@/shadcn/ui/input";
 import { useNavigate } from "react-router-dom";
 import {
   login,
@@ -14,14 +14,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../../@/components/ui/dialog";
-
-type LoginFormProps = {
-  onClose: () => void;
-}
+} from "../../@/shadcn/ui/dialog";
 
 
-const LoginForm: React.FC<LoginFormProps> = ({ onClose }) => {
+
+const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -67,11 +64,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="flex justify-center items-center bg-gray-100">
+    <div className="flex justify-center items-center">
       <Card className="w-full max-w-sm p-4">
-        <CardHeader>
-          <h2 className="text-2xl font-semibold text-center">Login</h2>
-        </CardHeader>
+        
         <CardContent>
           <div className="space-y-4">
             <Input
@@ -92,10 +87,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose }) => {
             <Button className="w-full" onClick={handleLogin}>
               Login
             </Button>
-            <Button className="w-full" onClick={onClose}>
-              Close
-            </Button>
             
+
             {/* Forgot Password Modal */}
             <Dialog>
               <DialogTrigger asChild>

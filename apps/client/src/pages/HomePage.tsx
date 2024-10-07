@@ -3,14 +3,13 @@ import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.png";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.png";
 import DefaultImage from "../assets/default-image.jpg";
 
-
 import {
   Card,
   CardHeader,
   CardContent,
   CardFooter,
-} from "../../@/components/ui/card";
-import { Input } from "../../@/components/ui/input";
+} from "../../@/shadcn/ui/card";
+import { Input } from "../../@/shadcn/ui/input";
 import {
   deleteUser,
   fetchUsersWithSkills,
@@ -23,13 +22,13 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "../../@/components/ui/carousel";
+} from "../../@/shadcn/ui/carousel";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../../@/components/ui/dialog";
+} from "../../@/shadcn/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
 import EditProfileForm from "../components/EditProfileForm";

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button } from "../../@/components/ui/button";
-import { Input } from "../../@/components/ui/input";
+import { Button } from "../../@/shadcn/ui/button";
+import { Input } from "../../@/shadcn/ui/input";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { resetPassword } from "../services/MindsMeshAPI";
 

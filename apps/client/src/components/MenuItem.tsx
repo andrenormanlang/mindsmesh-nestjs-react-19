@@ -1,31 +1,20 @@
+
 // src/components/MenuItem.tsx
 
 import React from "react";
-import { DropdownMenuItem } from "../../@/components/ui/dropdown-menu";
-import { ReactNode } from "react";
+import { DropdownMenuItem } from "../../@/shadcn/ui/dropdown-menu";
 
 interface MenuItemProps {
-  icon: ReactNode;
+  icon: React.ReactNode;
   label: string;
   onClick: () => void;
 }
 
 const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onClick }) => (
-  <DropdownMenuItem
-    onClick={onClick}
-    className="
-      flex items-center 
-      px-4 py-2 
-      hover:bg-gray-100 dark:hover:bg-gray-700 
-      cursor-pointer 
-      transition-colors 
-      duration-200
-    "
-  >
+  <DropdownMenuItem onClick={onClick} className="menuItem">
     {icon}
     <span className="ml-2">{label}</span>
   </DropdownMenuItem>
 );
 
 export default MenuItem;
-

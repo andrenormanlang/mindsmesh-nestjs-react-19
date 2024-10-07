@@ -1,9 +1,9 @@
 import { useForm, Controller } from "react-hook-form";
-import { Button } from "../../@/components/ui/button";
-import { Input } from "../../@/components/ui/input";
-import { Label } from "../../@/components/ui/label";
-import { Textarea } from "../../@/components/ui/textarea";
-import { Switch } from "../../@/components/ui/switch";
+import { Button } from "../../@/shadcn/ui/button";
+import { Input } from "../../@/shadcn/ui/input";
+import { Label } from "../../@/shadcn/ui/label";
+import { Textarea } from "../../@/shadcn/ui/textarea";
+import { Switch } from "../../@/shadcn/ui/switch";
 
 export type SkillData = {
   title: string;
@@ -59,7 +59,13 @@ const SkillForm: React.FC<SkillFormProps> = ({ onAddSkill, initialSkill }) => {
           name="price"
           control={control}
           render={({ field }) => (
-            <Input {...field} type="number" step="0.01" placeholder="Price" className="w-full" />
+            <Input
+              {...field}
+              type="number"
+              step="0.01"
+              placeholder="Price"
+              className="w-full"
+            />
           )}
         />
       </div>
@@ -69,13 +75,18 @@ const SkillForm: React.FC<SkillFormProps> = ({ onAddSkill, initialSkill }) => {
           control={control}
           render={({ field }) => (
             <label className="flex items-center">
-              <Switch checked={field.value || false} onCheckedChange={field.onChange} />
+              <Switch
+                checked={field.value || false}
+                onCheckedChange={field.onChange}
+              />
               <span className="ml-2">Available</span>
             </label>
           )}
         />
       </div>
-      <Button type="submit">{initialSkill ? "Update Skill" : "Add Skill"}</Button>
+      <Button type="submit">
+        {initialSkill ? "Update Skill" : "Add Skill"}
+      </Button>
     </form>
   );
 };

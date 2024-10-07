@@ -1,25 +1,21 @@
-// src/components/Navbar.tsx
-
 import { Link, useNavigate } from "react-router-dom";
 import React, { useState, useContext, useEffect } from "react";
 import { logout } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
-import { Button } from "../../@/components/ui/button";
+import { Button } from "../../@/shadcn/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-} from "../../@/components/ui/dropdown-menu";
+} from "../../@/shadcn/ui/dropdown-menu";
 import {
   Dialog,
   DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../../@/components/ui/dialog";
+} from "../../@/shadcn/ui/dialog";
 import {
-  HamburgerMenuIcon,
-  Cross1Icon,
   SunIcon,
   MoonIcon,
   PersonIcon,
@@ -73,13 +69,13 @@ const Navbar: React.FC = () => {
 
   return (
     <nav
-      className={`bg-gray-800 p-2 h-16 sticky top-0 z-50 transition-colors duration-500 ${
+      className={`navbar  ${
         theme === "dark" ? "bg-gray-900" : "bg-gray-800"
-      }`}
+      } p-2 h-16 sticky top-0 z-50 transition-colors duration-500`}
     >
-      <div className="container mx-auto flex justify-between items-center">
+      <div className="navbarContent container mx-auto flex justify-between items-center">
         {/* Logo and Brand Name */}
-        <Link to="/" className="text-white text-xl font-bold flex items-center">
+        <Link to="/" className="navbarTitle text-white text-xl font-bold flex items-center">
           {logo && <img src={logo} alt="MindsMesh" className="h-10 mr-2" />}
           <span className="hidden sm:inline">MindsMesh</span>
         </Link>
@@ -100,20 +96,7 @@ const Navbar: React.FC = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  className="
-                    bg-white dark:bg-gray-800 
-                    text-gray-700 dark:text-gray-200 
-                    rounded-md shadow-lg 
-                    w-48 
-                    transition-all 
-                    duration-200 
-                    ease-out
-                    transform 
-                    opacity-0 
-                    scale-95 
-                    data-[state=open]:opacity-100 
-                    data-[state=open]:scale-100
-                  "
+                  className="dropdownMenuContent bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-md shadow-lg w-48"
                   sideOffset={5}
                 >
                   <MenuItem
@@ -152,7 +135,7 @@ const Navbar: React.FC = () => {
                     <DialogHeader>
                       <DialogTitle>Login</DialogTitle>
                     </DialogHeader>
-                    <LoginForm onClose={() => setIsLoginDialogOpen(false)} />
+                    <LoginForm />
                   </DialogContent>
                 </Dialog>
 
@@ -194,111 +177,95 @@ const Navbar: React.FC = () => {
           </button>
 
           {/* Mobile Menu Toggle */}
-          <div className="md:hidden">
-            <Button
-              variant="ghost"
-              className="text-white"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-            >
-              {menuOpen ? (
-                <Cross1Icon className="h-6 w-6" />
-              ) : (
-                <HamburgerMenuIcon className="h-6 w-6" />
-              )}
-            </Button>
+          <div className="hamburgerIcon md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
+            <div className={`bar bar1 ${menuOpen ? 'rotate45' : ''}`}></div>
+            <div className={`bar bar2 ${menuOpen ? 'opacity-0' : ''}`}></div>
+            <div className={`bar bar3 ${menuOpen ? 'rotate-45' : ''}`}></div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="md:hidden bg-gray-800 fixed top-16 left-0 right-0 h-screen flex flex-col items-center space-y-4 py-8 transition-transform duration-500">
-          {user ? (
-            <>
-              {/* <img
-                src={user.avatar_url || "https://via.placeholder.com/90"}
-                alt={`${user.google_username}'s avatar`}
-                className="w-24 h-24 rounded-full border-2 border-white mb-4"
-              /> */}
-              <Button
-                variant="ghost"
-                className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
-                onClick={() => {
-                  setMenuOpen(false);
-                  setIsProfileOpen(true);
-                }}
-              >
-                <PersonIcon className="h-5 w-5 mr-2" />
-                Profile
-              </Button>
-              <Button
-                variant="ghost"
-                className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
-                onClick={() => {
-                  handleLogout();
-                  setMenuOpen(false);
-                }}
-              >
-                <ExitIcon className="h-5 w-5 mr-2" />
-                Logout
-              </Button>
-            </>
-          ) : (
-            <>
-              {/* Mobile Login Dialog */}
-              <Dialog
-                open={isLoginDialogOpen}
-                onOpenChange={(isOpen) => {
-                  setIsLoginDialogOpen(isOpen);
-                  if (isOpen) setMenuOpen(false);
-                }}
-              >
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
-                  >
-                    <LockClosedIcon className="h-5 w-5 mr-2" />
-                    Login
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
-                  <DialogHeader>
-                    <DialogTitle>Login</DialogTitle>
-                  </DialogHeader>
-                  <LoginForm onClose={() => setIsLoginDialogOpen(false)} />
-                </DialogContent>
-              </Dialog>
+      {/* Mobile Menu - Only display on mobile */}
+      <div className={`mobileMenu md:hidden ${menuOpen ? 'active' : ''}`}>
+        {user ? (
+          <>
+            <Button
+              variant="ghost"
+              className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
+              onClick={() => {
+                setMenuOpen(false);
+                setIsProfileOpen(true);
+              }}
+            >
+              <PersonIcon className="h-5 w-5 mr-2" />
+              Profile
+            </Button>
+            <Button
+              variant="ghost"
+              className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
+              onClick={() => {
+                handleLogout();
+                setMenuOpen(false);
+              }}
+            >
+              <ExitIcon className="h-5 w-5 mr-2" />
+              Logout
+            </Button>
+          </>
+        ) : (
+          <>
+            {/* Mobile Login Dialog */}
+            <Dialog
+              open={isLoginDialogOpen}
+              onOpenChange={(isOpen) => {
+                setIsLoginDialogOpen(isOpen);
+                if (isOpen) setMenuOpen(false);
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
+                >
+                  <LockClosedIcon className="h-5 w-5 mr-2" />
+                  Login
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
+                <DialogHeader>
+                  <DialogTitle>Login</DialogTitle>
+                </DialogHeader>
+                <LoginForm />
+              </DialogContent>
+            </Dialog>
 
-              {/* Mobile Register Dialog */}
-              <Dialog
-                open={isRegisterDialogOpen}
-                onOpenChange={(isOpen) => {
-                  setIsRegisterDialogOpen(isOpen);
-                  if (isOpen) setMenuOpen(false);
-                }}
-              >
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
-                  >
-                    <Pencil1Icon className="h-5 w-5 mr-2" />
-                    Register
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
-                  <DialogHeader>
-                    <DialogTitle>Register</DialogTitle>
-                  </DialogHeader>
-                  <RegisterForm onClose={() => setIsRegisterDialogOpen(false)} />
-                </DialogContent>
-              </Dialog>
-            </>
-          )}
-        </div>
-      )}
+            {/* Mobile Register Dialog */}
+            <Dialog
+              open={isRegisterDialogOpen}
+              onOpenChange={(isOpen) => {
+                setIsRegisterDialogOpen(isOpen);
+                if (isOpen) setMenuOpen(false);
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
+                >
+                  <Pencil1Icon className="h-5 w-5 mr-2" />
+                  Register
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
+                <DialogHeader>
+                  <DialogTitle>Register</DialogTitle>
+                </DialogHeader>
+                <RegisterForm onClose={() => setIsRegisterDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
+      </div>
 
       {/* Profile Edit Modal */}
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
