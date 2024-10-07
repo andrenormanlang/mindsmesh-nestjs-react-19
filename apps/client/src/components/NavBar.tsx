@@ -1,13 +1,14 @@
+// src/components/Navbar.tsx
+
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { getProfile, getUserById, logout } from "../services/MindsMeshAPI";
+import React, { useState, useContext, useEffect } from "react";
+import { logout } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import { Button } from "../../@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem,
 } from "../../@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -16,197 +17,292 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../@/components/ui/dialog";
-import { HamburgerMenuIcon, Cross1Icon } from "@radix-ui/react-icons";
+import {
+  HamburgerMenuIcon,
+  Cross1Icon,
+  SunIcon,
+  MoonIcon,
+  PersonIcon,
+  ExitIcon,
+  LockClosedIcon,
+  Pencil1Icon,
+} from "@radix-ui/react-icons";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import EditProfileForm from "./EditProfileForm";
 import logo from "../assets/logo.svg";
+import { useTheme } from "../hooks/useTheme";
+import { UserContext } from "../contexts/UserContext";
+import MenuItem from "./MenuItem";
 
-const Navbar = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false); // State for mobile menu
-  const [isProfileOpen, setIsProfileOpen] = useState(false); // State for profile modal
-  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false); // State for register modal
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false); // State for login modal
-
+const Navbar: React.FC = () => {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  const userContext = useContext(UserContext);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const profile = await getProfile();
-        const userId = profile.id; // This is your user ID
-        const fullUserData = await getUserById(userId);
-        console.log("Fetched User Data:", fullUserData);
-        setUser(fullUserData);
-      } catch (error) {
-        console.error("Failed to fetch user data", error);
-      }
-    };
+  if (!userContext) {
+    throw new Error("UserContext must be used within a UserProvider");
+  }
 
-    fetchData();
-  }, []);
+  const { user, setUser, refreshUser } = userContext;
+
+  // State for mobile menu and dialogs
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
 
   const handleLogout = async () => {
-    await logout(); // Assume logout function removes token and handles other cleanup
-    setUser(null); // Reset the user state
-    navigate("/"); // Redirect to home page
+    try {
+      await logout();
+      setUser(null);
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
-  return (
-    <nav className="bg-gray-800 p-2 h-16 sticky top-0 z-50">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-white text-xl font-bold">
-          {logo && <img src={logo} alt="MindsMesh" className="logo h-10" />}
-        </Link>
-        <div className="hidden md:flex space-x-4">
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="text-white" variant="ghost">
-                  Welcome, {user.username}!
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white">
-                <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <>
-              <Dialog
-                open={isLoginDialogOpen}
-                onOpenChange={setIsLoginDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button variant="ghost" className="text-white">
-                    Login
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Login</DialogTitle>
-                  </DialogHeader>
-                  <LoginForm />
-                </DialogContent>
-              </Dialog>
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [menuOpen]);
 
-              <Dialog
-                open={isRegisterDialogOpen}
-                onOpenChange={setIsRegisterDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button variant="ghost" className="text-white">
-                    Register
+  return (
+    <nav
+      className={`bg-gray-800 p-2 h-16 sticky top-0 z-50 transition-colors duration-500 ${
+        theme === "dark" ? "bg-gray-900" : "bg-gray-800"
+      }`}
+    >
+      <div className="container mx-auto flex justify-between items-center">
+        {/* Logo and Brand Name */}
+        <Link to="/" className="text-white text-xl font-bold flex items-center">
+          {logo && <img src={logo} alt="MindsMesh" className="h-10 mr-2" />}
+          <span className="hidden sm:inline">MindsMesh</span>
+        </Link>
+
+        {/* Menu Items and Theme Toggle */}
+        <div className="flex items-center space-x-4">
+          {/* Desktop Menu */}
+          <div className="hidden md:flex space-x-4">
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className="text-white flex items-center"
+                    variant="ghost"
+                    aria-label="User menu"
+                  >
+                    Welcome, {user.username}!
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Register</DialogTitle>
-                  </DialogHeader>
-                  <RegisterForm
-                    onClose={() => setIsRegisterDialogOpen(false)} // Pass the close function to the form
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="
+                    bg-white dark:bg-gray-800 
+                    text-gray-700 dark:text-gray-200 
+                    rounded-md shadow-lg 
+                    w-48 
+                    transition-all 
+                    duration-200 
+                    ease-out
+                    transform 
+                    opacity-0 
+                    scale-95 
+                    data-[state=open]:opacity-100 
+                    data-[state=open]:scale-100
+                  "
+                  sideOffset={5}
+                >
+                  <MenuItem
+                    icon={
+                      <PersonIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    }
+                    label="Profile"
+                    onClick={() => setIsProfileOpen(true)}
                   />
-                </DialogContent>
-              </Dialog>
-            </>
-          )}
-        </div>
-        {/* Mobile menu toggle */}
-        <div className="md:hidden">
-          <Button
-            variant="ghost"
-            className="text-white"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {menuOpen ? (
-              <Cross1Icon className="h-6 w-6" />
+                  <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                  <MenuItem
+                    icon={
+                      <ExitIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    }
+                    label="Logout"
+                    onClick={handleLogout}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <HamburgerMenuIcon className="h-6 w-6" />
+              <>
+                {/* Login Dialog */}
+                <Dialog
+                  open={isLoginDialogOpen}
+                  onOpenChange={setIsLoginDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="text-white flex items-center"
+                    >
+                      <LockClosedIcon className="h-5 w-5 mr-1" /> Login
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
+                    <DialogHeader>
+                      <DialogTitle>Login</DialogTitle>
+                    </DialogHeader>
+                    <LoginForm onClose={() => setIsLoginDialogOpen(false)} />
+                  </DialogContent>
+                </Dialog>
+
+                {/* Register Dialog */}
+                <Dialog
+                  open={isRegisterDialogOpen}
+                  onOpenChange={setIsRegisterDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="text-white flex items-center"
+                    >
+                      <Pencil1Icon className="h-5 w-5 mr-1" /> Register
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
+                    <DialogHeader>
+                      <DialogTitle>Register</DialogTitle>
+                    </DialogHeader>
+                    <RegisterForm onClose={() => setIsRegisterDialogOpen(false)} />
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
-          </Button>
+          </div>
+
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            className="bg-gray-700 text-white p-2 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition transform hover:scale-105"
+            aria-label="Toggle Theme"
+          >
+            {theme === "dark" ? (
+              <SunIcon className="h-6 w-6" />
+            ) : (
+              <MoonIcon className="h-6 w-6" />
+            )}
+          </button>
+
+          {/* Mobile Menu Toggle */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              className="text-white"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Toggle menu"
+            >
+              {menuOpen ? (
+                <Cross1Icon className="h-6 w-6" />
+              ) : (
+                <HamburgerMenuIcon className="h-6 w-6" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
-      {/* Mobile menu */}
+
+      {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden flex flex-col space-y-2 mt-2">
+        <div className="md:hidden bg-gray-800 fixed top-16 left-0 right-0 h-screen flex flex-col items-center space-y-4 py-8 transition-transform duration-500">
           {user ? (
             <>
+              {/* <img
+                src={user.avatar_url || "https://via.placeholder.com/90"}
+                alt={`${user.google_username}'s avatar`}
+                className="w-24 h-24 rounded-full border-2 border-white mb-4"
+              /> */}
               <Button
                 variant="ghost"
-                className="text-white"
+                className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
                 onClick={() => {
                   setMenuOpen(false);
                   setIsProfileOpen(true);
                 }}
               >
+                <PersonIcon className="h-5 w-5 mr-2" />
                 Profile
               </Button>
               <Button
                 variant="ghost"
-                className="text-white"
+                className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
                 onClick={() => {
                   handleLogout();
                   setMenuOpen(false);
                 }}
               >
+                <ExitIcon className="h-5 w-5 mr-2" />
                 Logout
               </Button>
             </>
           ) : (
             <>
+              {/* Mobile Login Dialog */}
               <Dialog
                 open={isLoginDialogOpen}
                 onOpenChange={(isOpen) => {
                   setIsLoginDialogOpen(isOpen);
-                  if (isOpen) setMenuOpen(false); // Close the menu only when the dialog is opened
+                  if (isOpen) setMenuOpen(false);
                 }}
               >
                 <DialogTrigger asChild>
-                  <Button variant="ghost" className="text-white">
+                  <Button
+                    variant="ghost"
+                    className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
+                  >
+                    <LockClosedIcon className="h-5 w-5 mr-2" />
                     Login
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
                   <DialogHeader>
                     <DialogTitle>Login</DialogTitle>
                   </DialogHeader>
-                  <LoginForm />
+                  <LoginForm onClose={() => setIsLoginDialogOpen(false)} />
                 </DialogContent>
               </Dialog>
 
+              {/* Mobile Register Dialog */}
               <Dialog
                 open={isRegisterDialogOpen}
                 onOpenChange={(isOpen) => {
                   setIsRegisterDialogOpen(isOpen);
-                  if (isOpen) setMenuOpen(false); // Close the menu only when the dialog is opened
+                  if (isOpen) setMenuOpen(false);
                 }}
               >
                 <DialogTrigger asChild>
-                  <Button variant="ghost" className="text-white">
+                  <Button
+                    variant="ghost"
+                    className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
+                  >
+                    <Pencil1Icon className="h-5 w-5 mr-2" />
                     Register
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
                   <DialogHeader>
                     <DialogTitle>Register</DialogTitle>
                   </DialogHeader>
-                  <RegisterForm
-                    onClose={() => setIsRegisterDialogOpen(false)}
-                  />
+                  <RegisterForm onClose={() => setIsRegisterDialogOpen(false)} />
                 </DialogContent>
               </Dialog>
             </>
           )}
         </div>
       )}
+
       {/* Profile Edit Modal */}
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent className="sm:max-w/[425px]">
+        <DialogContent className="sm:max-w-[425px] transition-transform duration-200 ease-in-out transform opacity-0 data-[state=open]:opacity-100">
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
           </DialogHeader>
@@ -214,7 +310,11 @@ const Navbar = () => {
             <EditProfileForm
               user={user}
               onClose={() => setIsProfileOpen(false)}
-              setUser={setUser}
+              setUser={(updatedUser: User) => {
+                setUser(updatedUser);
+                setIsProfileOpen(false);
+                refreshUser();
+              }}
             />
           )}
         </DialogContent>

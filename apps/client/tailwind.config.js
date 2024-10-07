@@ -63,6 +63,13 @@ module.exports = {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
         },
+        boxShadow: {
+          navbar: '0 2px 4px rgba(0, 0, 0, 0.1)',
+          dropdown: '0 2px 10px rgba(0, 0, 0, 0.1)',
+        },
+        transitionProperty: {
+          'height': 'height',
+        },
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },

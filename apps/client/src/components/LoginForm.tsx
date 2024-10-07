@@ -16,7 +16,12 @@ import {
   DialogTrigger,
 } from "../../@/components/ui/dialog";
 
-const LoginForm = () => {
+type LoginFormProps = {
+  onClose: () => void;
+}
+
+
+const LoginForm: React.FC<LoginFormProps> = ({ onClose }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -87,6 +92,10 @@ const LoginForm = () => {
             <Button className="w-full" onClick={handleLogin}>
               Login
             </Button>
+            <Button className="w-full" onClick={onClose}>
+              Close
+            </Button>
+            
             {/* Forgot Password Modal */}
             <Dialog>
               <DialogTrigger asChild>
