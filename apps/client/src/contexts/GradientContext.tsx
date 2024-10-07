@@ -1,5 +1,5 @@
 // GradientContext.tsx
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, ReactNode } from "react";
 
 const gradients = [
   "linear-gradient(to bottom, #3498db, #2ecc71)",
@@ -14,11 +14,13 @@ type GradientContextType = {
   currentGradient: string;
 };
 
-const GradientContext = createContext<GradientContextType | undefined>(
-  undefined
-);
+const GradientContext = createContext<GradientContextType | undefined>(undefined);
 
-export const GradientProvider: React.FC = ({ children }) => {
+type GradientProviderProps = {
+  children: ReactNode;
+};
+
+export const GradientProvider: React.FC<GradientProviderProps> = ({ children }) => {
   const [gradientIndex, setGradientIndex] = useState(0);
 
   const toggleGradient = () => {

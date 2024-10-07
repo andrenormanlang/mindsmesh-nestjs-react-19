@@ -5,6 +5,7 @@ import React, { Suspense } from "react";
 import LoadingSpinner from "./helpers/LoadingSpinner"; // The spinner component
 import ErrorBoundary from "./helpers/ErrorBoundary"; // Assume you create an error boundary component
 import { UserProvider } from "./contexts/UserContext"; // Import UserProvider
+import { GradientProvider } from "./contexts/GradientContext"; // Import GradientProvider
 import "./App.css";
 
 const HomePage = React.lazy(() => import("./pages/HomePage")); // Lazy load the HomePage
@@ -14,16 +15,18 @@ function App() {
     <>
       <Router>
         <UserProvider> {/* Wrap entire app in UserProvider */}
-          <Navbar />
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingSpinner />}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                {/* Add more routes as needed */}
-              </Routes>
-            </Suspense>
-          </ErrorBoundary>
-          <Footer />
+          <GradientProvider> {/* Wrap entire app in GradientProvider */}
+            <Navbar />
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  {/* Add more routes as needed */}
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
+            <Footer />
+          </GradientProvider>
         </UserProvider>
       </Router>
     </>

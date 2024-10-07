@@ -16,8 +16,6 @@ import {
   DialogTitle,
 } from "../../@/shadcn/ui/dialog";
 import {
-  SunIcon,
-  MoonIcon,
   PersonIcon,
   ExitIcon,
   LockClosedIcon,
@@ -27,14 +25,14 @@ import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import EditProfileForm from "./EditProfileForm";
 import logo from "../assets/logo.svg";
-import { useTheme } from "../hooks/useTheme";
 import { UserContext } from "../contexts/UserContext";
+import { useGradient } from "../contexts/GradientContext";
 import MenuItem from "./MenuItem";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
   const userContext = useContext(UserContext);
+  const { toggleGradient } = useGradient();
 
   if (!userContext) {
     throw new Error("UserContext must be used within a UserProvider");
@@ -69,9 +67,7 @@ const Navbar: React.FC = () => {
 
   return (
     <nav
-      className={`navbar  ${
-        theme === "dark" ? "bg-gray-900" : "bg-gray-800"
-      } p-2 h-16  top-0 z-50 transition-colors duration-500`}
+      className={`navbar   p-2 h-16  top-0 z-50 transition-colors duration-500`}
     >
       <div className="navbarContent container mx-auto flex justify-between items-center">
         {/* Logo and Brand Name */}
@@ -163,18 +159,15 @@ const Navbar: React.FC = () => {
             )}
           </div>
 
-          {/* Theme Toggle Button */}
+          {/* Gradient Toggle Button */}
           <button
-            onClick={toggleTheme}
-            className="bg-gray-700 text-white p-2 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition transform hover:scale-105"
-            aria-label="Toggle Theme"
+            onClick={toggleGradient}
+            className="bg-blue-500 text-white px-4 py-2 rounded transition-all duration-300 hover:bg-blue-600"
           >
-            {theme === "dark" ? (
-              <SunIcon className="h-6 w-6" />
-            ) : (
-              <MoonIcon className="h-6 w-6" />
-            )}
+            Toggle Gradient
           </button>
+          
+          
 
           {/* Mobile Menu Toggle */}
           <div className="hamburgerIcon md:hidden" onClick={() => setMenuOpen(!menuOpen)}>

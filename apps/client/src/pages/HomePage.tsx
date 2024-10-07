@@ -13,7 +13,7 @@ import { Input } from "../../@/shadcn/ui/input";
 import {
   deleteUser,
   fetchUsersWithSkills,
-  getProfile, // Fetches users either with all skills or filtered by a query
+  getProfile,
 } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import {
@@ -36,6 +36,7 @@ import DeleteAccountModal from "../components/DeleteAccountConfirm";
 import UserDetailCard from "../components/UserDetail";
 import useDebounce from "../hooks/useDebounce";
 import LoadingSpinner from "../helpers/LoadingSpinner";
+import { useGradient } from "../contexts/GradientContext";
 
 const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
@@ -55,6 +56,7 @@ const HomePage = () => {
   );
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const { currentGradient } = useGradient();
 
   const loadUsersAndProfile = async () => {
     setIsLoading(true);
@@ -72,7 +74,9 @@ const HomePage = () => {
 
       setUsersWithSkills(usersWithSkills);
       setSearchResultPhrase(
-        `You found ${usersWithSkills.length} user${usersWithSkills.length > 1 ? "s" : ""} with the skill "${debouncedSearchQuery}".`
+        `You found ${usersWithSkills.length} user${
+          usersWithSkills.length > 1 ? "s" : ""
+        } with the skill "${debouncedSearchQuery}".`
       );
     } catch (error) {
       console.error("Failed to fetch users or profile", error);
@@ -125,7 +129,10 @@ const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-700 to-green-900 text-white relative">
+    <div
+      className="min-h-screen text-white relative"
+      style={{ background: currentGradient }}
+    >
       {isLoading ? (
         <LoadingSpinner />
       ) : (
@@ -157,6 +164,7 @@ const HomePage = () => {
               onChange={handleSearchChange}
               className="w-11/12 sm:w-1/2 p-4 text-lg rounded-full mb-2 border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 shadow-lg placeholder-gray-400"
             />
+            
           </div>
           {searchResultPhrase && (
             <div className="flex justify-center items-center py-4">
