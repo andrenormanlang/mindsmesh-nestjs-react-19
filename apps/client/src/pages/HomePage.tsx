@@ -1,5 +1,4 @@
 import { useContext, useEffect, useState } from "react";
-import { FaPalette } from "react-icons/fa"; // New icon for gradient toggle
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.png";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.png";
 import DefaultImage from "../assets/default-image.jpg";

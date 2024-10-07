@@ -53,33 +53,6 @@
   --chart-5: 340 75% 55%;
 }
 
-body {
-  -webkit-transition: background 1s ease-in-out;
-  transition: background 1s ease-in-out;
-}
-
-.toggle-gradient-button {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-      -ms-flex-align: center;
-          align-items: center;
-  background-color: #3498db;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  -webkit-transition: background-color 0.3s ease;
-  transition: background-color 0.3s ease;
-}
-.toggle-gradient-button:hover {
-  background-color: #2980b9;
-}
-.toggle-gradient-button .icon {
-  margin-right: 0.5rem;
-}
-
 .navbar {
   position: sticky;
   top: 0;
