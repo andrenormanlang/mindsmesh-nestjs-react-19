@@ -6,7 +6,7 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 
 ![MindsMesh logo](/apps/client/public/logo.svg)
 
-![MindsMesh Cat](/apps/client/public/Hipster-Chubby-Cat.png)
+![MindsMesh Cat](/apps/client/public/Hipster-Chubby-Cat.webp)
 
 ## 🌟 Features
 
