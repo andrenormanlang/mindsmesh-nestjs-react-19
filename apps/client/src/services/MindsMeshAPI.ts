@@ -2,8 +2,7 @@ import axios from "axios";
 import { User, Skill, Lesson, Review, UserAuth } from "../types/types";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL || "http://localhost:3000/api", // Fallback to localhost if .env variable is not set
-  // baseURL:  "http://localhost:3000/api", // Fallback to localhost if .env variable is not set
+  baseURL: import.meta.env.VITE_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },

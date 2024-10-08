@@ -7,7 +7,6 @@ const gradients = [
   "linear-gradient(to right, #ff006e 0%, #fb5607 50%, #ffbe0b 100%)",
   "radial-gradient(circle, #06d6a0 0%, #1b9aaa 50%, #127475 100%)",
   "linear-gradient(to bottom right, #ff9e00 0%, #ff0000 50%, #7a00ff 100%)",
-  "conic-gradient(from 45deg, #ff0a54, #ff477e, #ff7096, #ff85a1, #fbb1bd, #f9bec7)",
   "linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,0.8) 50%, rgba(252,176,69,1) 100%)"
 ];
 

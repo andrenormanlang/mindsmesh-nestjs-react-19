@@ -11,10 +11,7 @@ import {
   CardFooter,
 } from "../../@/shadcn/ui/card";
 import { Input } from "../../@/shadcn/ui/input";
-import {
-  deleteUser,
-  fetchUsersWithSkills,
-} from "../services/MindsMeshAPI";
+import { deleteUser, fetchUsersWithSkills } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import {
   Carousel,
@@ -41,7 +38,7 @@ import { UserContext } from "../contexts/UserContext";
 const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false); // New loading state
-  const isLargeScreen = window.innerWidth >= 1024;
+  // const isLargeScreen = window.innerWidth >= 1024;
   const userContext = useContext(UserContext);
   const gradientContext = useContext(GradientContext);
 
@@ -73,7 +70,9 @@ const HomePage = () => {
     setSearchResultPhrase(null); // Reset the phrase on new search
     try {
       // Fetching users with skills
-      const users = await fetchUsersWithSkills(debouncedSearchQuery.toLowerCase());
+      const users = await fetchUsersWithSkills(
+        debouncedSearchQuery.toLowerCase()
+      );
 
       console.log("HomePage: Fetched users from API:", users);
 
@@ -147,9 +146,10 @@ const HomePage = () => {
           />
           <div className="flex flex-col items-center py-16 sm:py-24 relative z-10 w-full">
             <h1
-              className={`text-lg sm:text-xl lg:text-4xl font-bold mb-6 sm:mb-4 text-right sm:text-center lg:text-center transition-colors duration-500 ${
-                isLargeScreen ? "text-teal-400" : "text-red-500"
-              }`}
+              className="text-lg sm:text-xl lg:text-4xl font-bold mb-6 sm:mb-4 text-right sm:text-center lg:text-center text-white transition-colors duration-500"
+              style={{
+                textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)",
+              }}
             >
               Find the right pro, right away
             </h1>
