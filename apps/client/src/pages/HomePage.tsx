@@ -1,8 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import { GradientContext } from "../contexts/GradientContext";
-import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.png";
-import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.png";
-import DefaultImage from "../assets/default-image.jpg";
+import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.webp";
+import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.webp";
+import DefaultImage from "../assets/default-image.webp";
 
 import {
   Card,
