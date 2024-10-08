@@ -249,4 +249,37 @@
 .card {
   padding: 3em;
   font-weight: 400; /* Using medium weight for regular text in cards */
+}
+
+.gradient-1,
+.gradient-2,
+.gradient-3,
+.gradient-4 {
+  background-size: 200% 200%; /* Doubling the size for smooth transition */
+  -webkit-transition: background-position 1s ease-in-out;
+  transition: background-position 1s ease-in-out; /* Transition on background position */
+}
+
+.gradient-1 {
+  background: -webkit-gradient(linear, left top, left bottom, from(#005f73), to(#0a9396));
+  background: linear-gradient(to bottom, #005f73, #0a9396);
+  background-position: 0% 50%;
+}
+
+.gradient-2 {
+  background: -webkit-gradient(linear, left top, left bottom, from(#3a0ca3), to(#f72585));
+  background: linear-gradient(to bottom, #3a0ca3, #f72585);
+  background-position: 100% 50%;
+}
+
+.gradient-3 {
+  background: -webkit-gradient(linear, left top, left bottom, from(#ff7f11), to(#ff206e));
+  background: linear-gradient(to bottom, #ff7f11, #ff206e);
+  background-position: 0% 50%;
+}
+
+.gradient-4 {
+  background: -webkit-gradient(linear, left top, left bottom, from(#4361ee), to(#4cc9f0));
+  background: linear-gradient(to bottom, #4361ee, #4cc9f0);
+  background-position: 100% 50%;
 }/*# sourceMappingURL=App.css.map */

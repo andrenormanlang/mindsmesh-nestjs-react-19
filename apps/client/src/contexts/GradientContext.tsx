@@ -1,19 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useState, ReactNode, useEffect } from "react";
 
-const gradients = [
-  "linear-gradient(to bottom, #005f73, #0a9396)",
-  "linear-gradient(to bottom, #3a0ca3, #f72585)",
-  "linear-gradient(to bottom, #ff7f11, #ff206e)",
-  "linear-gradient(to bottom, #4361ee, #4cc9f0)",
-];
-
+const gradients = ["gradient-1", "gradient-2", "gradient-3", "gradient-4"];
 type GradientContextType = {
-  gradientIndex: number;
   toggleGradient: () => void;
-  currentGradient: string;
+  currentGradientClass: string;
 };
 
-const GradientContext = createContext<GradientContextType | undefined>(undefined);
+export const GradientContext = createContext<GradientContextType | undefined>(undefined);
 
 type GradientProviderProps = {
   children: ReactNode;
@@ -26,18 +19,20 @@ export const GradientProvider: React.FC<GradientProviderProps> = ({ children }) 
     setGradientIndex((prevIndex) => (prevIndex + 1) % gradients.length);
   };
 
-  const currentGradient = gradients[gradientIndex];
+  const currentGradientClass = gradients[gradientIndex];
 
-  // Effect to apply the current gradient to the body with a smooth transition
+  // Effect to apply the current gradient class to the body element
   useEffect(() => {
-    document.body.style.transition = "background 1s ease-in-out";
-    document.body.style.background = currentGradient;
-  }, [currentGradient]);
-
+    // Remove any previously applied gradient classes
+    document.body.classList.remove(...gradients);
+    
+    // Add the current gradient class
+    document.body.classList.add(currentGradientClass);
+  }, [currentGradientClass]);
+  
   const value = {
-    gradientIndex,
     toggleGradient,
-    currentGradient,
+    currentGradientClass,
   };
 
   return (
@@ -45,12 +40,4 @@ export const GradientProvider: React.FC<GradientProviderProps> = ({ children }) 
       {children}
     </GradientContext.Provider>
   );
-};
-
-export const useGradient = () => {
-  const context = useContext(GradientContext);
-  if (context === undefined) {
-    throw new Error("useGradient must be used within a GradientProvider");
-  }
-  return context;
 };

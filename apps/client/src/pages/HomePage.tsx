@@ -35,7 +35,7 @@ import DeleteAccountModal from "../components/DeleteAccountConfirm";
 import UserDetailCard from "../components/UserDetail";
 import useDebounce from "../hooks/useDebounce";
 import LoadingSpinner from "../helpers/LoadingSpinner";
-import { useGradient } from "../contexts/GradientContext";
+import { useGradient } from "../hooks/useGradient";
 import { UserContext } from "../contexts/UserContext";
 
 const HomePage = () => {
@@ -48,7 +48,7 @@ const HomePage = () => {
     throw new Error("UserContext must be used within a UserProvider");
   }
 
-  const { user, refreshUser } = userContext;
+  const { refreshUser } = userContext;
 
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -62,7 +62,7 @@ const HomePage = () => {
   );
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const { currentGradient } = useGradient();
+  const { currentGradientClass } = useGradient();
 
   const loadUsersAndProfile = async () => {
     setIsLoading(true);
@@ -125,8 +125,7 @@ const HomePage = () => {
 
   return (
     <div
-      className="min-h-screen text-white relative"
-      style={{ background: currentGradient }}
+            className={`min-h-screen text-white relative ${currentGradientClass} transition-all duration-1000`}
     >
       {isLoading ? (
         <LoadingSpinner />

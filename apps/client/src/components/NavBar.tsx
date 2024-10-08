@@ -21,7 +21,7 @@ import RegisterForm from "./RegisterForm";
 import EditProfileForm from "./EditProfileForm";
 import logo from "../assets/logo.svg";
 import { UserContext } from "../contexts/UserContext";
-import { useGradient } from "../contexts/GradientContext";
+import { useGradient } from "../hooks/useGradient";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -33,7 +33,6 @@ const Navbar: React.FC = () => {
   }
 
   const { user, setUser, refreshUser } = userContext;
-
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -61,10 +60,15 @@ const Navbar: React.FC = () => {
   }, [menuOpen]);
 
   return (
-    <nav className={`navbar p-2 h-16 top-0 z-50 transition-colors duration-500`}>
+    <nav
+      className={`navbar p-2 h-16 top-0 z-50 transition-colors duration-500`}
+    >
       <div className="navbarContent container mx-auto flex justify-between items-center">
         {/* Logo and Brand Name */}
-        <Link to="/" className="navbarTitle text-white text-xl font-bold flex items-center">
+        <Link
+          to="/"
+          className="navbarTitle text-white text-xl font-bold flex items-center"
+        >
           {logo && <img src={logo} alt="MindsMesh" className="h-10 mr-2" />}
           <span className="hidden sm:inline"></span>
         </Link>
@@ -95,9 +99,15 @@ const Navbar: React.FC = () => {
             ) : (
               <>
                 {/* Login Dialog */}
-                <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
+                <Dialog
+                  open={isLoginDialogOpen}
+                  onOpenChange={setIsLoginDialogOpen}
+                >
                   <DialogTrigger asChild>
-                    <Button variant="ghost" className="text-white flex items-center">
+                    <Button
+                      variant="ghost"
+                      className="text-white flex items-center"
+                    >
                       <LockClosedIcon className="h-5 w-5 mr-1" /> Login
                     </Button>
                   </DialogTrigger>
@@ -110,9 +120,15 @@ const Navbar: React.FC = () => {
                 </Dialog>
 
                 {/* Register Dialog */}
-                <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
+                <Dialog
+                  open={isRegisterDialogOpen}
+                  onOpenChange={setIsRegisterDialogOpen}
+                >
                   <DialogTrigger asChild>
-                    <Button variant="ghost" className="text-white flex items-center">
+                    <Button
+                      variant="ghost"
+                      className="text-white flex items-center"
+                    >
                       <Pencil1Icon className="h-5 w-5 mr-1" /> Register
                     </Button>
                   </DialogTrigger>
@@ -120,7 +136,9 @@ const Navbar: React.FC = () => {
                     <DialogHeader>
                       <DialogTitle>Register</DialogTitle>
                     </DialogHeader>
-                    <RegisterForm onClose={() => setIsRegisterDialogOpen(false)} />
+                    <RegisterForm
+                      onClose={() => setIsRegisterDialogOpen(false)}
+                    />
                   </DialogContent>
                 </Dialog>
               </>
@@ -136,16 +154,19 @@ const Navbar: React.FC = () => {
           </button>
 
           {/* Mobile Menu Toggle */}
-          <div className="hamburgerIcon md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
-            <div className={`bar bar1 ${menuOpen ? 'rotate45' : ''}`}></div>
-            <div className={`bar bar2 ${menuOpen ? 'opacity-0' : ''}`}></div>
-            <div className={`bar bar3 ${menuOpen ? 'rotate-45' : ''}`}></div>
+          <div
+            className="hamburgerIcon md:hidden"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <div className={`bar bar1 ${menuOpen ? "rotate45" : ""}`}></div>
+            <div className={`bar bar2 ${menuOpen ? "opacity-0" : ""}`}></div>
+            <div className={`bar bar3 ${menuOpen ? "rotate-45" : ""}`}></div>
           </div>
         </div>
       </div>
 
       {/* Mobile Menu - Only display on mobile */}
-      <div className={`mobileMenu md:hidden ${menuOpen ? 'active' : ''}`}>
+      <div className={`mobileMenu md:hidden ${menuOpen ? "active" : ""}`}>
         {user ? (
           <>
             <Button
