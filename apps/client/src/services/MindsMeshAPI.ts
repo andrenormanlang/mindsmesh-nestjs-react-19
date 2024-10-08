@@ -1,23 +1,13 @@
 import axios from "axios";
 import { User, Skill, Lesson, Review, UserAuth } from "../types/types";
 
-
 const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL || "http://localhost:3000/api", // Fallback to localhost if .env variable is not set
+  // baseURL:  "http://localhost:3000/api", // Fallback to localhost if .env variable is not set
   headers: {
     "Content-Type": "application/json",
   },
 });
-
-// const api = axios.create({
-//   baseURL: isLocalhost
-//     ? "http://localhost:3000/api"
-//     : "https://mindsmesh-nestjs-react-19-api.onrender.com/api",
-//   headers: {
-//     "Content-Type": "application/json",
-//   },
-// });
-
 
 // Adding JWT token to requests
 api.interceptors.request.use((config) => {
@@ -27,28 +17,23 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
-// Authentication and User Management
 
+// Authentication and User Management
 export const login = async (email: string, password: string): Promise<User> => {
   const response = await api.post("/auth/login", { email, password });
   localStorage.setItem("token", response.data.access_token);
-  const profile = await getProfile(); // Fetch the full profile after login
-  return profile;
+  return await getProfile();
 };
 
 export const logout = async (): Promise<void> => {
-  localStorage.removeItem("token"); // Remove the JWT token
-  // You might want to do additional cleanup here
+  localStorage.removeItem("token");
 };
 
 export const getProfile = async (): Promise<User> => {
   try {
     const response = await api.get("/auth/profile");
     const profile: UserAuth = response.data;
-
-    // Now, fetch the full user data using the user ID (sub) from the JWT payload
-    const fullUserData = await getUserById(profile.sub);
-    return fullUserData;
+    return await getUserById(profile.sub);
   } catch (error) {
     console.error("Error fetching profile:", error);
     throw error;
@@ -61,20 +46,12 @@ export const fetchUsersWithSkills = async (query: string = ""): Promise<User[]> 
     const response = await api.get(endpoint, {
       params: query.trim() ? { q: query, t: Date.now() } : {},
     });
-
-    const users = response.data;
-    console.log("Fetched users API:", users);
-
-    // Filter users that have skills
-    
-    return users;
-
+    return response.data;
   } catch (error) {
     console.error("Error fetching users with skills:", error);
     throw error;
   }
 };
-
 
 export const getAllSkillTitles = async (): Promise<{ title: string }[]> => {
   try {
@@ -89,36 +66,29 @@ export const getAllSkillTitles = async (): Promise<{ title: string }[]> => {
 export const searchUsersBySkill = async (query: string): Promise<User[]> => {
   try {
     const response = await api.get(`/skills/search`, { params: { q: query } });
-    return response.data;  // Assuming the response is an array of users with their skills
+    return response.data;
   } catch (error) {
     console.error("Error fetching users by skill:", error);
     throw error;
   }
 };
 
-
-
 export const getProfileWithFullUserData = async (): Promise<User> => {
   const profileResponse = await api.get("/auth/profile");
   const profile: UserAuth = profileResponse.data;
-
   const fullUserResponse = await api.get(`/users/${profile.sub}`);
   return fullUserResponse.data;
 };
 
 export const sendPasswordResetEmail = async (email: string): Promise<void> => {
-  await api.post("/api/auth/forgot-password", { email });
-};
-
-export const requestPasswordReset = async (email: string): Promise<void> => {
-  await axios.post("/api/auth/forgot-password", { email });
+  await api.post("/auth/forgot-password", { email });
 };
 
 export const resetPassword = async (
   token: string,
   newPassword: string
 ): Promise<void> => {
-  await api.post(`/api/auth/reset-password?token=${token}`, { newPassword });
+  await api.post(`/auth/reset-password?token=${token}`, { newPassword });
 };
 
 export const register = async (
@@ -137,7 +107,7 @@ export const register = async (
   const formData = new FormData();
 
   formData.append("username", username);
-  formData.append("password", password);
+  formData.append("password", password); // Ensure password is appended correctly
   formData.append("email", email);
 
   if (imageUrls) {
@@ -151,28 +121,25 @@ export const register = async (
       formData.append(`skills[${index}][title]`, skill.title);
       formData.append(`skills[${index}][description]`, skill.description);
       formData.append(`skills[${index}][price]`, skill.price.toString());
-      formData.append(
-        `skills[${index}][isAvailable]`,
-        skill.isAvailable.toString()
-      );
+      formData.append(`skills[${index}][isAvailable]`, skill.isAvailable.toString());
     });
   }
 
-  // Log the formData entries
-  formData.forEach((value, key) => {
-    console.log(`${key}: ${value}`);
-  });
+  try {
+    const response = await api.post("/users/register", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
-  const response = await axios.post("/api/users/register", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-
-  localStorage.setItem("token", response.data.access_token);
-
-  return response.data;
+    localStorage.setItem("token", response.data.access_token);
+    return response.data;
+  } catch (error) {
+    console.error("Registration error:", error);
+    throw error;
+  }
 };
+
 
 export const updateProfile = async (
   profileData: Partial<User>
@@ -211,32 +178,24 @@ export const updateUser = async (data: {
 
   if (data.username) formData.append("username", data.username);
 
-  // Add avatar URLs (existing)
   if (data.imageUrls) {
     data.imageUrls.forEach((url) => {
-      formData.append("imageUrls[]", url); // Ensure proper form data format
+      formData.append("imageUrls[]", url);
     });
   }
 
-  // Add avatar files (new uploads)
   if (data.avatarFiles) {
     data.avatarFiles.forEach((file) => {
       formData.append("avatarFiles", file);
     });
   }
 
-  try {
-    const response = await axios.put(`/api/users/${data.id}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    return response.data;
-  } catch (error) {
-    throw new Error(
-      `Failed to update user profile due to: ${(error as Error).message}`
-    );
-  }
+  const response = await api.put(`/users/${data.id}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
 };
 
 export const addSkillToUser = async (
@@ -244,18 +203,7 @@ export const addSkillToUser = async (
   skillData: Partial<Skill>
 ): Promise<Skill> => {
   try {
-    const response = await api.post(`/users/${userId}/skills`, {
-      ...skillData,
-      price:
-        skillData.price !== undefined
-          ? parseFloat(skillData.price.toString())
-          : undefined,
-    });
-
-    if (!response.data.id) {
-      throw new Error("Failed to retrieve the skill ID after creation");
-    }
-
+    const response = await api.post(`/users/${userId}/skills`, skillData);
     return response.data;
   } catch (error) {
     console.error("Error adding skill to user:", error);
@@ -268,10 +216,7 @@ export const updateUserSkill = async (
   skillId: string,
   skillData: Partial<Skill>
 ): Promise<Skill> => {
-  const response = await api.put(
-    `/users/${userId}/skills/${skillId}`,
-    skillData
-  );
+  const response = await api.put(`/users/${userId}/skills/${skillId}`, skillData);
   return response.data;
 };
 
@@ -283,10 +228,7 @@ export const deleteUserSkill = async (
 };
 
 // Skill Management
-
-export const createSkill = async (
-  skillData: Partial<Skill>
-): Promise<Skill> => {
+export const createSkill = async (skillData: Partial<Skill>): Promise<Skill> => {
   const response = await api.post("/skills", skillData);
   return response.data;
 };
@@ -310,15 +252,11 @@ export const updateSkill = async (
 };
 
 export const deleteSkill = async (skillId: string): Promise<void> => {
-  const response = await api.delete(`/skills/${skillId}`);
-  return response.data;
+  await api.delete(`/skills/${skillId}`);
 };
 
 // Booking Management
-
-export const bookLesson = async (
-  lessonData: Partial<Lesson>
-): Promise<Lesson> => {
+export const bookLesson = async (lessonData: Partial<Lesson>): Promise<Lesson> => {
   const response = await api.post("/lessons", lessonData);
   return response.data;
 };
@@ -334,17 +272,12 @@ export const getBookingById = async (bookingId: string): Promise<Lesson> => {
 };
 
 // Review Management
-
-export const leaveReview = async (
-  reviewData: Partial<Review>
-): Promise<Review> => {
+export const leaveReview = async (reviewData: Partial<Review>): Promise<Review> => {
   const response = await api.post("/reviews", reviewData);
   return response.data;
 };
 
-export const getReviewsForSkill = async (
-  skillId: string
-): Promise<Review[]> => {
+export const getReviewsForSkill = async (skillId: string): Promise<Review[]> => {
   const response = await api.get(`/reviews/skill/${skillId}`);
   return response.data;
 };
@@ -355,11 +288,13 @@ export const getReviewsByUser = async (userId: string): Promise<Review[]> => {
 };
 
 // Admin Management
-
 export const manageUserRoles = async (
   userId: string,
   role: string
 ): Promise<void> => {
-  const response = await api.put(`/admin/users/${userId}/role`, { role });
-  return response.data;
+  await api.put(`/admin/users/${userId}/role`, { role });
+};
+
+export const requestPasswordReset = async (email: string): Promise<void> => {
+  await api.post("/auth/forgot-password", { email });
 };
