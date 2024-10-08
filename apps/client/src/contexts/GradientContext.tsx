@@ -1,9 +1,16 @@
-import React, { createContext, useState, ReactNode, useEffect } from "react";
+import React, { createContext, useState, ReactNode } from "react";
+import { motion } from "framer-motion";
 
-const gradients = ["gradient-1", "gradient-2", "gradient-3", "gradient-4"];
+const gradients = [
+  "linear-gradient(to bottom, #005f73, #0a9396)",
+  "linear-gradient(to bottom, #3a0ca3, #f72585)",
+  "linear-gradient(to bottom, #ff7f11, #ff206e)",
+  "linear-gradient(to bottom, #4361ee, #4cc9f0)"
+];
+
 type GradientContextType = {
   toggleGradient: () => void;
-  currentGradientClass: string;
+  currentGradientIndex: number;
 };
 
 export const GradientContext = createContext<GradientContextType | undefined>(undefined);
@@ -19,25 +26,22 @@ export const GradientProvider: React.FC<GradientProviderProps> = ({ children }) 
     setGradientIndex((prevIndex) => (prevIndex + 1) % gradients.length);
   };
 
-  const currentGradientClass = gradients[gradientIndex];
-
-  // Effect to apply the current gradient class to the body element
-  useEffect(() => {
-    // Remove any previously applied gradient classes
-    document.body.classList.remove(...gradients);
-    
-    // Add the current gradient class
-    document.body.classList.add(currentGradientClass);
-  }, [currentGradientClass]);
-  
   const value = {
     toggleGradient,
-    currentGradientClass,
+    currentGradientIndex: gradientIndex,
   };
 
   return (
     <GradientContext.Provider value={value}>
-      {children}
+      {/* Framer Motion wrapper for smooth transitions */}
+      <motion.div
+        initial={{ background: gradients[gradientIndex] }}
+        animate={{ background: gradients[gradientIndex] }}
+        transition={{ duration: 1, ease: "easeInOut" }}
+        style={{ minHeight: "100vh", width: "100%" }}
+      >
+        {children}
+      </motion.div>
     </GradientContext.Provider>
   );
 };

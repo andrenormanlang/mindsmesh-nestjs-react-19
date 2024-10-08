@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from "react";
+import { GradientContext } from "../contexts/GradientContext";
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.png";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.png";
 import DefaultImage from "../assets/default-image.jpg";
@@ -35,7 +36,6 @@ import DeleteAccountModal from "../components/DeleteAccountConfirm";
 import UserDetailCard from "../components/UserDetail";
 import useDebounce from "../hooks/useDebounce";
 import LoadingSpinner from "../helpers/LoadingSpinner";
-import { useGradient } from "../hooks/useGradient";
 import { UserContext } from "../contexts/UserContext";
 
 const HomePage = () => {
@@ -43,11 +43,15 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false); // New loading state
   const isLargeScreen = window.innerWidth >= 1024;
   const userContext = useContext(UserContext);
+  const gradientContext = useContext(GradientContext);
 
   if (!userContext) {
     throw new Error("UserContext must be used within a UserProvider");
   }
 
+  if (!gradientContext) {
+    throw new Error("GradientContext must be used within a GradientProvider");
+  }
   const { refreshUser } = userContext;
 
   const navigate = useNavigate();
@@ -62,7 +66,7 @@ const HomePage = () => {
   );
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const { currentGradientClass } = useGradient();
+  // const { currentGradientClass } = useGradient();
 
   const loadUsersAndProfile = async () => {
     setIsLoading(true);
@@ -124,9 +128,7 @@ const HomePage = () => {
   };
 
   return (
-    <div
-            className={`min-h-screen text-white relative ${currentGradientClass} transition-all duration-1000`}
-    >
+    <div className="min-h-screen text-white relative">
       {isLoading ? (
         <LoadingSpinner />
       ) : (
