@@ -3,7 +3,7 @@ import { UsersService } from './users.service';
 import { User } from './user.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DeepPartial, DeleteResult, Repository } from 'typeorm';
-import { CreateUserDto } from './createusers.dto';
+import { CreateUserDto } from './dto/createusers.dto';
 import { Skill } from './skill.entity';
 import * as bcrypt from 'bcrypt';
 
@@ -42,7 +42,9 @@ describe('UsersService', () => {
             findOne: jest.fn().mockResolvedValue(mockUser as User),
             create: jest.fn().mockReturnValue(mockUser as User),
             save: jest.fn().mockResolvedValue(mockUser as User),
-            delete: jest.fn().mockResolvedValue({ affected: 1 } as DeleteResult),
+            delete: jest
+              .fn()
+              .mockResolvedValue({ affected: 1 } as DeleteResult),
           },
         },
         {
@@ -50,7 +52,7 @@ describe('UsersService', () => {
           useValue: {
             find: jest.fn(),
             findOne: jest.fn(),
-            create: jest.fn().mockImplementation(skill => skill),
+            create: jest.fn().mockImplementation((skill) => skill),
             save: jest.fn().mockResolvedValue([mockSkill as Skill]),
           },
         },
@@ -79,13 +81,18 @@ describe('UsersService', () => {
     jest.spyOn(repository, 'findOne').mockResolvedValue(mockUser as User);
     const result = await service.findOne('testId');
     expect(result).toEqual(mockUser as User);
-    expect(repository.findOne).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'testId' }, relations: ['skills'] }));
+    expect(repository.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'testId' },
+        relations: ['skills'],
+      })
+    );
   });
 
   it('should create a user with one skill', async () => {
     // Mock implementation to return a hashed password
-    jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword' as never); 
-  
+    jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedPassword' as never);
+
     const createUserDto: CreateUserDto = {
       email: 'test@example.com',
       password: 'password',
@@ -93,7 +100,7 @@ describe('UsersService', () => {
       isAdmin: false,
       skills: [mockSkill as Skill],
     };
-  
+
     // Creating a mock user to reflect the expected structure after save
     const mockCreatedUser = {
       ...mockUser,
@@ -108,12 +115,12 @@ describe('UsersService', () => {
         },
       ],
     };
-  
+
     jest.spyOn(repository, 'create').mockReturnValue(mockCreatedUser as User);
     jest.spyOn(repository, 'save').mockResolvedValue(mockCreatedUser as User);
-  
+
     const result = await service.create(createUserDto);
-  
+
     // Adjusting the expectation to deep compare the structure
     expect(result).toMatchObject({
       email: 'test@example.com',
@@ -131,7 +138,7 @@ describe('UsersService', () => {
       ],
       username: 'Test User',
     });
-    
+
     expect(bcrypt.hash).toHaveBeenCalledWith(createUserDto.password, 10);
     expect(skillRepository.create).toHaveBeenCalledTimes(1);
     expect(skillRepository.save).toHaveBeenCalledWith([mockSkill as Skill]);
@@ -152,7 +159,12 @@ describe('UsersService', () => {
 
     const result = await service.update('testId', updateUserDto);
     expect(result).toEqual(mockUser as User);
-    expect(repository.findOne).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'testId' }, relations: ['skills'] }));
+    expect(repository.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'testId' },
+        relations: ['skills'],
+      })
+    );
     expect(repository.save).toHaveBeenCalledWith(expect.anything());
   });
 
@@ -163,7 +175,11 @@ describe('UsersService', () => {
   });
 
   it('should throw an error if user not found for delete', async () => {
-    jest.spyOn(repository, 'delete').mockResolvedValue({ affected: 0 } as DeleteResult);
-    await expect(service.delete('invalidId')).rejects.toThrow('No user found with the provided ID.');
+    jest
+      .spyOn(repository, 'delete')
+      .mockResolvedValue({ affected: 0 } as DeleteResult);
+    await expect(service.delete('invalidId')).rejects.toThrow(
+      'No user found with the provided ID.'
+    );
   });
 });

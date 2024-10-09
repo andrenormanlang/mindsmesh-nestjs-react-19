@@ -1,3 +1,5 @@
+// src/users/users.service.ts
+
 import {
   Injectable,
   NotFoundException,
@@ -6,13 +8,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from './createusers.dto';
-import { Skill } from './skill.entity';
+import { CreateUserDto } from './dto/create-user.dto';
+// import { CreateUserDto, CreateUsersDto } from './dto/createusers.dto';
+import { Skill } from '../skills/entities/skill.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { QueryFailedError } from 'typeorm';
-import { UpdateUserDto } from './update.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -25,101 +28,139 @@ export class UsersService {
   ) {}
 
   async findByEmail(email: string): Promise<User | undefined> {
-    return this.usersRepository.findOne({ where: { email } });
+    return this.usersRepository.findOne({ where: { email }, relations: ['skills'] });
   }
 
-  async create(userData: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     // Check if the email already exists
-    const existingUser = await this.findByEmail(userData.email);
+    const existingUser = await this.findByEmail(createUserDto.email);
     if (existingUser) {
       throw new ConflictException('A user with this email already exists.');
     }
   
-    // Continue with creating the user
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+  
+    // Create a new user instance
     const newUser = this.usersRepository.create({
-      email: userData.email,
-      username: userData.username,
-      password: await bcrypt.hash(userData.password, 10),
-      isAdmin: userData.isAdmin,
-      imageUrls: userData.imageUrls,
+      email: createUserDto.email,
+      username: createUserDto.username,
+      password: hashedPassword,
+      isAdmin: createUserDto.isAdmin,
+      imageUrls: createUserDto.imageUrls,
     });
   
-    if (userData.skills && userData.skills.length > 0) {
-      userData.skills = userData.skills.map((skill) => {
-        if (!skill.id || skill.id === 'undefined' || skill.id.length === 0) {
-          skill.id = uuidv4(); // Assign a new UUID
-        }
-        return skill;
-      });
+    // Save the user first
+    const savedUser = await this.usersRepository.save(newUser);
   
-      newUser.skills = await this.skillsRepository.save(userData.skills);
+    // Now create and associate skills if provided
+    if (createUserDto.skills && createUserDto.skills.length > 0) {
+      const skills = createUserDto.skills.map(skillDto => 
+        this.skillsRepository.create({
+          ...skillDto,
+          user: savedUser,
+        })
+      );
+      savedUser.skills = await this.skillsRepository.save(skills);
     }
   
-    try {
-      return await this.usersRepository.save(newUser);
-    } catch (error) {
-      console.error('Error saving user:', error); // Log the error
-      if (error instanceof QueryFailedError) {
-        if (error.message.includes('duplicate key value') && error.message.includes('user_email_key')) {
-          throw new ConflictException('A user with this email already exists.');
-        }
-      }
-      throw new InternalServerErrorException('An unexpected error occurred while creating the user.');
-    }
+    // Return the user with associated skills
+    return this.usersRepository.findOne({
+      where: { id: savedUser.id },
+      relations: ['skills'],
+    });
   }
-  
+
   async createBulk(usersData: CreateUserDto[]): Promise<User[]> {
     console.log('Received usersData:', usersData);
 
     if (!usersData || !Array.isArray(usersData)) {
       console.error('usersData is not an array:', usersData);
-      throw new Error('usersData should be an array');
+      throw new ConflictException('Invalid data format for bulk creation.');
     }
 
-    const hashedUsers = await Promise.all(
-      usersData.map(async (user) => {
-        user.password = await bcrypt.hash(user.password, 10);
-        return this.usersRepository.create(user);
+    const users = await Promise.all(
+      usersData.map(async (userDto) => {
+        // Check for existing email
+        const existingUser = await this.findByEmail(userDto.email);
+        if (existingUser) {
+          throw new ConflictException(`A user with email ${userDto.email} already exists.`);
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(userDto.password, 10);
+
+        // Create user instance
+        const user = this.usersRepository.create({
+          email: userDto.email,
+          username: userDto.username,
+          password: hashedPassword,
+          isAdmin: userDto.isAdmin,
+          imageUrls: userDto.imageUrls,
+        });
+
+        // Associate skills
+        if (userDto.skills && userDto.skills.length > 0) {
+          const skills = userDto.skills.map(skillDto => {
+            return this.skillsRepository.create({
+              ...skillDto,
+              user: user,
+            });
+          });
+          user.skills = await this.skillsRepository.save(skills);
+        }
+
+        return this.usersRepository.save(user);
       })
     );
-    return this.usersRepository.save(hashedUsers);
+
+    return users;
   }
 
-  async update(id: string, userDto: UpdateUserDto): Promise<User> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id },
       relations: ['skills'],
     });
     if (!user) throw new NotFoundException('User not found');
 
-    // Hash password if provided
-    if (userDto.password) {
-      userDto.password = await bcrypt.hash(userDto.password, 10);
+    // Update fields if provided
+    if (updateUserDto.email) {
+      user.email = updateUserDto.email;
+    }
+    if (updateUserDto.username) {
+      user.username = updateUserDto.username;
+    }
+    if (updateUserDto.role) {
+      user.role = updateUserDto.role;
+    }
+    if (updateUserDto.isAdmin !== undefined) {
+      user.isAdmin = updateUserDto.isAdmin;
+    }
+    if (updateUserDto.imageUrls) {
+      user.imageUrls = updateUserDto.imageUrls;
+    }
+    if (updateUserDto.password) {
+      user.password = await bcrypt.hash(updateUserDto.password, 10);
     }
 
-    // Update the imageUrls by replacing old URLs with the new ones
-    if (userDto.imageUrls) {
-      // Replace the user's avatar URLs with the new array (possibly after some filtering/processing)
-      user.imageUrls = userDto.imageUrls;
+    // Add new skills if provided
+    if (updateUserDto.skills && updateUserDto.skills.length > 0) {
+      const skills = updateUserDto.skills.map(skillDto => {
+        return this.skillsRepository.create({
+          ...skillDto,
+          user: user,
+        });
+      });
+      user.skills = [...user.skills, ...await this.skillsRepository.save(skills)];
     }
 
-    // Append any new skills provided
-    if (userDto.skills && userDto.skills.length > 0) {
-      const newSkills = await this.skillsRepository.save(
-        userDto.skills.map((skillData) =>
-          this.skillsRepository.create(skillData)
-        )
-      );
-      user.skills = [...user.skills, ...newSkills];
+    try {
+      return await this.usersRepository.save(user);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw new InternalServerErrorException('An error occurred while updating the user.');
     }
-
-    // Update other fields if provided
-    if (userDto.email !== undefined) user.email = userDto.email;
-    if (userDto.username !== undefined) user.username = userDto.username;
-    if (userDto.role !== undefined) user.role = userDto.role;
-    if (userDto.isAdmin !== undefined) user.isAdmin = userDto.isAdmin;
-
-    return this.usersRepository.save(user);
   }
 
   async delete(id: string): Promise<void> {
@@ -130,14 +171,17 @@ export class UsersService {
   }
 
   async deleteBulk(userIds: string[]): Promise<void> {
-    await this.usersRepository.delete(userIds);
+    const result = await this.usersRepository.delete(userIds);
+    if (result.affected === 0) {
+      throw new NotFoundException('No users found with the provided IDs.');
+    }
   }
 
   async findAll(): Promise<User[]> {
     return this.usersRepository.find({ relations: ['skills'] });
   }
 
-  async findOne(id: string): Promise<User | undefined> {
+  async findOne(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id },
       relations: ['skills'],

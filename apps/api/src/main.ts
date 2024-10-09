@@ -1,10 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import * as bodyParser from 'body-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
+  
   const app = await NestFactory.create(AppModule);
 
   // Set a global prefix for all routes
@@ -19,7 +21,7 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: '*', // Frontend application URL
+    origin: process.env.CORS_ORIGIN || '*', // Replace '*' with specific origin in production
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true, // Allows sending cookies and other credentials in requests
   });

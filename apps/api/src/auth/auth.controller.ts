@@ -1,5 +1,7 @@
 // src/auth/auth.controller.ts
 
+// src/auth/auth.controller.ts
+
 import {
   Controller,
   Post,
@@ -27,6 +29,7 @@ import {
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
 
   @Post('login')
   @ApiOperation({ summary: 'User login' })

@@ -8,7 +8,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Skill } from './skill.entity';
+import { Skill } from '../skill.entity';
 
 export class CreateUserDto {
   @IsEmail()
