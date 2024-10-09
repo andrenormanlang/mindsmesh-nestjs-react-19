@@ -11,15 +11,18 @@ export class JwtAuthGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
+    console.log("JwtAuthGuard called");
     const token = this.extractTokenFromHeader(request);
     if (!token) {
+      console.log("No token provided");
       return false;
     }
-
+  
     try {
       const payload = this.jwtService.verify(token);
       request['user'] = payload;
-    } catch {
+    } catch (e) {
+      console.log("Token verification failed", e);
       return false;
     }
     return true;

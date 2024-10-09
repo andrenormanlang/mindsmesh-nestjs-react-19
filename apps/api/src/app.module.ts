@@ -11,12 +11,17 @@ import { SkillsModule } from './skills/skills.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { MailModule } from './mail/mail.module';
+import {  PostmarkModule } from './email/postmark.module';
+import { SendGridModule } from './sendgrid/sendgrid.module';
+
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [typeorm],
+      envFilePath: '.env',
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -38,6 +43,9 @@ import { APP_GUARD } from '@nestjs/core';
     AuthModule,
     UsersModule,
     SkillsModule,
+    PostmarkModule, // Add MailModule to imports
+    MailModule, 
+    SendGridModule
   ],
   controllers: [AppController],
   providers: [

@@ -2,12 +2,18 @@ import { BadRequestException, Injectable, NotFoundException, UnauthorizedExcepti
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
+import { ConfigService } from '@nestjs/config';
+import { MailService } from '../mail/mail.service';
+import { PostmarkService } from '../email/postmark.service';
+import { SendGridService } from '../sendgrid/sendgrid.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly sendGridService: SendGridService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
@@ -47,28 +53,35 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    const token = this.jwtService.sign(
+    const resetToken = this.jwtService.sign(
       { email: user.email, sub: user.id },
-      { expiresIn: '1h' } // Token expires in 1 hour
+      {
+        secret: this.configService.get<string>('RESET_PASSWORD_SECRET'),
+        expiresIn: this.configService.get<string>('RESET_PASSWORD_EXPIRES_IN'),
+      },
     );
 
-    // Here you would send the email with the reset link containing the token
-    // Example: sendEmail(user.email, `Your reset link: http://localhost:3000/reset-password?token=${token}`);
+    const resetLink = `${this.configService.get<string>('FRONTEND_URL')}/reset-password?token=${resetToken}`;
+
+    await this.sendGridService.sendPasswordResetEmail(user.email, resetLink);
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     try {
-      const payload = this.jwtService.verify(token);
+      const payload = this.jwtService.verify(token, {
+        secret: this.configService.get<string>('RESET_PASSWORD_SECRET'),
+      });
       const user = await this.usersService.findByEmail(payload.email);
 
       if (!user) {
         throw new NotFoundException('User not found');
       }
 
+      // Hash and update the new password
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       user.password = hashedPassword;
       await this.usersService.update(user.id, user);
-    } catch (e) {
+    } catch (error) {
       throw new BadRequestException('Invalid or expired token');
     }
   }

@@ -5,7 +5,6 @@ import {
   Delete,
   Get,
   InternalServerErrorException,
-  NotFoundException,
   Param,
   Post,
   Put,
@@ -155,15 +154,8 @@ export class UsersController {
         console.error('Error uploading avatars:', error);
       }
     }
-
-    // Continue processing with other data
     return this.usersService.update(id, userDto);
   }
-
-  // @Put(':id/skills')
-  // async updateSkills(@Param('id') id: string, @Body() skills: UpdateSkillDto[]): Promise<User> {
-  //   return this.usersService.updateSkills(id, skills);
-  // }
 
   @Delete('delete-bulk')
   async deleteBulk(@Body() deleteUsersDto: DeleteUsersDto): Promise<void> {

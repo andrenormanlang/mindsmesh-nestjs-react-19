@@ -68,17 +68,6 @@ export class UsersService {
     }
   }
   
-
-  // async createBulk(usersData: CreateUserDto[]): Promise<User[]> {
-  //   const hashedUsers = await Promise.all(
-  //     usersData.map(async (user) => {
-  //       const hashedPassword = await bcrypt.hash(user.password, 10);
-  //       return this.usersRepository.create({ ...user, password: hashedPassword });
-  //     }),
-  //   );
-  //   return this.usersRepository.save(hashedUsers);
-  // }
-
   async createBulk(usersData: CreateUserDto[]): Promise<User[]> {
     console.log('Received usersData:', usersData);
 
