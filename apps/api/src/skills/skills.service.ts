@@ -1,5 +1,3 @@
-// src/skills/skills.service.ts
-
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,7 +6,6 @@ import { User } from '../users/entities/user.entity';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { UsersService } from '../users/users.service';
-import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class SkillsService {

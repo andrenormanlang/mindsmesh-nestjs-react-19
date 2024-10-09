@@ -209,6 +209,8 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 
 - Open `http://localhost:3000` in Postman or Insomnia.
 
+- **Swagger Documentation:** Access the API documentation at `http://localhost:3000/api-docs`.
+
 ### Frontend
 
    ```bash
