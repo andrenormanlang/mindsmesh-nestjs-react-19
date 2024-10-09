@@ -1,3 +1,5 @@
+// src/users/users.controller.ts
+
 import {
   BadRequestException,
   Body,
@@ -12,13 +14,16 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { User } from './user.entity';
-import { CreateUserDto, CreateUsersDto } from './createusers.dto';
-import { DeleteUsersDto } from './delete.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { CreateUserDto, CreateUsersDto } from './dto/createusers.dto';
+import { DeleteUsersDto } from './dto/delete.dto';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { CloudinaryService } from './cloudinary.service';
-import { UpdateUserDto } from './update.dto';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { plainToClass } from 'class-transformer';
+import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 
+@ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(
@@ -27,16 +32,34 @@ export class UsersController {
   ) {}
 
   @Get()
-  async findAll(): Promise<User[]> {
-    return this.usersService.findAll();
+  @ApiOperation({ summary: 'Retrieve all users' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all users',
+    type: [UserResponseDto],
+  })
+  async findAll(): Promise<UserResponseDto[]> {
+    const users = await this.usersService.findAll();
+    return users.map(user => plainToClass(UserResponseDto, user));
   }
 
   @Post('bulk-create')
   @UseInterceptors(FilesInterceptor('imageUrls', 4)) // Assume up to 4 files
+  @ApiOperation({ summary: 'Bulk create users' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Bulk create users',
+    type: CreateUsersDto, // Adjust based on actual payload
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Users successfully created',
+    type: [UserResponseDto],
+  })
   async createBulk(
     @UploadedFiles() avatars: Express.Multer.File[],
     @Body() body: any // Use raw body instead of DTO
-  ) {
+  ): Promise<UserResponseDto[]> {
     try {
       console.log('Received files:', avatars);
       console.log('Received Body:', body);
@@ -79,7 +102,7 @@ export class UsersController {
         createUsersDto.users
       );
       console.log('Users successfully created:', createdUsers);
-      return createdUsers;
+      return createdUsers.map(user => plainToClass(UserResponseDto, user));
     } catch (error) {
       console.error('Error in createBulk:', error);
       throw new InternalServerErrorException(
@@ -88,28 +111,24 @@ export class UsersController {
     }
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string): Promise<User | undefined> {
-    if (!this.isValidUUID(id)) {
-      throw new BadRequestException('Invalid UUID');
-    }
-    console.log(`Fetching user with ID: ${id}`);
-    return this.usersService.findOne(id);
-  }
-
-  // Helper method to validate UUID
-  private isValidUUID(id: string): boolean {
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(id);
-  }
-
   @Post('register')
   @UseInterceptors(FilesInterceptor('imageUrls', 4))
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Register a new user',
+    type: CreateUserDto,
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User successfully registered',
+    type: UserResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
   async register(
     @Body() createUserDto: CreateUserDto,
     @UploadedFiles() avatars: Express.Multer.File[]
-  ) {
+  ): Promise<UserResponseDto> {
     console.log('Incoming registration data:', createUserDto); // Log the incoming data
     console.log('Uploaded files:', avatars); // Log the uploaded files
 
@@ -128,20 +147,56 @@ export class UsersController {
       // Log before creating the user
       console.log('Creating user with data:', createUserDto);
 
-      return this.usersService.create(createUserDto);
+      const createdUser = await this.usersService.create(createUserDto);
+      return plainToClass(UserResponseDto, createdUser);
     } catch (error) {
       console.error('Error during user registration:', error.message);
       throw new BadRequestException('Registration failed.');
     }
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Retrieve a user by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User retrieved successfully',
+    type: UserResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid UUID' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async findOne(@Param('id') id: string): Promise<UserResponseDto> {
+    if (!this.isValidUUID(id)) {
+      throw new BadRequestException('Invalid UUID');
+    }
+    console.log(`Fetching user with ID: ${id}`);
+    const user = await this.usersService.findOne(id);
+    return plainToClass(UserResponseDto, user);
+  }
+
   @Put(':id')
   @UseInterceptors(FilesInterceptor('avatarFiles', 4)) // Handles files
+  @ApiOperation({ summary: 'Update a user by ID' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Update user data',
+    type: UpdateUserDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User successfully updated',
+    type: UserResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 404, description: 'User not found' })
   async update(
     @Param('id') id: string,
     @Body() userDto: UpdateUserDto, // Expects DTO with URLs and files
     @UploadedFiles() avatarFiles: Express.Multer.File[]
-  ): Promise<User> {
+  ): Promise<UserResponseDto> {
+    if (!this.isValidUUID(id)) {
+      throw new BadRequestException('Invalid UUID');
+    }
+
     if (avatarFiles && avatarFiles.length > 0) {
       try {
         console.log('Attempting to upload avatars:', avatarFiles);
@@ -152,18 +207,45 @@ export class UsersController {
         userDto.imageUrls = [...(userDto.imageUrls || []), ...uploadedUrls];
       } catch (error) {
         console.error('Error uploading avatars:', error);
+        throw new InternalServerErrorException('Error uploading avatars.');
       }
     }
-    return this.usersService.update(id, userDto);
+    const updatedUser = await this.usersService.update(id, userDto);
+    return plainToClass(UserResponseDto, updatedUser);
   }
 
   @Delete('delete-bulk')
-  async deleteBulk(@Body() deleteUsersDto: DeleteUsersDto): Promise<void> {
+  @ApiOperation({ summary: 'Bulk delete users' })
+  @ApiResponse({
+    status: 200,
+    description: 'Users successfully deleted',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  async deleteBulk(@Body() deleteUsersDto: DeleteUsersDto): Promise<{ message: string }> {
     await this.usersService.deleteBulk(deleteUsersDto.userIds);
+    return { message: 'Users successfully deleted' };
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string): Promise<void> {
-    return this.usersService.delete(id);
+  @ApiOperation({ summary: 'Delete a user by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User successfully deleted',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid UUID' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async delete(@Param('id') id: string): Promise<{ message: string }> {
+    if (!this.isValidUUID(id)) {
+      throw new BadRequestException('Invalid UUID');
+    }
+    await this.usersService.delete(id);
+    return { message: 'User successfully deleted' };
+  }
+
+  // Helper method to validate UUID
+  private isValidUUID(id: string): boolean {
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
   }
 }

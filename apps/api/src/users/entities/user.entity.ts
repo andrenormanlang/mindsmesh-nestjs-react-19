@@ -7,7 +7,7 @@ import {
   Column,
   OneToMany,
 } from 'typeorm';
-import { Skill } from '../skills/skills.entity';
+import { Skill } from '../skill.entity';
 
 @Entity()
 export class User {
@@ -69,5 +69,3 @@ export class User {
   @OneToMany(() => Skill, (skill) => skill.user, { cascade: true })
   skills!: Skill[];
 }
-
-

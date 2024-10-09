@@ -7,8 +7,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { JwtAuthGuard } from './jwt.auth.guard';
-import { PostmarkModule } from '../email/postmark.module';
-import { MailModule } from '../mail/mail.module';
 import { SendGridModule } from '../sendgrid/sendgrid.module';
 
 @Module({
@@ -23,8 +21,6 @@ import { SendGridModule } from '../sendgrid/sendgrid.module';
         signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES_IN') },
       }),
     }),
-    PostmarkModule,
-    MailModule,
     SendGridModule
   ],
   controllers: [AuthController],

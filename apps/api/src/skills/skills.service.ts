@@ -1,38 +1,46 @@
+// src/skills/skills.service.ts
+
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Skill } from './skills.entity';
-import { User } from '../users/user.entity';  // Import the User entity
+import { Skill } from './entities/skill.entity';
+import { User } from '../users/entities/user.entity';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
-import { UsersService } from '../users/users.service';  // Import the UsersService
+import { UsersService } from '../users/users.service';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class SkillsService {
   constructor(
     @InjectRepository(Skill)
     private readonly skillsRepository: Repository<Skill>,
-    private readonly usersService: UsersService,  // Inject UsersService
+    private readonly usersService: UsersService, // Inject UsersService
   ) {}
 
   async create(userId: string, createSkillDto: CreateSkillDto): Promise<Skill> {
-    const user = await this.usersService.findOne(userId);  // Fetch the user
+    const user = await this.usersService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     const skill = this.skillsRepository.create({
       ...createSkillDto,
-      user,  // Associate the skill with the user
+      user: user,
     });
     const savedSkill = await this.skillsRepository.save(skill);
     console.log(`Created skill with ID ${savedSkill.id} for user ${userId}`);
     return savedSkill;
   }
-  
 
   async findAll(userId: string): Promise<Skill[]> {
-    return this.skillsRepository.find({ where: { user: { id: userId } } });  // Fetch skills for a specific user
+    return this.skillsRepository.find({ where: { user: { id: userId } } });
   }
 
   async findOne(userId: string, id: string): Promise<Skill> {
-    const skill = await this.skillsRepository.findOne({ where: { id, user: { id: userId } } });
+    const skill = await this.skillsRepository.findOne({
+      where: { id, user: { id: userId } },
+    });
     if (!skill) {
       throw new NotFoundException(`Skill with ID ${id} not found for user ${userId}`);
     }
@@ -50,73 +58,32 @@ export class SkillsService {
     await this.skillsRepository.remove(skill);
   }
 
-//   async searchUsersBySkill(query: string): Promise<User[]> {
-//     const skills = await this.skillsRepository
-//         .createQueryBuilder('skill')
-//         .leftJoinAndSelect('skill.user', 'user')
-//         .where('skill.title ILIKE :query', { query: `%${query}%` })
-//         .orWhere('skill.description ILIKE :query', { query: `%${query}%` })
-//         .select([
-//             'skill.id', 
-//             'skill.title', 
-//             'skill.description', 
-//             'user.id', 
-//             'user.username', 
-//             'user.email'
-//         ])
-//         .getMany();
-
-//     console.log('Generated Query:', skills);
-
-//     const uniqueUsers = new Map<string, User>();
-//     skills.forEach(skill => {
-//         if (skill.user) {
-//             uniqueUsers.set(skill.user.id, skill.user);
-//         }
-//     });
-
-//     return Array.from(uniqueUsers.values());
-// }
-
-async searchUsersBySkill(query: string): Promise<User[]> {
-  const skills = await this.skillsRepository
+  // Search users by skill
+  async searchUsersBySkill(query: string): Promise<User[]> {
+    const skills = await this.skillsRepository
       .createQueryBuilder('skill')
       .leftJoinAndSelect('skill.user', 'user')
-      .leftJoinAndSelect('user.skills', 'userSkills')  // This line joins the skills of each user
       .where('skill.title ILIKE :query', { query: `%${query}%` })
       .orWhere('skill.description ILIKE :query', { query: `%${query}%` })
-      .select([
-          'skill.id', 
-          'skill.title', 
-          'skill.description', 
-          'user.id', 
-          'user.username',
-          'user.imageUrls', 
-          'user.email',
-          'userSkills.id',       
-          'userSkills.title',    
-          'userSkills.description' 
-      ])
       .getMany();
 
-  console.log('Generated Query:', skills);
+    console.log('Generated Query:', skills);
 
-  const uniqueUsers = new Map<string, User>();
-  skills.forEach(skill => {
+    const uniqueUsers = new Map<string, User>();
+    skills.forEach(skill => {
       if (skill.user) {
-          uniqueUsers.set(skill.user.id, skill.user);
+        uniqueUsers.set(skill.user.id, skill.user);
       }
-  });
+    });
 
-  return Array.from(uniqueUsers.values());
-}
+    return Array.from(uniqueUsers.values());
+  }
 
-  // New method to get all skill titles
+  // Get all skill titles
   async getAllSkills(): Promise<{ title: string }[]> {
     return this.skillsRepository
       .createQueryBuilder('skill')
-      .select('skill.title')  // Select only the title field
-      .getMany();
+      .select('skill.title')
+      .getRawMany();
   }
-  
 }

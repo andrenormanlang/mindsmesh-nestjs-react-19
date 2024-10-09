@@ -3,8 +3,6 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { ConfigService } from '@nestjs/config';
-import { MailService } from '../mail/mail.service';
-import { PostmarkService } from '../email/postmark.service';
 import { SendGridService } from '../sendgrid/sendgrid.service';
 
 @Injectable()
