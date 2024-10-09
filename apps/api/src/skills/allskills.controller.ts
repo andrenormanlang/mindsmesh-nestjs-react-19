@@ -39,6 +39,6 @@ export class AllSkillsController {
   })
   async searchUsersBySkill(@Query('q') query: string): Promise<UserResponseDto[]> {
     const users = await this.skillsService.searchUsersBySkill(query);
-    return users.map(user => plainToClass(UserResponseDto, user));
+    return users
   }
 }

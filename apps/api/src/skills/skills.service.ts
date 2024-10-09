@@ -61,21 +61,34 @@ export class SkillsService {
   // Search users by skill
   async searchUsersBySkill(query: string): Promise<User[]> {
     const skills = await this.skillsRepository
-      .createQueryBuilder('skill')
-      .leftJoinAndSelect('skill.user', 'user')
-      .where('skill.title ILIKE :query', { query: `%${query}%` })
-      .orWhere('skill.description ILIKE :query', { query: `%${query}%` })
-      .getMany();
-
+        .createQueryBuilder('skill')
+        .leftJoinAndSelect('skill.user', 'user')
+        .leftJoinAndSelect('user.skills', 'userSkills')  // This line joins the skills of each user
+        .where('skill.title ILIKE :query', { query: `%${query}%` })
+        .orWhere('skill.description ILIKE :query', { query: `%${query}%` })
+        .select([
+            'skill.id', 
+            'skill.title', 
+            'skill.description', 
+            'user.id', 
+            'user.username',
+            'user.imageUrls', 
+            'user.email',
+            'userSkills.id',       
+            'userSkills.title',    
+            'userSkills.description' 
+        ])
+        .getMany();
+  
     console.log('Generated Query:', skills);
-
+  
     const uniqueUsers = new Map<string, User>();
     skills.forEach(skill => {
-      if (skill.user) {
-        uniqueUsers.set(skill.user.id, skill.user);
-      }
+        if (skill.user) {
+            uniqueUsers.set(skill.user.id, skill.user);
+        }
     });
-
+  
     return Array.from(uniqueUsers.values());
   }
 
