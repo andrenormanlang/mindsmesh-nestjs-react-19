@@ -22,11 +22,13 @@ import EditProfileForm from "./EditProfileForm";
 import logo from "../assets/logo.svg";
 import { UserContext } from "../contexts/UserContext";
 import { useGradient } from "../hooks/useGradient";
+import { useToast } from "./shadcn/ui/use-toast";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const userContext = useContext(UserContext);
   const { toggleGradient } = useGradient();
+  const { toast } = useToast();
 
   if (!userContext) {
     throw new Error("UserContext must be used within a UserProvider");
@@ -44,9 +46,24 @@ const Navbar: React.FC = () => {
       await logout();
       localStorage.removeItem("user"); // Remove user from local storage on logout
       setUser(null); // Update UserContext state
+
+      toast({
+        title: "Logged Out",
+        description: "You've safely signed out. Come back soon!",
+        variant: "success",
+        duration: 5000,
+      });
+
       navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
+
+      toast({
+        title: "Logout Failed",
+        description: "There was an error while logging out. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
     }
   };
 
@@ -256,7 +273,7 @@ const Navbar: React.FC = () => {
           {user && (
             <EditProfileForm
               user={user}
-              onClose={() => setIsProfileOpen(false)}
+              // onClose={() => setIsProfileOpen(false)}
               setUser={(updatedUser) => {
                 setUser(updatedUser);
                 setIsProfileOpen(false);

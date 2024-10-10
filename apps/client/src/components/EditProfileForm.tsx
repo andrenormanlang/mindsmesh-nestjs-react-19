@@ -56,7 +56,7 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
         toast({
           title: "Profile Updated",
           description: "Your profile was updated successfully.",
-          variant: "default",
+          variant: "success",
           duration: 3000, // Optional: Adjust duration for a brief display before reload
         });
     

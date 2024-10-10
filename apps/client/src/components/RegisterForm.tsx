@@ -119,6 +119,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
       toast({
         title: "Registration Successful",
         description: "Please test your login.",
+        variant: "success",
         duration: 3000,
       });
 

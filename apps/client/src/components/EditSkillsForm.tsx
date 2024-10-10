@@ -59,7 +59,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
       toast({
         title: "Skills Updated",
         description: "Your skills have been successfully updated.",
-        variant: "default",
+        variant: "success",
         duration: 5000,
       });
 
@@ -92,7 +92,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
     toast({
       title: "Skill Added",
       description: "You have successfully added a new skill.",
-      variant: "default",
+      variant: "success",
       duration: 5000,
     });
   };
@@ -107,7 +107,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
         toast({
           title: "Skill Deleted",
           description: `The skill "${skillToDelete.title}" has been deleted.`,
-          variant: "default",
+          variant: "destructive",
           duration: 5000,
         });
       } catch (error) {
