@@ -33,16 +33,14 @@ const LoginForm = () => {
     try {
       const user = await login(email, password);
       if (user) {
-        toast({
-          title: "Login Successful",
-          description: "Welcome back! You have logged in successfully.",
-          duration: 4000,
-          variant: "success",
-        });
+        // toast({
+        //   title: "Login Successful",
+        //   description: "Welcome back! You have logged in successfully.",
+        //   duration: 4000,
+        //   variant: "success",
+        // });
         navigate("/"); 
-        setTimeout(() => {
           window.location.reload();
-        }, 2000); 
     
       }
     } catch (err) {

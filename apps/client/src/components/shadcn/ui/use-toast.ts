@@ -17,7 +17,7 @@ type ToasterToast = ToastProps & {
 }
 
 
-// Define the constant using `as const` to ensure the values are treated as literals
+
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
   UPDATE_TOAST: "UPDATE_TOAST",
