@@ -1,14 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useState, useContext, useEffect } from "react";
 import { logout } from "../services/MindsMeshAPI";
-import { Button } from "../../@/shadcn/ui/button";
+import { Button } from "./shadcn/ui/button";
 import {
   Dialog,
   DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../../@/shadcn/ui/dialog";
+} from "./shadcn/ui/dialog";
 import {
   PersonIcon,
   ExitIcon,

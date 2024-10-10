@@ -5,9 +5,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "../../@/shadcn/ui/dialog";
-import { Button } from "../../@/shadcn/ui/button";
-import { Input } from "../../@/shadcn/ui/input";
+} from "./shadcn/ui/dialog";
+import { Button } from "./shadcn/ui/button";
+import { Input } from "./shadcn/ui/input";
 
 const DeleteAccountModal = ({
   userEmail,

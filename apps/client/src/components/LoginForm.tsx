@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button } from "../../@/shadcn/ui/button";
-import { Card, CardContent } from "../../@/shadcn/ui/card";
-import { Input } from "../../@/shadcn/ui/input";
+import { Button } from "./shadcn/ui/button";
+import { Card, CardContent } from "./shadcn/ui/card";
+import { Input } from "./shadcn/ui/input";
 import { useNavigate } from "react-router-dom";
 import {
   login,
@@ -14,9 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../../@/shadcn/ui/dialog";
-
-
+} from "./shadcn/ui/dialog";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -66,7 +64,6 @@ const LoginForm = () => {
   return (
     <div className="flex justify-center items-center">
       <Card className="w-full max-w-sm p-4">
-        
         <CardContent>
           <div className="space-y-4">
             <Input
@@ -87,7 +84,6 @@ const LoginForm = () => {
             <Button className="w-full" onClick={handleLogin}>
               Login
             </Button>
-            
 
             {/* Forgot Password Modal */}
             <Dialog>

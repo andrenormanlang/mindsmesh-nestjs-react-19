@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Button } from "../../@/shadcn/ui/button";
-import { Input } from "../../@/shadcn/ui/input";
-import { Label } from "../../@/shadcn/ui/label";
-import { Textarea } from "../../@/shadcn/ui/textarea";
-import { Switch } from "../../@/shadcn/ui/switch";
+import { Button } from "./shadcn/ui/button";
+import { Input } from "./shadcn/ui/input";
+import { Label } from "./shadcn/ui/label";
+import { Textarea } from "./shadcn/ui/textarea";
+import { Switch } from "./shadcn/ui/switch";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../../@/shadcn/ui/dialog";
+} from "./shadcn/ui/dialog";
 import { User, Skill } from "../types/types";
 import {
   addSkillToUser,
@@ -82,7 +82,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
     const skillToDelete = skills[index];
     if (skillToDelete && skillToDelete.id) {
       try {
-        await deleteUserSkill(user.id, skillToDelete.id); 
+        await deleteUserSkill(user.id, skillToDelete.id);
       } catch (error) {
         console.error("Failed to delete skill:", error);
       }

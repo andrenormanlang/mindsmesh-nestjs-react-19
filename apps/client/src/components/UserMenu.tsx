@@ -1,14 +1,14 @@
 import React from "react";
 import { User } from "../types/types";
-import { Button } from "../../@/shadcn/ui/button";
+import { Button } from "./shadcn/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from "../../@/shadcn/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "../../@/shadcn/ui/avatar";
+} from "./shadcn/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "./shadcn/ui/avatar";
 import {
   ChevronDownIcon,
   UserIcon,

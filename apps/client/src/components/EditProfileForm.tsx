@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Button } from "../../@/shadcn/ui/button";
-import { Input } from "../../@/shadcn/ui/input";
-import { Label } from "../../@/shadcn/ui/label";
-import { Dialog } from "../../@/shadcn/ui/dialog";
+import { Button } from "./shadcn/ui/button";
+import { Input } from "./shadcn/ui/input";
+import { Label } from "./shadcn/ui/label";
+import { Dialog } from "./shadcn/ui/dialog";
 import { Skill, User } from "../types/types";
 import EditSkillsForm from "./EditSkillsForm";
 import { updateUser } from "../services/MindsMeshAPI";
@@ -11,7 +11,7 @@ import DeleteImage from "./DeleteImageConfirm";
 
 type ProfileFormData = {
   username: string;
-  avatarFiles: File[]; 
+  avatarFiles: File[];
   skills: Skill[];
 };
 
@@ -26,7 +26,7 @@ const EditProfileForm = ({ user, setUser, onClose }: EditProfileFormProps) => {
   const [existingimageUrls, setExistingimageUrls] = useState<string[]>(
     user.imageUrls || []
   );
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [targetDeleteIndex, setTargetDeleteIndex] = useState<number | null>(
     null
   );

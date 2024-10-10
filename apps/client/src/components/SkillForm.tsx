@@ -1,9 +1,9 @@
 import { useForm, Controller } from "react-hook-form";
-import { Button } from "../../@/shadcn/ui/button";
-import { Input } from "../../@/shadcn/ui/input";
-import { Label } from "../../@/shadcn/ui/label";
-import { Textarea } from "../../@/shadcn/ui/textarea";
-import { Switch } from "../../@/shadcn/ui/switch";
+import { Button } from "./shadcn/ui/button";
+import { Input } from "./shadcn/ui/input";
+import { Label } from "./shadcn/ui/label";
+import { Textarea } from "./shadcn/ui/textarea";
+import { Switch } from "./shadcn/ui/switch";
 
 export type SkillData = {
   title: string;

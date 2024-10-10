@@ -3,21 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { useForm, Controller, FieldError } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "../../@/shadcn/ui/button";
-import { Input } from "../../@/shadcn/ui/input";
-import { Label } from "../../@/shadcn/ui/label";
+import { Button } from "./shadcn/ui/button";
+import { Input } from "./shadcn/ui/input";
+import { Label } from "./shadcn/ui/label";
 import {
   Dialog,
   DialogHeader,
   DialogTitle,
   DialogContent,
-} from "../../@/shadcn/ui/dialog";
+} from "./shadcn/ui/dialog";
 import {
   Toast,
   ToastClose,
   ToastDescription,
   ToastTitle,
-} from "../../@/shadcn/ui/toast";
+} from "./shadcn/ui/toast";
 import { register } from "../services/MindsMeshAPI";
 import { SkillData } from "../types/types";
 import SkillForm from "./SkillForm";

@@ -9,8 +9,8 @@ import {
   CardHeader,
   CardContent,
   CardFooter,
-} from "../../@/shadcn/ui/card";
-import { Input } from "../../@/shadcn/ui/input";
+} from "../components/shadcn/ui/card";
+import { Input } from "../components/shadcn/ui/input";
 import { deleteUser, fetchUsersWithSkills } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import {
@@ -19,13 +19,13 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "../../@/shadcn/ui/carousel";
+} from "../components/shadcn/ui/carousel";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "../../@/shadcn/ui/dialog";
+} from "../components/shadcn/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
 import EditProfileForm from "../components/EditProfileForm";

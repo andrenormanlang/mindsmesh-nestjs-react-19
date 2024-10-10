@@ -4,8 +4,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../../@/shadcn/ui/dialog";
-import { Button } from "../../@/shadcn/ui/button";
+} from "./shadcn/ui/dialog";
+import { Button } from "./shadcn/ui/button";
 
 const DeleteImage = ({
   isOpen,

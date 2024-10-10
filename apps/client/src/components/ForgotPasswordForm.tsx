@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button } from "../../@/shadcn/ui/button";
-import { Input } from "../../@/shadcn/ui/input";
+import { Button } from "./shadcn/ui/button";
+import { Input } from "./shadcn/ui/input";
 import { sendPasswordResetEmail } from "../services/MindsMeshAPI";
 
 const ForgotPasswordForm = () => {
