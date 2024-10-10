@@ -44,6 +44,6 @@ describe('AuthController', () => {
     expect(controller).toBeDefined();
   });
 
-  // Additional tests for AuthController methods can be added here
+  
 });
 

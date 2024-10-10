@@ -17,7 +17,7 @@ export class CloudinaryService {
       cloudinary.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
         if (error) return reject(error);
         resolve(result);
-      }).end(file.buffer); // Assuming Multer saves the file as a buffer
+      }).end(file.buffer); 
     });
   }
 }

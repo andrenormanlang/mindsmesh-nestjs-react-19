@@ -1,5 +1,3 @@
-// src/skills/dto/skill-response.dto.ts
-
 import { ApiProperty } from '@nestjs/swagger';
 import { SkillLevel } from '../enums/skill-level.enum';
 

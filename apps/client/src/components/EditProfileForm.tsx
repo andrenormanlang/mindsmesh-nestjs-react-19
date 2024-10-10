@@ -11,7 +11,7 @@ import DeleteImage from "./DeleteImageConfirm";
 
 type ProfileFormData = {
   username: string;
-  avatarFiles: File[]; // Store the newly uploaded files
+  avatarFiles: File[]; 
   skills: Skill[];
 };
 
@@ -26,10 +26,10 @@ const EditProfileForm = ({ user, setUser, onClose }: EditProfileFormProps) => {
   const [existingimageUrls, setExistingimageUrls] = useState<string[]>(
     user.imageUrls || []
   );
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // Modal visibility state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); 
   const [targetDeleteIndex, setTargetDeleteIndex] = useState<number | null>(
     null
-  ); // Index of image to delete
+  );
 
   const { control, handleSubmit, getValues, setValue } =
     useForm<ProfileFormData>({

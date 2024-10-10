@@ -18,6 +18,7 @@ export class Skill {
   @Column()
   title!: string;
 
+  // TODO: Add a level property to the Skill entity
 //   @ApiProperty({
 //     example: 'Advanced',
 //     description: 'The proficiency level of the skill',

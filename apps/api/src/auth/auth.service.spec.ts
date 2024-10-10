@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
-import { UsersService } from '../users/users.service'; // Import UsersService
-import { JwtService } from '@nestjs/jwt'; // Import JwtService
+import { UsersService } from '../users/users.service';
+import { JwtService } from '@nestjs/jwt'; 
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -12,11 +12,11 @@ describe('AuthService', () => {
         AuthService,
         {
           provide: UsersService,
-          useValue: { findOne: jest.fn() }, // Mock UsersService
+          useValue: { findOne: jest.fn() },
         },
         {
           provide: JwtService,
-          useValue: { sign: jest.fn() }, // Mock JwtService
+          useValue: { sign: jest.fn() },
         },
       ],
     }).compile();

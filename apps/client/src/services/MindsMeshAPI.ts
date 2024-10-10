@@ -131,7 +131,7 @@ export const register = async (
       },
     });
 
-    localStorage.setItem("token", response.data.access_token);
+    // localStorage.setItem("token", response.data.access_token);
     return response.data;
   } catch (error) {
     console.error("Registration error:", error);

@@ -1,13 +1,6 @@
-// src/users/entities/user.entity.ts
-
 import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToMany,
-} from 'typeorm';
-import { Skill } from '../skill.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Skill } from '../../skills/entities/skill.entity';
 
 @Entity()
 export class User {
@@ -39,13 +32,16 @@ export class User {
   @ApiProperty({
     example: 'user',
     description: 'The role of the user',
-    enum: ['admin', 'user', 'guest'], // Enumerated roles for clarity
+    enum: ['admin', 'user', 'guest'], 
   })
   @Column({ default: 'user' })
   role!: string;
 
   @ApiProperty({
-    example: ['https://example.com/image1.png', 'https://example.com/image2.png'],
+    example: [
+      'https://example.com/image1.png',
+      'https://example.com/image2.png',
+    ],
     description: 'Array of image URLs associated with the user',
     required: false,
     type: [String],

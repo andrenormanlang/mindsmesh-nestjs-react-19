@@ -7,8 +7,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Skill } from '../skill.entity'; // Adjust the import path based on your project structure
-
+import { Skill } from '../../skills/entities/skill.entity'; 
 export class UpdateUserDto {
   @IsEmail()
   @IsOptional()

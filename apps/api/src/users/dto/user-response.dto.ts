@@ -1,7 +1,7 @@
 // src/users/dto/user-response.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
-import { SkillDto } from './skill.dto';
+import { SkillDto } from './skill-service.dto';
 
 export class UserResponseDto {
   @ApiProperty({

@@ -15,6 +15,15 @@ export class SkillsService {
     private readonly usersService: UsersService, // Inject UsersService
   ) {}
 
+  /*  Get all skill titles */
+  async getAllSkills(): Promise<{ title: string }[]> {
+    return this.skillsRepository
+      .createQueryBuilder('skill')
+      .select('skill.title')
+      .getRawMany();
+  }
+
+  /* Create a new skill for a user */
   async create(userId: string, createSkillDto: CreateSkillDto): Promise<Skill> {
     const user = await this.usersService.findOne(userId);
     if (!user) {
@@ -55,14 +64,14 @@ export class SkillsService {
     await this.skillsRepository.remove(skill);
   }
 
-  // Search users by skill
+  /* Search users by skill */
   async searchUsersBySkill(query: string): Promise<User[]> {
     const skills = await this.skillsRepository
-        .createQueryBuilder('skill')
-        .leftJoinAndSelect('skill.user', 'user')
+        .createQueryBuilder('skill') // This line creates a query builder for the skill entity
+        .leftJoinAndSelect('skill.user', 'user') // This line joins the user of each skill
         .leftJoinAndSelect('user.skills', 'userSkills')  // This line joins the skills of each user
-        .where('skill.title ILIKE :query', { query: `%${query}%` })
-        .orWhere('skill.description ILIKE :query', { query: `%${query}%` })
+        .where('skill.title ILIKE :query', { query: `%${query}%` }) // This line filters skills by title
+        .orWhere('skill.description ILIKE :query', { query: `%${query}%` }) // This line filters skills by description
         .select([
             'skill.id', 
             'skill.title', 
@@ -74,8 +83,8 @@ export class SkillsService {
             'userSkills.id',       
             'userSkills.title',    
             'userSkills.description' 
-        ])
-        .getMany();
+        ]) // This line selects the columns to return
+        .getMany(); // This line executes the query and returns the results
   
     console.log('Generated Query:', skills);
   
@@ -89,11 +98,5 @@ export class SkillsService {
     return Array.from(uniqueUsers.values());
   }
 
-  // Get all skill titles
-  async getAllSkills(): Promise<{ title: string }[]> {
-    return this.skillsRepository
-      .createQueryBuilder('skill')
-      .select('skill.title')
-      .getRawMany();
-  }
+  
 }

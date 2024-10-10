@@ -38,6 +38,7 @@ import { UserContext } from "../contexts/UserContext";
 const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false); // New loading state
+  // TODO: Check if the screen is large enough to show the carousel
   // const isLargeScreen = window.innerWidth >= 1024;
   const userContext = useContext(UserContext);
   const gradientContext = useContext(GradientContext);
@@ -63,13 +64,11 @@ const HomePage = () => {
   );
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  // const { currentGradientClass } = useGradient();
-
+ 
   const loadUsersAndProfile = async () => {
     setIsLoading(true);
     setSearchResultPhrase(null); // Reset the phrase on new search
     try {
-      // Fetching users with skills
       const users = await fetchUsersWithSkills(
         debouncedSearchQuery.toLowerCase()
       );
@@ -92,7 +91,7 @@ const HomePage = () => {
     } catch (error) {
       console.error("Failed to fetch users or profile", error);
     } finally {
-      setIsLoading(false); // Stop loading
+      setIsLoading(false); 
     }
   };
 

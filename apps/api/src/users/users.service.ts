@@ -1,5 +1,3 @@
-// src/users/users.service.ts
-
 import {
   Injectable,
   NotFoundException,
@@ -10,11 +8,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from './dto/create-user.dto';
-// import { CreateUserDto, CreateUsersDto } from './dto/createusers.dto';
+import { CreateUserDto } from './dto/create-user-service.dto';
 import { Skill } from '../skills/entities/skill.entity';
-import { v4 as uuidv4 } from 'uuid';
-import { QueryFailedError } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()

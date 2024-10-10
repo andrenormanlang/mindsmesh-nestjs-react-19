@@ -6,7 +6,6 @@ const SuperWrapper = <P extends object>(WrappedComponent: ComponentType<P>) => {
   return function WithSuper(props: P) {
     const navigate = useNavigate();
 
-    // Example logic: Logging
     useEffect(() => {
       console.log(`Component ${WrappedComponent.name} is rendering...`);
     }, []);

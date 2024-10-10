@@ -16,7 +16,7 @@ import {
   addSkillToUser,
   updateUserSkill,
   deleteUserSkill,
-} from "../services/MindsMeshAPI"; // Import the new API functions
+} from "../services/MindsMeshAPI";
 
 type EditSkillsFormProps = {
   user: User;
@@ -82,7 +82,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
     const skillToDelete = skills[index];
     if (skillToDelete && skillToDelete.id) {
       try {
-        await deleteUserSkill(user.id, skillToDelete.id); // Delete the skill if it exists on the server
+        await deleteUserSkill(user.id, skillToDelete.id); 
       } catch (error) {
         console.error("Failed to delete skill:", error);
       }
@@ -93,7 +93,6 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
     setSkills(updatedSkills);
     reset({ skills: updatedSkills });
 
-    // Close the delete modal
     setIsDeleteModalOpen(false);
     setSkillToDelete(null);
   };

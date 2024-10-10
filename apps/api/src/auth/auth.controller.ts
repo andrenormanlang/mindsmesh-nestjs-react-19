@@ -1,7 +1,3 @@
-// src/auth/auth.controller.ts
-
-// src/auth/auth.controller.ts
-
 import {
   Controller,
   Post,
@@ -25,7 +21,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 
-@ApiTags('auth') // Groups endpoints under the 'auth' tag in Swagger UI
+@ApiTags('auth') 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -84,7 +80,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  @ApiBearerAuth() // Indicates that the endpoint uses Bearer authentication
+  @ApiBearerAuth() 
   @ApiOperation({ summary: 'Get user profile' })
   @ApiResponse({ status: 200, description: 'Returns user profile.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })

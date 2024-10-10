@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsNumber, IsBoolean, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { SkillLevel } from '../../skills/enums/skill-level.enum';
+// import { SkillLevel } from '../../skills/enums/skill-level.enum';
 
 export class SkillDto {
   @ApiProperty({
@@ -11,6 +11,7 @@ export class SkillDto {
   @IsNotEmpty({ message: 'Skill title cannot be empty' })
   title: string;
 
+  // TODO: Add a level property to the SkillDto
   // @ApiProperty({
   //   example: 'Advanced',
   //   description: 'The proficiency level of the skill',

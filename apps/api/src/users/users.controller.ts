@@ -1,5 +1,3 @@
-// src/users/users.controller.ts
-
 import {
   BadRequestException,
   Body,
@@ -15,13 +13,20 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserResponseDto } from './dto/user-response.dto';
-import { CreateUserDto, CreateUsersDto } from './dto/createusers.dto';
+import { CreateUserControllerDto } from './dto/create-user-controller.dto';
+import {CreateUsersDto} from './dto/create-users.dto';
 import { DeleteUsersDto } from './dto/delete.dto';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { plainToClass } from 'class-transformer';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 
 @ApiTags('Users')
 @Controller('users')
@@ -40,9 +45,10 @@ export class UsersController {
   })
   async findAll(): Promise<UserResponseDto[]> {
     const users = await this.usersService.findAll();
-    return users.map(user => plainToClass(UserResponseDto, user));
+    return users.map((user) => plainToClass(UserResponseDto, user));
   }
 
+  // TODO Implement bulk create with multiform data
   @Post('bulk-create')
   @UseInterceptors(FilesInterceptor('imageUrls', 4)) // Assume up to 4 files
   @ApiOperation({ summary: 'Bulk create users' })
@@ -102,7 +108,7 @@ export class UsersController {
         createUsersDto.users
       );
       console.log('Users successfully created:', createdUsers);
-      return createdUsers.map(user => plainToClass(UserResponseDto, user));
+      return createdUsers.map((user) => plainToClass(UserResponseDto, user));
     } catch (error) {
       console.error('Error in createBulk:', error);
       throw new InternalServerErrorException(
@@ -117,19 +123,20 @@ export class UsersController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Register a new user',
-    type: CreateUserDto,
+    type: CreateUserControllerDto,
   })
   @ApiResponse({
     status: 201,
     description: 'User successfully registered',
-    type: UserResponseDto,
+    // Not sure if this is necessary
+    // type: UserResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   async register(
-    @Body() createUserDto: CreateUserDto,
+    @Body() createUserControllerDto: CreateUserControllerDto,
     @UploadedFiles() avatars: Express.Multer.File[]
   ): Promise<UserResponseDto> {
-    console.log('Incoming registration data:', createUserDto); // Log the incoming data
+    console.log('Incoming registration data:', createUserControllerDto); // Log the incoming data
     console.log('Uploaded files:', avatars); // Log the uploaded files
 
     try {
@@ -138,16 +145,18 @@ export class UsersController {
         const uploadResults = await Promise.all(
           avatars.map((file) => this.cloudinaryService.uploadImage(file))
         );
-        createUserDto.imageUrls = uploadResults.map(
+        createUserControllerDto.imageUrls = uploadResults.map(
           (result) => result.secure_url
         );
-        console.log('Uploaded avatars:', createUserDto.imageUrls); // Log the URLs from Cloudinary
+        console.log('Uploaded avatars:', createUserControllerDto.imageUrls); // Log the URLs from Cloudinary
       }
 
       // Log before creating the user
-      console.log('Creating user with data:', createUserDto);
+      console.log('Creating user with data:', createUserControllerDto);
 
-      const createdUser = await this.usersService.create(createUserDto);
+      const createdUser = await this.usersService.create(
+        createUserControllerDto
+      );
       return plainToClass(UserResponseDto, createdUser);
     } catch (error) {
       console.error('Error during user registration:', error.message);
@@ -221,7 +230,9 @@ export class UsersController {
     description: 'Users successfully deleted',
   })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  async deleteBulk(@Body() deleteUsersDto: DeleteUsersDto): Promise<{ message: string }> {
+  async deleteBulk(
+    @Body() deleteUsersDto: DeleteUsersDto
+  ): Promise<{ message: string }> {
     await this.usersService.deleteBulk(deleteUsersDto.userIds);
     return { message: 'Users successfully deleted' };
   }

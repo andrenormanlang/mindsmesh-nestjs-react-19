@@ -1,5 +1,3 @@
-// src/skills/skills.controller.ts
-
 import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
 import { SkillsService } from './skills.service';
 import { CreateSkillDto } from './dto/create-skill.dto';

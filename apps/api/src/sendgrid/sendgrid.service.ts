@@ -11,7 +11,7 @@ export class SendGridService {
   async sendPasswordResetEmail(to: string, resetLink: string): Promise<void> {
     const msg = {
       to,
-      from: 'andrenormanlang@gmail.com', // Replace with a verified email address
+      from: 'andrenormanlang@gmail.com', //  Verified email address in SendGrid
       subject: 'Password Reset Request',
       html: `
         <p>You requested a password reset. Click the link below to reset your password:</p>
