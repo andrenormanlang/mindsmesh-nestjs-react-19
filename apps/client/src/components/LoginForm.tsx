@@ -45,12 +45,12 @@ const LoginForm = () => {
       }
     } catch (err) {
       setError("Login failed. Please check your email and password.");
-      toast({
-        title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
-        variant: "destructive",
-        duration: 5000,
-      });
+      // toast({
+      //   title: "Login Failed",
+      //   description: "Invalid email or password. Please try again.",
+      //   variant: "destructive",
+      //   duration: 5000,
+      // });
       console.error("Login error:", err);
     }
   };
