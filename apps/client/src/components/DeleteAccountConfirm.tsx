@@ -26,7 +26,7 @@ const DeleteAccountModal = ({
   const handleConfirm = () => {
     if (emailInput === userEmail) {
       onDeleteConfirm();
-      onClose(); // Automatically close the modal after confirming deletion
+      onClose(); 
     } else {
       setError("Email does not match!");
     }

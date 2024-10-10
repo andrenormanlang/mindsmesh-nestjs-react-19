@@ -5,18 +5,10 @@ import { Input } from "./shadcn/ui/input";
 import { Label } from "./shadcn/ui/label";
 import { Textarea } from "./shadcn/ui/textarea";
 import { Switch } from "./shadcn/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "./shadcn/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./shadcn/ui/dialog";
 import { User, Skill } from "../types/types";
-import {
-  addSkillToUser,
-  updateUserSkill,
-  deleteUserSkill,
-} from "../services/MindsMeshAPI";
+import { addSkillToUser, updateUserSkill, deleteUserSkill } from "../services/MindsMeshAPI";
+import { useToast } from "./shadcn/ui/use-toast"; // Import the toast hook
 
 type EditSkillsFormProps = {
   user: User;
@@ -25,6 +17,8 @@ type EditSkillsFormProps = {
 };
 
 const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
+  const { toast } = useToast(); // Initialize the toast hook
+
   const {
     control,
     handleSubmit,
@@ -60,9 +54,26 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
 
       const updatedUser = { ...user, skills: updatedSkills }; // Update the user object
       setUser(updatedUser);
+
+      // Show success toast when skills are updated
+      toast({
+        title: "Skills Updated",
+        description: "Your skills have been successfully updated.",
+        variant: "default",
+        duration: 5000,
+      });
+
       onClose();
     } catch (error) {
       console.error("Failed to update skills:", error);
+
+      // Show error toast on failure
+      toast({
+        title: "Failed to Update Skills",
+        description: "There was an error updating your skills. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
     }
   };
 
@@ -76,6 +87,14 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
     const updatedSkills = [...skills, newSkill];
     setSkills(updatedSkills);
     reset({ skills: updatedSkills });
+
+    // Show toast when a skill is added
+    toast({
+      title: "Skill Added",
+      description: "You have successfully added a new skill.",
+      variant: "default",
+      duration: 5000,
+    });
   };
 
   const handleDeleteSkill = async (index: number) => {
@@ -83,8 +102,25 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
     if (skillToDelete && skillToDelete.id) {
       try {
         await deleteUserSkill(user.id, skillToDelete.id);
+
+        // Show success toast when a skill is deleted
+        toast({
+          title: "Skill Deleted",
+          description: `The skill "${skillToDelete.title}" has been deleted.`,
+          variant: "default",
+          duration: 5000,
+        });
       } catch (error) {
         console.error("Failed to delete skill:", error);
+
+        // Show error toast on failure
+        toast({
+          title: "Failed to Delete Skill",
+          description: `There was an error deleting the skill "${skillToDelete.title}". Please try again.`,
+          variant: "destructive",
+          duration: 5000,
+        });
+        return;
       }
     }
 
@@ -105,19 +141,14 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           {skills.map((_, index) => (
-            <div
-              key={index}
-              className="p-4 bg-white shadow-md rounded-lg space-y-4"
-            >
+            <div key={index} className="p-4 bg-white shadow-md rounded-lg space-y-4">
               <div>
                 <Label htmlFor={`skills.${index}.title`}>Title</Label>
                 <Controller
                   name={`skills.${index}.title`}
                   control={control}
                   rules={{ required: "Title is required" }}
-                  render={({ field }) => (
-                    <Input {...field} placeholder="Title" className="w-full" />
-                  )}
+                  render={({ field }) => <Input {...field} placeholder="Title" className="w-full" />}
                 />
                 {errors.skills?.[index]?.title && (
                   <p className="text-red-500 text-sm mt-1">
@@ -127,18 +158,12 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
               </div>
 
               <div>
-                <Label htmlFor={`skills.${index}.description`}>
-                  Description
-                </Label>
+                <Label htmlFor={`skills.${index}.description`}>Description</Label>
                 <Controller
                   name={`skills.${index}.description`}
                   control={control}
                   render={({ field }) => (
-                    <Textarea
-                      {...field}
-                      placeholder="Description"
-                      className="w-full"
-                    />
+                    <Textarea {...field} placeholder="Description" className="w-full" />
                   )}
                 />
               </div>
@@ -150,19 +175,11 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
                   control={control}
                   rules={{ required: "Price is required" }}
                   render={({ field }) => (
-                    <Input
-                      {...field}
-                      type="number"
-                      value={field.value || 0} // Ensure value is a number
-                      placeholder="Price"
-                      className="w-full"
-                    />
+                    <Input {...field} type="number" value={field.value || 0} placeholder="Price" className="w-full" />
                   )}
                 />
                 {errors.skills?.[index]?.price && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.skills[index].price?.message}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{errors.skills[index].price?.message}</p>
                 )}
               </div>
 
@@ -174,10 +191,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
                   name={`skills.${index}.isAvailable`}
                   control={control}
                   render={({ field }) => (
-                    <Switch
-                      checked={field.value || false}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value || false} onCheckedChange={field.onChange} />
                   )}
                 />
               </div>
@@ -195,17 +209,10 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
             </div>
           ))}
 
-          <Button
-            type="button"
-            onClick={handleAddSkill}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-          >
+          <Button type="button" onClick={handleAddSkill} className="w-full bg-blue-500 hover:bg-blue-600 text-white">
             Add Skill
           </Button>
-          <Button
-            type="submit"
-            className="w-full bg-green-500 hover:bg-green-600 text-white"
-          >
+          <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white">
             Update Skills
           </Button>
         </form>
@@ -219,10 +226,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
           </DialogHeader>
           <p>
             Are you sure you want to delete{" "}
-            {skillToDelete !== null
-              ? skills[skillToDelete].title
-              : "this skill"}
-            ?
+            {skillToDelete !== null ? skills[skillToDelete].title : "this skill"}?
           </p>
           <div className="flex space-x-4 mt-4">
             <Button
@@ -232,11 +236,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
             >
               Yes, Delete
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="w-full"
-            >
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} className="w-full">
               Cancel
             </Button>
           </div>

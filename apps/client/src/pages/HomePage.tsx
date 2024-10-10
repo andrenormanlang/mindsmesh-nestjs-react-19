@@ -253,7 +253,7 @@ const HomePage = () => {
           {selectedUser && (
             <EditProfileForm
               user={selectedUser}
-              onClose={() => setIsEditModalOpen(false)}
+              // onClose={() => setIsEditModalOpen(false)}
               setUser={userContext.setUser}
             />
           )}

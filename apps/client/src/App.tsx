@@ -6,12 +6,14 @@ import LoadingSpinner from "./helpers/LoadingSpinner";
 import { UserProvider } from "./contexts/UserContext"; 
 import { GradientProvider } from "./contexts/GradientContext"; 
 import "./App.css";
+import { Toaster } from "./components/shadcn/ui/toaster";
 
 const HomePage = React.lazy(() => import("./pages/HomePage")); // Lazy load the HomePage
 
 function App() {
   return (
     <>
+      <Toaster />
       <Router>
         <UserProvider> 
           <GradientProvider> 

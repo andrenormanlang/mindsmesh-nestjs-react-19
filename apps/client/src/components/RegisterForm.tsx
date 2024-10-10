@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { useForm, Controller, FieldError } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,15 +12,11 @@ import {
   DialogTitle,
   DialogContent,
 } from "./shadcn/ui/dialog";
-import {
-  Toast,
-  ToastClose,
-  ToastDescription,
-  ToastTitle,
-} from "./shadcn/ui/toast";
+import { useToast } from "./shadcn/ui/use-toast";
 import { register } from "../services/MindsMeshAPI";
 import { SkillData } from "../types/types";
 import SkillForm from "./SkillForm";
+import { AxiosError } from "axios";
 
 export type RegisterFormData = {
   username: string;
@@ -37,7 +33,8 @@ const registerSchema = z.object({
 });
 
 const RegisterForm = ({ onClose }: { onClose: () => void }) => {
-  const navigate = useNavigate();
+  const { toast } = useToast();
+  // const navigate = useNavigate();
   const [error, setError] = useState("");
   const [isSkillDialogOpen, setIsSkillDialogOpen] = useState(false);
   const [skills, setSkills] = useState<SkillData[]>([]);
@@ -86,6 +83,18 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
   };
 
   const onSubmit = async (data: RegisterFormData) => {
+    if (skills.length === 0) {
+      // Show a toast if no skills are added
+      toast({
+        title: "Missing Skills",
+        description:
+          "You must add at least one skill to offer before registering.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      return; // Prevent form submission
+    }
+
     const formData = new FormData();
     formData.append("username", data.username);
     formData.append("email", data.email);
@@ -97,16 +106,6 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
       });
     }
 
-    const showSuccessToast = () => {
-      return (
-        <Toast>
-          <ToastTitle>Registration Successful</ToastTitle>
-          <ToastDescription>Please test your login.</ToastDescription>
-          <ToastClose />
-        </Toast>
-      );
-    };
-
     try {
       await register(
         formData.get("username") as string,
@@ -117,14 +116,38 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
       );
 
       onClose();
+      toast({
+        title: "Registration Successful",
+        description: "Please test your login.",
+        duration: 3000,
+      });
 
-      // Show success toast
-      showSuccessToast();
-
-      navigate("/");
-    } catch (err) {
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000); 
+  
+    } catch (err: unknown) {
       console.error("Registration error:", err);
-      setError("Registration failed. Please try again.");
+      const error = err as AxiosError;
+      if (error.response?.status === 400) {
+        toast({
+          title: "Email Already Registered",
+          description:
+            "An account with this email already exists. Please use a different email or login.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      } else {
+        setError("Registration failed. Please try again.");
+
+        // Show general error toast
+        toast({
+          title: "Registration Failed",
+          description: "Please try again.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
     }
   };
 

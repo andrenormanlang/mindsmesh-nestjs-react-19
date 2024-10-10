@@ -8,6 +8,7 @@ import { Skill, User } from "../types/types";
 import EditSkillsForm from "./EditSkillsForm";
 import { updateUser } from "../services/MindsMeshAPI";
 import DeleteImage from "./DeleteImageConfirm";
+import { useToast } from "./shadcn/ui/use-toast"; 
 
 type ProfileFormData = {
   username: string;
@@ -18,10 +19,11 @@ type ProfileFormData = {
 type EditProfileFormProps = {
   user: User;
   setUser: (user: User) => void;
-  onClose: () => void;
+  // onClose: () => void;
 };
 
-const EditProfileForm = ({ user, setUser, onClose }: EditProfileFormProps) => {
+const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
+  const { toast } = useToast(); // Initialize the toast hook
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
   const [existingimageUrls, setExistingimageUrls] = useState<string[]>(
     user.imageUrls || []
@@ -40,21 +42,41 @@ const EditProfileForm = ({ user, setUser, onClose }: EditProfileFormProps) => {
       },
     });
 
-  const handleFormSubmit = async (data: ProfileFormData) => {
-    try {
-      const updatedUser = await updateUser({
-        id: user.id,
-        username: data.username,
-        imageUrls: existingimageUrls, // Only pass existing URLs
-        avatarFiles: data.avatarFiles, // Only pass new files
-      });
-
-      setUser(updatedUser);
-      onClose();
-    } catch (error) {
-      console.error("Failed to update profile:", error);
-    }
-  };
+    const handleFormSubmit = async (data: ProfileFormData) => {
+      try {
+        const updatedUser = await updateUser({
+          id: user.id,
+          username: data.username,
+          imageUrls: existingimageUrls, // Only pass existing URLs
+          avatarFiles: data.avatarFiles, // Only pass new files
+        });
+    
+        setUser(updatedUser);
+    
+        toast({
+          title: "Profile Updated",
+          description: "Your profile was updated successfully.",
+          variant: "default",
+          duration: 3000, // Optional: Adjust duration for a brief display before reload
+        });
+    
+        // Delay the page reload slightly to give the toast time to appear
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000); 
+    
+      } catch (error) {
+        console.error("Failed to update profile:", error);
+    
+        toast({
+          title: "Update Failed",
+          description: "There was an issue updating your profile. Please try again.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
+    };
+    
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
