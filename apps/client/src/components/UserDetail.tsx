@@ -9,6 +9,7 @@ import {
   CarouselPrevious,
 } from "./shadcn/ui/carousel";
 import { Badge } from "./shadcn/ui/badge";
+import DefaultImage from "../assets/default-image.webp";
 
 interface UserDetailCardProps {
   user: User;
@@ -16,20 +17,34 @@ interface UserDetailCardProps {
 
 const UserDetailCard: React.FC<UserDetailCardProps> = ({ user }) => {
   return (
-    <div className=" flex items-center justify-center m-0 p-0">
-      <Card className=" bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-900 shadow-lg rounded-lg overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="flex items-center justify-center m-0 p-0">
+      <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-900 shadow-lg rounded-lg overflow-hidden max-h-[90vh] flex flex-col">
         <CardHeader className="p-0 m-0 flex-shrink-0 relative">
           <Carousel className="w-full relative m-0 h-80">
             <CarouselContent>
-              {user.imageUrls?.map((url, index) => (
-                <CarouselItem key={index}>
+              {user.imageUrls && user.imageUrls.length > 0 ? (
+                user.imageUrls.map((url, index) => (
+                  <CarouselItem key={index}>
+                    <img
+                      src={url}
+                      alt={`${user.username}'s image ${index + 1}`}
+                      className="w-full h-80 object-cover"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null; // Prevent infinite loop in case fallback fails
+                        e.currentTarget.src = DefaultImage; // Set fallback image
+                      }}
+                    />
+                  </CarouselItem>
+                ))
+              ) : (
+                <CarouselItem>
                   <img
-                    src={url}
-                    alt={`${user.username}'s image ${index + 1}`}
-                    className="w-full h-80 object-cover"
+                    src={DefaultImage}
+                    alt="Default user image"
+                    className="w-1/2 h-full object-contain mx-auto rounded-t-lg"
                   />
                 </CarouselItem>
-              ))}
+              )}
             </CarouselContent>
             <CarouselPrevious className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-indigo-800 p-2 rounded-full shadow" />
             <CarouselNext className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-indigo-800 p-2 rounded-full shadow" />

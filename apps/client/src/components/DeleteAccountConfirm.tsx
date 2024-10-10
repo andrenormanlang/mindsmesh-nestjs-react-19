@@ -8,6 +8,7 @@ import {
 } from "./shadcn/ui/dialog";
 import { Button } from "./shadcn/ui/button";
 import { Input } from "./shadcn/ui/input";
+import { useToast } from "./shadcn/ui/use-toast"; 
 
 const DeleteAccountModal = ({
   userEmail,
@@ -22,11 +23,23 @@ const DeleteAccountModal = ({
 }) => {
   const [emailInput, setEmailInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast(); 
 
   const handleConfirm = () => {
     if (emailInput === userEmail) {
       onDeleteConfirm();
-      onClose(); 
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been successfully deleted.",
+        variant: "destructive",
+        duration: 5000,
+      });
+
+      onClose();
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000); 
     } else {
       setError("Email does not match!");
     }

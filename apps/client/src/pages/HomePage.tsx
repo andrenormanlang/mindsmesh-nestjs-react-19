@@ -37,7 +37,7 @@ import { UserContext } from "../contexts/UserContext";
 
 const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(false); // New loading state
+  const [isLoading, setIsLoading] = useState(false);
   // TODO: Check if the screen is large enough to show the carousel
   // const isLargeScreen = window.innerWidth >= 1024;
   const userContext = useContext(UserContext);
@@ -64,7 +64,7 @@ const HomePage = () => {
   );
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
- 
+
   const loadUsersAndProfile = async () => {
     setIsLoading(true);
     setSearchResultPhrase(null); // Reset the phrase on new search
@@ -91,7 +91,7 @@ const HomePage = () => {
     } catch (error) {
       console.error("Failed to fetch users or profile", error);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
@@ -161,7 +161,8 @@ const HomePage = () => {
               className="w-11/12 sm:w-1/2 p-4 text-lg rounded-full mb-2 border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 shadow-lg placeholder-gray-400"
             />
           </div>
-          {searchResultPhrase && (
+          {/* Show result phrase only if a search query exists */}
+          {debouncedSearchQuery && searchResultPhrase && (
             <div className="flex justify-center items-center py-4">
               <p className="text-lg text-white">{searchResultPhrase}</p>
             </div>
@@ -176,14 +177,14 @@ const HomePage = () => {
                 <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
                   {user.imageUrls && user.imageUrls.length > 0 ? (
                     <div className="relative w-full h-full">
-                      <Carousel className="relative">
+                      <Carousel className="relative w-full h-full">
                         <CarouselContent>
                           {user.imageUrls.map((url, index) => (
-                            <CarouselItem key={index}>
+                            <CarouselItem key={index} className="w-full h-full">
                               <img
                                 src={url}
                                 alt={`${user.username}'s image ${index + 1}`}
-                                className="w-full h-full object-contain rounded-lg"
+                                className="w-full h-full object-contain rounded-lg" 
                               />
                             </CarouselItem>
                           ))}
@@ -196,7 +197,7 @@ const HomePage = () => {
                     <img
                       src={DefaultImage}
                       alt="Placeholder"
-                      className="w-full h-full object-contain rounded-lg"
+                      className="w-full h-full object-contain rounded-lg" 
                     />
                   )}
                 </CardHeader>

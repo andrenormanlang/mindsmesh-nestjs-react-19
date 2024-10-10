@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./shadcn/ui/dialog";
+import { useToast } from "./shadcn/ui/use-toast";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -26,16 +27,32 @@ const LoginForm = () => {
   const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast(); 
 
   const handleLogin = async () => {
     try {
       const user = await login(email, password);
       if (user) {
-        navigate("/"); // Redirect to the home page or profile after login
-        window.location.reload(); // Refresh the page to update the user state in Navbar
+        toast({
+          title: "Login Successful",
+          description: "Welcome back! You have logged in successfully.",
+          duration: 4000,
+          variant: "success",
+        });
+        navigate("/"); 
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000); 
+    
       }
     } catch (err) {
       setError("Login failed. Please check your email and password.");
+      toast({
+        title: "Login Failed",
+        description: "Invalid email or password. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
       console.error("Login error:", err);
     }
   };
@@ -44,8 +61,19 @@ const LoginForm = () => {
     try {
       await requestPasswordReset(resetEmail);
       setResetSuccess(true);
+      toast({
+        title: "Reset Link Sent",
+        description: "Check your email for the password reset link.",
+        duration: 4000,
+      });
     } catch (err) {
       setResetError("Failed to request password reset. Please try again.");
+      toast({
+        title: "Reset Request Failed",
+        description: "Could not send password reset link. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
       console.error("Password reset request error:", err);
     }
   };
@@ -53,10 +81,20 @@ const LoginForm = () => {
   const handleResetPassword = async () => {
     try {
       await resetPassword(resetToken, newPassword);
-      alert("Password reset successfully!");
+      toast({
+        title: "Password Reset Successful",
+        description: "Your password has been reset successfully.",
+        duration: 4000,
+      });
       window.location.reload();
     } catch (err) {
       setResetError("Failed to reset password. Please try again.");
+      toast({
+        title: "Password Reset Failed",
+        description: "The reset token may be invalid or expired. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
       console.error("Password reset error:", err);
     }
   };
