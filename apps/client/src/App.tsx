@@ -3,7 +3,6 @@ import Navbar from "./components/NavBar";
 import Footer from "./components/Footer";
 import React, { Suspense } from "react";
 import LoadingSpinner from "./helpers/LoadingSpinner";
-import ErrorBoundary from "./helpers/ErrorBoundary"; 
 import { UserProvider } from "./contexts/UserContext"; 
 import { GradientProvider } from "./contexts/GradientContext"; 
 import "./App.css";
@@ -17,14 +16,11 @@ function App() {
         <UserProvider> 
           <GradientProvider> 
             <Navbar />
-            <ErrorBoundary>
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  
+                  <Route path="/" element={<HomePage />} />                  
                 </Routes>
               </Suspense>
-            </ErrorBoundary>
             <Footer />
           </GradientProvider>
         </UserProvider>

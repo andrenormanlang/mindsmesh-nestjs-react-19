@@ -97,6 +97,7 @@ const HomePage = () => {
 
   useEffect(() => {
     loadUsersAndProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchQuery]);
 
   const handleDeleteAccount = async (userId: string) => {

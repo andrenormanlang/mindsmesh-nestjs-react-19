@@ -6,7 +6,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 /* General Root Styling */
 #root {
 
@@ -16,12 +15,9 @@
   font-family: 'Quicksand', sans-serif; /* Applying Quicksand font to the entire application */
 }
 
-
-
-
-
 @layer base {
   * {
+
     @apply border-border;
   }
   body {
