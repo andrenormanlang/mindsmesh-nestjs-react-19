@@ -2,20 +2,35 @@ import { useState } from "react";
 import { Button } from "./shadcn/ui/button";
 import { Input } from "./shadcn/ui/input";
 import { sendPasswordResetEmail } from "../services/MindsMeshAPI";
+import { useToast } from "./shadcn/ui/use-toast";
 
 const ForgotPasswordForm = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const { toast } = useToast();
 
   const handleForgotPassword = async () => {
     try {
       await sendPasswordResetEmail(email);
       setMessage("Password reset email sent. Please check your inbox.");
+      toast({
+        title: "Email Sent",
+        description: "Check your email for a password reset link.",
+        duration: 4000,
+        variant: "success",
+      });
     } catch (error) {
       console.error("Failed to send password reset email:", error);
-      setMessage("Failed to send password reset email.");
+      setMessage("Failed to send password reset email. Please try again later.");
+      toast({
+        title: "Reset Failed",
+        description: "Unable to send reset email at the moment. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
     }
   };
+  
 
   return (
     <div className="flex justify-center items-center bg-gray-100">

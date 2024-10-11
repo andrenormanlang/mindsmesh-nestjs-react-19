@@ -9,9 +9,13 @@ export class SendGridService {
   }
 
   async sendPasswordResetEmail(to: string, resetLink: string): Promise<void> {
+    // Debugging logs
+    console.log(`Preparing to send password reset email to: ${to}`);
+    console.log(`Reset link: ${resetLink}`);
+
     const msg = {
       to,
-      from: 'andrenormanlang@gmail.com', //  Verified email address in SendGrid
+      from: 'andrenormanlang@gmail.com', // Verified email address in SendGrid
       subject: 'Password Reset Request',
       html: `
         <p>You requested a password reset. Click the link below to reset your password:</p>
@@ -24,7 +28,12 @@ export class SendGridService {
       await sgMail.send(msg);
       console.log(`Password reset email sent to ${to}`);
     } catch (error) {
-      console.error('Error sending password reset email:', error);
+      // Provide detailed error information
+      if (error.response) {
+        console.error('Error response from SendGrid:', error.response.body.errors);
+      } else {
+        console.error('Error sending password reset email:', error.message);
+      }
       throw new Error('Failed to send password reset email');
     }
   }

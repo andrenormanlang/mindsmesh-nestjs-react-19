@@ -117,46 +117,77 @@ export class UsersService {
       where: { id },
       relations: ['skills'],
     });
+  
     if (!user) throw new NotFoundException('User not found');
-
+  
+    // Log current user details before updating
+    console.log('Current user details:', {
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      isAdmin: user.isAdmin,
+      imageUrls: user.imageUrls,
+      password: user.password,
+    });
+  
     // Update fields if provided
     if (updateUserDto.email) {
+      console.log(`Updating email for user ${user.id} from ${user.email} to ${updateUserDto.email}`);
       user.email = updateUserDto.email;
     }
     if (updateUserDto.username) {
+      console.log(`Updating username for user ${user.id} from ${user.username} to ${updateUserDto.username}`);
       user.username = updateUserDto.username;
     }
     if (updateUserDto.role) {
+      console.log(`Updating role for user ${user.id} from ${user.role} to ${updateUserDto.role}`);
       user.role = updateUserDto.role;
     }
     if (updateUserDto.isAdmin !== undefined) {
+      console.log(`Updating isAdmin for user ${user.id} from ${user.isAdmin} to ${updateUserDto.isAdmin}`);
       user.isAdmin = updateUserDto.isAdmin;
     }
     if (updateUserDto.imageUrls) {
+      console.log(`Updating imageUrls for user ${user.id}`);
       user.imageUrls = updateUserDto.imageUrls;
     }
     if (updateUserDto.password) {
+      console.log(`Updating password for user ${user.id}. Current hashed password: ${user.password}`);
       user.password = await bcrypt.hash(updateUserDto.password, 10);
+      console.log(`New hashed password for user ${user.id}: ${user.password}`);
     }
-
+  
     // Add new skills if provided
     if (updateUserDto.skills && updateUserDto.skills.length > 0) {
+      console.log(`Adding new skills for user ${user.id}`);
       const skills = updateUserDto.skills.map(skillDto => {
         return this.skillsRepository.create({
           ...skillDto,
           user: user,
         });
       });
-      user.skills = [...user.skills, ...await this.skillsRepository.save(skills)];
+      user.skills = [...user.skills, ...(await this.skillsRepository.save(skills))];
     }
-
+  
     try {
-      return await this.usersRepository.save(user);
+      // Save the updated user
+      const updatedUser = await this.usersRepository.save(user);
+      console.log('User updated successfully:', {
+        email: updatedUser.email,
+        username: updatedUser.username,
+        role: updatedUser.role,
+        isAdmin: updatedUser.isAdmin,
+        imageUrls: updatedUser.imageUrls,
+        password: updatedUser.password,
+      });
+  
+      return updatedUser;
     } catch (error) {
       console.error('Error updating user:', error);
       throw new InternalServerErrorException('An error occurred while updating the user.');
     }
   }
+  
 
   async delete(id: string): Promise<void> {
     const result = await this.usersRepository.delete(id);

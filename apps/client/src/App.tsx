@@ -7,6 +7,7 @@ import { UserProvider } from "./contexts/UserContext";
 import { GradientProvider } from "./contexts/GradientContext"; 
 import "./App.css";
 import { Toaster } from "./components/shadcn/ui/toaster";
+import ResetPasswordForm from "./components/ResetPassword";
 
 const HomePage = React.lazy(() => import("./pages/HomePage")); // Lazy load the HomePage
 
@@ -20,7 +21,8 @@ function App() {
             <Navbar />
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
-                  <Route path="/" element={<HomePage />} />                  
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/reset-password" element={<ResetPasswordForm />} />
                 </Routes>
               </Suspense>
             <Footer />

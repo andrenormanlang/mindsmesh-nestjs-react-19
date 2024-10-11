@@ -87,7 +87,7 @@ export const resetPassword = async (
   token: string,
   newPassword: string
 ): Promise<void> => {
-  await api.post(`/auth/reset-password?token=${token}`, { newPassword });
+  await api.post(`/auth/reset-password`, { token, newPassword });
 };
 
 export const register = async (

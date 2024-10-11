@@ -87,4 +87,8 @@ export class AuthController {
   getProfile(@Request() req: ExpressRequest) {
     return req.user;
   }
+
+  
 }
+
+

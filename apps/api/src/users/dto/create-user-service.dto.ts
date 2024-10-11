@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsOptional,
   IsString,
+  Matches,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -24,7 +25,10 @@ export class CreateUserDto {
     description: 'The password for the user account',
   })
   @IsString({ message: 'Password must be a string' })
-  @MinLength(6, { message: 'Password must be at least 6 characters long' })
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  @Matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/, {
+    message: 'Password too weak',
+  })
   password: string;
 
   @ApiPropertyOptional({

@@ -7,10 +7,10 @@ dotenvConfig({ path: '.env' });
 const config = {
   type: 'postgres',
   url: process.env.DATABASE_URL,
-  entities: ["dist/**/*.entity{.ts,.js}"], // where entities reside
+  entities: ["dist/**/*.entity{.ts,.js}"], 
   migrations: ["dist/db/migrations/*{.ts,.js}"],
   autoLoadEntities: true,
-  synchronize: true, // shouldn't really be used in production - may lose data
+  synchronize: false, 
   ssl: true,
   extra: {
     ssl: {
