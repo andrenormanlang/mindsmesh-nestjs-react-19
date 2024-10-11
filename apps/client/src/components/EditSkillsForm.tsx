@@ -8,7 +8,7 @@ import { Switch } from "./shadcn/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./shadcn/ui/dialog";
 import { User, Skill } from "../types/types";
 import { addSkillToUser, updateUserSkill, deleteUserSkill } from "../services/MindsMeshAPI";
-import { useToast } from "./shadcn/ui/use-toast"; // Import the toast hook
+import { useToast } from "./shadcn/ui/use-toast"; 
 
 type EditSkillsFormProps = {
   user: User;
@@ -17,7 +17,7 @@ type EditSkillsFormProps = {
 };
 
 const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
-  const { toast } = useToast(); // Initialize the toast hook
+  const { toast } = useToast(); 
 
   const {
     control,
@@ -55,7 +55,6 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
       const updatedUser = { ...user, skills: updatedSkills }; // Update the user object
       setUser(updatedUser);
 
-      // Show success toast when skills are updated
       toast({
         title: "Skills Updated",
         description: "Your skills have been successfully updated.",
@@ -103,7 +102,6 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
       try {
         await deleteUserSkill(user.id, skillToDelete.id);
 
-        // Show success toast when a skill is deleted
         toast({
           title: "Skill Deleted",
           description: `The skill "${skillToDelete.title}" has been deleted.`,
@@ -113,7 +111,6 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
       } catch (error) {
         console.error("Failed to delete skill:", error);
 
-        // Show error toast on failure
         toast({
           title: "Failed to Delete Skill",
           description: `There was an error deleting the skill "${skillToDelete.title}". Please try again.`,
@@ -124,7 +121,6 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
       }
     }
 
-    // Safely update the skills array
     const updatedSkills = skills.filter((_, i) => i !== index);
     setSkills(updatedSkills);
     reset({ skills: updatedSkills });
