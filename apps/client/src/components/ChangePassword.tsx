@@ -5,16 +5,16 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { resetPassword } from "../services/MindsMeshAPI";
 import { useToast } from "./shadcn/ui/use-toast";
 
-const ResetPasswordForm = () => {
+const ChangePasswordForm = () => {
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleResetPassword = async () => {
+  const handleChangePassword = async () => {
     const token = searchParams.get("token");
-    console.log("Extracted Token:", token); // Check what is being extracted
+    console.log("Extracted Token:", token); 
   
     if (!token) {
       setMessage("Invalid or missing token.");
@@ -50,7 +50,7 @@ const ResetPasswordForm = () => {
             className="w-full"
           />
           {message && <p className="text-center text-green-500">{message}</p>}
-          <Button onClick={handleResetPassword} className="w-full">
+          <Button onClick={handleChangePassword} className="w-full">
             Reset Password
           </Button>
         </div>
@@ -59,4 +59,4 @@ const ResetPasswordForm = () => {
   );
 };
 
-export default ResetPasswordForm;
+export default ChangePasswordForm;

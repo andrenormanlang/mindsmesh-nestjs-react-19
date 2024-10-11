@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import {
   login,
   requestPasswordReset,
-  resetPassword,
 } from "../services/MindsMeshAPI";
 import {
   Dialog,
@@ -22,8 +21,6 @@ const LoginForm = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [resetEmail, setResetEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [resetToken, setResetToken] = useState("");
   const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
   const navigate = useNavigate();
@@ -78,27 +75,7 @@ const LoginForm = () => {
     }
   };
 
-  const handleResetPassword = async () => {
-    try {
-      await resetPassword(resetToken, newPassword);
-      toast({
-        title: "Password Reset Successful",
-        description: "Your password has been reset successfully.",
-        duration: 4000,
-      });
-      window.location.reload();
-    } catch (err) {
-      setResetError("Failed to reset password. Please try again.");
-      toast({
-        title: "Password Reset Failed",
-        description: "The reset token may be invalid or expired. Please try again.",
-        variant: "destructive",
-        duration: 5000,
-      });
-      console.error("Password reset error:", err);
-    }
-  };
-
+  
   return (
     <div className="flex justify-center items-center">
       <Card className="w-full max-w-sm p-4">
@@ -126,7 +103,7 @@ const LoginForm = () => {
             {/* Forgot Password Modal */}
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="link" className="text-blue-600">
+                <Button variant="link" className="text-blue-600 w-full">
                   Forgot Password?
                 </Button>
               </DialogTrigger>
@@ -154,39 +131,6 @@ const LoginForm = () => {
                   <p className="text-green-500 text-center">
                     Check your email for reset link.
                   </p>
-                )}
-              </DialogContent>
-            </Dialog>
-            {/* Reset Password Modal */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="link" className="text-blue-600">
-                  Reset Password?
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Reset Password</DialogTitle>
-                </DialogHeader>
-                <Input
-                  type="text"
-                  placeholder="Reset Token"
-                  value={resetToken}
-                  onChange={(e) => setResetToken(e.target.value)}
-                  className="w-full mt-4"
-                />
-                <Input
-                  type="password"
-                  placeholder="New Password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full mt-4"
-                />
-                <Button className="mt-4 w-full" onClick={handleResetPassword}>
-                  Reset Password
-                </Button>
-                {resetError && (
-                  <p className="text-red-500 text-center">{resetError}</p>
                 )}
               </DialogContent>
             </Dialog>
