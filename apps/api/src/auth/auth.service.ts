@@ -80,47 +80,28 @@ console.log("Password comparison result:", await bcrypt.compare(user.password, f
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     try {
-      // Decode the token to get the payload
       const payload = this.jwtService.verify(token, {
         secret: this.configService.get<string>('RESET_PASSWORD_SECRET'),
       });
   
-      console.log('Received reset token payload:', payload);
-  
-      // Find the user by email from token payload
       const user = await this.usersService.findByEmail(payload.email);
   
       if (!user) {
         throw new NotFoundException('User not found');
       }
   
-      // Log the current hashed password
-      console.log('Current hashed password for user:', user.password);
+      await this.usersService.update(user.id, { password: newPassword }); 
   
-      // Update the user with the new password directly (assuming update will handle hashing)
-      await this.usersService.update(user.id, { password: newPassword }); // Pass the plain new password
-  
-      // Fetch the user again to verify the update
       const updatedUser = await this.usersService.findByEmail(payload.email);
-      console.log('Stored hashed password after update:', updatedUser.password);
   
-      // Verify if the password was updated correctly
       const passwordMatches = await bcrypt.compare(newPassword, updatedUser.password);
       if (!passwordMatches) {
-        console.error('Password mismatch detected after update');
         throw new InternalServerErrorException('Password update verification failed');
       }
-  
-      console.log('Password updated successfully for user:', updatedUser.email);
   
     } catch (error) {
       console.error('Error during password reset:', error.message);
       throw new BadRequestException('Invalid or expired token');
     }
-  }
-  
-  
-  
-  
-  
+  }  
 }
