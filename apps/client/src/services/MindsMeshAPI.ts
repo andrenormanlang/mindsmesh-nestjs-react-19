@@ -169,6 +169,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
 export const updateUser = async (data: {
   id: string;
   username?: string;
+  password?: string;
   imageUrls?: string[];
   avatarFiles?: File[];
   skills?: Skill[];
@@ -196,6 +197,22 @@ export const updateUser = async (data: {
   });
   return response.data;
 };
+
+// services/MindsMeshAPI.ts
+export const updatePassword = async (userId: string, newPassword: string, currentPassword: string) => {
+  const response = await fetch(`/api/users/${userId}/update-password`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ newPassword, currentPassword }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update password');
+  }
+  return response.json();
+};
+
 
 export const addSkillToUser = async (
   userId: string,

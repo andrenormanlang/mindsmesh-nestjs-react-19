@@ -8,7 +8,8 @@ import { Skill, User } from "../types/types";
 import EditSkillsForm from "./EditSkillsForm";
 import { updateUser } from "../services/MindsMeshAPI";
 import DeleteImage from "./DeleteImageConfirm";
-import { useToast } from "./shadcn/ui/use-toast"; 
+import { useToast } from "./shadcn/ui/use-toast";
+import ChangePasswordForm from "./ChangePasswordForm";
 
 type ProfileFormData = {
   username: string;
@@ -19,95 +20,81 @@ type ProfileFormData = {
 type EditProfileFormProps = {
   user: User;
   setUser: (user: User) => void;
-  // onClose: () => void;
 };
 
 const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
-  const { toast } = useToast(); // Initialize the toast hook
+  const { toast } = useToast();
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
-  const [existingimageUrls, setExistingimageUrls] = useState<string[]>(
-    user.imageUrls || []
-  );
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false); // State to manage change password dialog
+  const [existingimageUrls, setExistingimageUrls] = useState<string[]>(user.imageUrls || []);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [targetDeleteIndex, setTargetDeleteIndex] = useState<number | null>(
-    null
-  );
+  const [targetDeleteIndex, setTargetDeleteIndex] = useState<number | null>(null);
 
-  const { control, handleSubmit, getValues, setValue } =
-    useForm<ProfileFormData>({
-      defaultValues: {
-        username: user.username,
-        avatarFiles: [],
-        skills: user.skills,
-      },
-    });
+  const { control, handleSubmit, getValues, setValue } = useForm<ProfileFormData>({
+    defaultValues: {
+      username: user.username,
+      avatarFiles: [],
+      skills: user.skills,
+    },
+  });
 
-    const handleFormSubmit = async (data: ProfileFormData) => {
-      try {
-        const updatedUser = await updateUser({
-          id: user.id,
-          username: data.username,
-          imageUrls: existingimageUrls, // Only pass existing URLs
-          avatarFiles: data.avatarFiles, // Only pass new files
-        });
-    
-        setUser(updatedUser);
-    
-        toast({
-          title: "Profile Updated",
-          description: "Your profile was updated successfully.",
-          variant: "success",
-          duration: 3000, // Optional: Adjust duration for a brief display before reload
-        });
-    
-        // Delay the page reload slightly to give the toast time to appear
-        setTimeout(() => {
-          window.location.reload();
-        }, 3000); 
-    
-      } catch (error) {
-        console.error("Failed to update profile:", error);
-    
-        toast({
-          title: "Update Failed",
-          description: "There was an issue updating your profile. Please try again.",
-          variant: "destructive",
-          duration: 5000,
-        });
-      }
-    };
-    
+  const handleFormSubmit = async (data: ProfileFormData) => {
+    try {
+      const updatedUser = await updateUser({
+        id: user.id,
+        username: data.username,
+        imageUrls: existingimageUrls,
+        avatarFiles: data.avatarFiles,
+      });
+
+      setUser(updatedUser);
+
+      toast({
+        title: "Profile Updated",
+        description: "Your profile was updated successfully.",
+        variant: "success",
+        duration: 3000,
+      });
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+
+      toast({
+        title: "Update Failed",
+        description: "There was an issue updating your profile. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  };
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      setValue("avatarFiles", [...getValues("avatarFiles"), ...files]); // Store new files
+      setValue("avatarFiles", [...getValues("avatarFiles"), ...files]);
     }
   };
 
   const handleDeleteImageRequest = (index: number) => {
-    setTargetDeleteIndex(index); // Set the target index
-    setIsDeleteModalOpen(true); // Open the modal
+    setTargetDeleteIndex(index);
+    setIsDeleteModalOpen(true);
   };
 
   const confirmDeleteImage = () => {
     if (targetDeleteIndex !== null) {
       if (targetDeleteIndex < existingimageUrls.length) {
-        // Remove from existing URLs
-        const updatedUrls = existingimageUrls.filter(
-          (_, i) => i !== targetDeleteIndex
-        );
+        const updatedUrls = existingimageUrls.filter((_, i) => i !== targetDeleteIndex);
         setExistingimageUrls(updatedUrls);
       } else {
-        // Remove from newly added files
         const newIndex = targetDeleteIndex - existingimageUrls.length;
-        const updatedFiles = getValues("avatarFiles").filter(
-          (_, i) => i !== newIndex
-        );
+        const updatedFiles = getValues("avatarFiles").filter((_, i) => i !== newIndex);
         setValue("avatarFiles", updatedFiles);
       }
-      setIsDeleteModalOpen(false); // Close the modal after deletion
-      setTargetDeleteIndex(null); // Reset the target index
+      setIsDeleteModalOpen(false);
+      setTargetDeleteIndex(null);
     }
   };
 
@@ -120,9 +107,7 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
             name="username"
             control={control}
             rules={{ required: "Username is required" }}
-            render={({ field }) => (
-              <Input {...field} placeholder="Username" className="w-full" />
-            )}
+            render={({ field }) => <Input {...field} placeholder="Username" className="w-full" />}
           />
         </div>
 
@@ -133,16 +118,10 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
             <div className="grid grid-cols-2 gap-4 mt-2">
               {[
                 ...existingimageUrls,
-                ...getValues("avatarFiles").map((file) =>
-                  URL.createObjectURL(file)
-                ),
+                ...getValues("avatarFiles").map((file) => URL.createObjectURL(file)),
               ].map((url, index) => (
                 <div key={index} className="relative">
-                  <img
-                    src={url}
-                    alt={`Avatar ${index + 1}`}
-                    className="h-20 w-full object-cover rounded-md"
-                  />
+                  <img src={url} alt={`Avatar ${index + 1}`} className="h-20 w-full object-cover rounded-md" />
                   <Button
                     type="button"
                     onClick={() => handleDeleteImageRequest(index)}
@@ -165,20 +144,26 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
         </Button>
 
         <Button
-          type="submit"
-          className="w-full bg-green-500 hover:bg-green-600 text-white"
+          type="button"
+          onClick={() => setIsChangePasswordModalOpen(true)}
+          className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
         >
+          Change Password
+        </Button>
+
+        <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white">
           Update Profile
         </Button>
       </form>
 
       {/* Skills Modal */}
       <Dialog open={isSkillsModalOpen} onOpenChange={setIsSkillsModalOpen}>
-        <EditSkillsForm
-          user={user}
-          setUser={setUser}
-          onClose={() => setIsSkillsModalOpen(false)}
-        />
+        <EditSkillsForm user={user} setUser={setUser} onClose={() => setIsSkillsModalOpen(false)} />
+      </Dialog>
+
+      {/* Change Password Modal */}
+      <Dialog open={isChangePasswordModalOpen} onOpenChange={setIsChangePasswordModalOpen}>
+        <ChangePasswordForm userId={user.id} onClose={() => setIsChangePasswordModalOpen(false)} />
       </Dialog>
 
       <DeleteImage

@@ -9,16 +9,18 @@ import {
   Post,
   Put,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserResponseDto } from './dto/user-response.dto';
 import { CreateUserControllerDto } from './dto/create-user-controller.dto';
 import {CreateUsersDto} from './dto/create-users.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 import { DeleteUsersDto } from './dto/delete.dto';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { plainToClass } from 'class-transformer';
 import {
   ApiTags,
@@ -27,6 +29,7 @@ import {
   ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
+import * as bcrypt from 'bcrypt';
 
 @ApiTags('Users')
 @Controller('users')
@@ -222,6 +225,34 @@ export class UsersController {
     const updatedUser = await this.usersService.update(id, userDto);
     return plainToClass(UserResponseDto, updatedUser);
   }
+
+@Put(':id/update-password')
+@ApiOperation({ summary: 'Update user password' })
+@ApiConsumes('application/json')
+@ApiBody({
+  description: 'New password data',
+  type: UpdatePasswordDto,
+})
+@ApiResponse({
+  status: 200,
+  description: 'Password successfully updated',
+})
+@ApiResponse({ status: 400, description: 'Invalid input data' })
+@ApiResponse({ status: 401, description: 'Unauthorized' })
+async updatePassword(
+  @Param('id') id: string,
+  @Body() updatePasswordDto: UpdatePasswordDto
+): Promise<{ message: string }> {
+  // Optional: Verify current password
+  const user = await this.usersService.findOne(id);
+  const isMatch = await bcrypt.compare(updatePasswordDto.currentPassword, user.password);
+  if (!isMatch) {
+    throw new BadRequestException('Current password is incorrect.');
+  }
+
+  await this.usersService.updatePassword(id, updatePasswordDto.newPassword);
+  return { message: 'Password successfully updated' };
+}
 
   @Delete('delete-bulk')
   @ApiOperation({ summary: 'Bulk delete users' })

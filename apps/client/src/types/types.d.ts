@@ -1,11 +1,12 @@
 export type User = {
   id: string;
   username: string;
+  password: string;
   email: string;
   role: string;
   profile: UserProfile;
   skills: Skill[];
-  imageUrls?: string[]; // Array of avatar URLs
+  imageUrls?: string[]; 
 };
 
 export type UserAuth = {

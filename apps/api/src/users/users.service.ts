@@ -157,6 +157,20 @@ export class UsersService {
       throw new InternalServerErrorException('An error occurred while updating the user.');
     }
   }
+
+  async updatePassword(id: string, newPassword: string): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    user.password = await bcrypt.hash(newPassword, 10);
+    try {
+      await this.usersRepository.save(user);
+    } catch (error) {
+      console.error('Error updating password:', error);
+      throw new InternalServerErrorException('Failed to update password.');
+    }
+  }
   
   async delete(id: string): Promise<void> {
     const result = await this.usersRepository.delete(id);
