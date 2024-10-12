@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -164,6 +165,17 @@ export class UsersController {
     } catch (error) {
       console.error('Error during user registration:', error.message);
       throw new BadRequestException('Registration failed.');
+    }
+  }
+
+  @Get('verify-email')
+  @ApiOperation({ summary: 'Verify user email' })
+  async verifyEmail(@Query('token') token: string): Promise<{ message: string }> {
+    const user = await this.usersService.verifyEmail(token);
+    if (user) {
+      return { message: 'Email successfully verified' };
+    } else {
+      throw new BadRequestException('Invalid or expired verification token');
     }
   }
 

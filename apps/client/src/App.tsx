@@ -8,6 +8,7 @@ import { GradientProvider } from "./contexts/GradientContext";
 import "./App.css";
 import { Toaster } from "./components/shadcn/ui/toaster";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import EmailVerificationPage from "./pages/EmailVerificationPage";
 
 const HomePage = React.lazy(() => import("./pages/HomePage")); // Lazy load the HomePage
 
@@ -22,6 +23,7 @@ function App() {
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
                   <Route path="/" element={<HomePage />} />
+                  <Route path="/verify-email" element={<EmailVerificationPage/>}/>
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
                 </Routes>
               </Suspense>

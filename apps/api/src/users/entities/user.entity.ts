@@ -58,6 +58,18 @@ export class User {
   isAdmin: boolean = false;
 
   @ApiProperty({
+    example: false,
+    description: 'Indicates whether the user has verified their email address',
+    required: false,
+  })
+  @Column({ default: false })
+  isEmailVerified!: boolean;
+
+  @ApiHideProperty()
+  @Column({ nullable: true })
+  emailVerificationToken?: string;
+
+  @ApiProperty({
     type: () => Skill,
     description: 'Skills associated with the user',
     isArray: true,

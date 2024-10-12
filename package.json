@@ -1,1 +1,18 @@
-{"name":"mindsmesh","packageManager":"npm@10.8.2","devDependencies":{"@types/uuid":"^10.0.0","turbo":"^2.0.12"},"scripts":{"dev":"turbo run dev","build":"turbo run build","start":"node apps/api/dist/main"},"workspaces":["apps/*"]}
+{
+  "name": "mindsmesh",
+  "packageManager": "pnpm@8.6.12",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter api dev\" \"pnpm --filter client dev\"",
+
+    "build": "turbo run build",
+    "start": "node apps/api/dist/main"
+  },
+  "devDependencies": {
+    "@types/uuid": "^10.0.0",
+    "turbo": "^2.0.12"
+  },
+  "dependencies": {
+    "concurrently": "^9.0.1"
+  }
+}

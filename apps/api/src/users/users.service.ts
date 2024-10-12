@@ -6,8 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { SendGridService } from '@/sendgrid/sendgrid.service';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { CreateUserDto } from './dto/create-user-service.dto';
 import { Skill } from '../skills/entities/skill.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -19,7 +22,10 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
 
     @InjectRepository(Skill)
-    private readonly skillsRepository: Repository<Skill>
+    private readonly skillsRepository: Repository<Skill>,
+
+    private readonly configService: ConfigService,
+    private readonly sendGridService: SendGridService,
   ) {}
 
   async findByEmail(email: string): Promise<User | undefined> {
@@ -35,6 +41,8 @@ export class UsersService {
   
     // Hash the password
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
+    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
   
     // Create a new user instance
     const newUser = this.usersRepository.create({
@@ -43,6 +51,8 @@ export class UsersService {
       password: hashedPassword,
       isAdmin: createUserDto.isAdmin,
       imageUrls: createUserDto.imageUrls,
+      isEmailVerified: false,
+      emailVerificationToken,
     });
   
     // Save the user first
@@ -58,12 +68,28 @@ export class UsersService {
       );
       savedUser.skills = await this.skillsRepository.save(skills);
     }
+
+    // Send verification email
+    const verificationLink = `${this.configService.get<string>('FRONTEND_URL')}/verify-email?token=${emailVerificationToken}`;
+    await this.sendGridService.sendVerificationEmail(newUser.email, verificationLink);
   
     // Return the user with associated skills
     return this.usersRepository.findOne({
       where: { id: savedUser.id },
       relations: ['skills'],
     });
+  }
+
+  async verifyEmail(token: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { emailVerificationToken: token } });
+    if (!user) {
+      throw new NotFoundException('Invalid verification token');
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = null; // Clear the token after verification
+
+    return this.usersRepository.save(user);
   }
 
   async createBulk(usersData: CreateUserDto[]): Promise<User[]> {

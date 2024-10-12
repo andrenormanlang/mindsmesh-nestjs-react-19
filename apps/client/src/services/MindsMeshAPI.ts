@@ -139,6 +139,9 @@ export const register = async (
   }
 };
 
+export const verifyEmail = async (token: string): Promise<void> => {
+  await api.get(`/users/verify-email`, { params: { token } });
+};
 
 export const updateProfile = async (
   profileData: Partial<User>
