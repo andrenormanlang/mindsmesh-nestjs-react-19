@@ -1,6 +1,6 @@
 import React from "react";
 import { User } from "../types/types";
-import { Card, CardContent, CardHeader } from "./shadcn/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "./shadcn/ui/card";
 import {
   Carousel,
   CarouselContent,
@@ -54,7 +54,6 @@ const UserDetailCard: React.FC<UserDetailCardProps> = ({ user }) => {
           <h2 className="text-4xl font-bold mb-4 text-indigo-900">
             {user.username}
           </h2>
-          <p className="text-gray-600 mb-4 text-lg">{user.email}</p>
           <h3 className="text-2xl font-semibold mb-4 text-indigo-800">
             Skills:
           </h3>
@@ -73,8 +72,6 @@ const UserDetailCard: React.FC<UserDetailCardProps> = ({ user }) => {
                   </p>
                   <span className="text-green-600 font-semibold mt-2 block text-lg">
                     ${skill.price}
-                  </span>
-                </div>
                 <Badge
                   className={`ml-4 ${
                     skill.isAvailable ? "bg-green-500" : "bg-red-500"
@@ -82,10 +79,25 @@ const UserDetailCard: React.FC<UserDetailCardProps> = ({ user }) => {
                 >
                   {skill.isAvailable ? "Available" : "Unavailable"}
                 </Badge>
+                  </span>
+                </div>
+            
               </li>
             ))}
           </ul>
         </CardContent>
+        <CardFooter className="p-4 flex items-center justify-between">
+
+    
+
+    {/* Optional: Add a Contact button */}
+    <a
+  href={`mailto:${user.email}`}
+  className="bg-green-700 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm inline-block text-center font-bold"
+>
+  Contact by Email
+</a>
+  </CardFooter>
       </Card>
     </div>
   );

@@ -89,6 +89,8 @@ console.log("Password comparison result:", await bcrypt.compare(user.password, f
       if (!user) {
         throw new NotFoundException('User not found');
       }
+
+      
   
       await this.usersService.update(user.id, { password: newPassword }); 
   

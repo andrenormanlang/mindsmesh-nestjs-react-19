@@ -171,75 +171,82 @@ const HomePage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4 sm:p-8">
             {usersWithSkills.map((user) => (
               <Card
-                key={user.id}
-                className="bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
-              >
-                <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
-                  {user.imageUrls && user.imageUrls.length > 0 ? (
-                    <div className="relative w-full h-full">
-                      <Carousel className="relative w-full h-full">
-                        <CarouselContent>
-                          {user.imageUrls.map((url, index) => (
-                            <CarouselItem key={index} className="w-full h-full">
-                              <img
-                                src={url}
-                                alt={`${user.username}'s image ${index + 1}`}
-                                className="w-full h-full object-contain rounded-lg" 
-                              />
-                            </CarouselItem>
-                          ))}
-                        </CarouselContent>
-                        <CarouselPrevious className="absolute top-1/2 left-0 transform -translate-y-1/2 z-10 p-2 bg-gray-800 text-white rounded-full shadow-lg" />
-                        <CarouselNext className="absolute top-1/2 right-0 transform -translate-y-1/2 z-10 p-2 bg-gray-800 text-white rounded-full shadow-lg" />
-                      </Carousel>
-                    </div>
-                  ) : (
-                    <img
-                      src={DefaultImage}
-                      alt="Placeholder"
-                      className="w-full h-full object-contain rounded-lg" 
+              key={user.id}
+              className="flex flex-col bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
+            >
+              <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
+                {user.imageUrls && user.imageUrls.length > 0 ? (
+                  <div className="relative w-full h-full">
+                    <Carousel className="relative w-full h-full">
+                      <CarouselContent>
+                        {user.imageUrls.map((url, index) => (
+                          <CarouselItem key={index} className="w-full h-full">
+                            <img
+                              src={url}
+                              alt={`${user.username}'s image ${index + 1}`}
+                              className="w-full h-full object-contain rounded-lg" 
+                            />
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className="absolute top-1/2 left-0 transform -translate-y-1/2 z-10 p-2 bg-gray-800 text-white rounded-full shadow-lg" />
+                      <CarouselNext className="absolute top-1/2 right-0 transform -translate-y-1/2 z-10 p-2 bg-gray-800 text-white rounded-full shadow-lg" />
+                    </Carousel>
+                  </div>
+                ) : (
+                  <img
+                    src={DefaultImage}
+                    alt="Placeholder"
+                    className="w-full h-full object-contain rounded-lg" 
+                  />
+                )}
+              </CardHeader>
+              <CardContent className="pt-4 flex-grow">
+                {/* Center the username */}
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold">{user.username}</h3>
+                </div>
+                {/* Clickable e-mail */}
+                <div className="text-left mt-2">
+                  <a href={`mailto:${user.email}`} className="text-sm text-blue-500 hover:underline">
+                    {user.email}
+                  </a>
+                </div>
+                {/* Left-align the skills */}
+                <div className="text-left mt-4">
+                  {user.skills.map((skill) => (
+                    <p
+                      key={skill.id}
+                      className="bg-blue-100 text-blue-800 text-xs font-semibold mr-2 mb-2 px-2.5 py-0.5 roundedtext-sm truncate whitespace-nowrap overflow-hidden text-ellipsis"
+                      title={skill.title}
+                    >
+                      {skill.title}
+                    </p>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between items-center">
+                <button
+                  onClick={(e) => openViewModal(user, e)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
+                >
+                  View Details
+                </button>
+                {userContext.user && userContext.user.id === user.id && (
+                  <div className="flex space-x-2">
+                    <Pencil1Icon
+                      className="w-5 h-5 text-gray-700 cursor-pointer hover:text-gray-900"
+                      onClick={() => openEditModal(user)}
                     />
-                  )}
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="flex justify-between items-center">
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold">{user.username}</h3>
-                    </div>
+                    <TrashIcon
+                      className="w-5 h-5 text-red-500 cursor-pointer hover:text-red-700"
+                      onClick={() => openDeleteModal(user)}
+                    />
                   </div>
-                  <div className="mt-4">
-                    {user.skills.map((skill) => (
-                      <p
-                        key={skill.id}
-                        className="text-sm truncate whitespace-nowrap overflow-hidden text-ellipsis max-w-xs"
-                        title={skill.title}
-                      >
-                        {skill.title}
-                      </p>
-                    ))}
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between items-center">
-                  <button
-                    onClick={(e) => openViewModal(user, e)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
-                  >
-                    View Details
-                  </button>
-                  {userContext.user && userContext.user.id === user.id && (
-                    <div className="flex space-x-2">
-                      <Pencil1Icon
-                        className="w-5 h-5 text-gray-700 cursor-pointer hover:text-gray-900"
-                        onClick={() => openEditModal(user)}
-                      />
-                      <TrashIcon
-                        className="w-5 h-5 text-red-500 cursor-pointer hover:text-red-700"
-                        onClick={() => openDeleteModal(user)}
-                      />
-                    </div>
-                  )}
-                </CardFooter>
-              </Card>
+                )}
+              </CardFooter>
+            </Card>
+            
             ))}
           </div>
         </>

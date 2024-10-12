@@ -18,8 +18,8 @@ export class User {
   @Column({ unique: true })
   email!: string;
 
-  @ApiHideProperty() // Hides the password field from Swagger documentation
-  @Column()
+  @ApiHideProperty() 
+  @Column({ nullable: false })
   password!: string;
 
   @ApiProperty({
