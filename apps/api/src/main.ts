@@ -21,7 +21,7 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*', // Replace '*' with specific origin in production
+    origin: '*', // Replace '*' with specific origin in production
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true, // Allows sending cookies and other credentials in requests
   });

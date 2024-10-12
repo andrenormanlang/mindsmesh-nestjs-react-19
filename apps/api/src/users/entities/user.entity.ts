@@ -19,8 +19,8 @@ export class User {
   email!: string;
 
   @ApiHideProperty() 
-  @Column({ nullable: false })
-  password!: string;
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  password: string;
 
   @ApiProperty({
     example: 'JohnDoe',
