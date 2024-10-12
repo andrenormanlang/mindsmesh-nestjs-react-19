@@ -21,17 +21,21 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: '*', // Replace '*' with specific origin in production
+    origin: [
+      'https://mindsmesh.vercel.app', 
+      'https://mindsmesh.netlify.app', 
+      'http://localhost:5173' 
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // Allows sending cookies and other credentials in requests
+    allowedHeaders: 'Content-Type, Authorization',
+    credentials: true, 
   });
-
   // Swagger configuration
   const config = new DocumentBuilder()
     .setTitle('Auth API')
     .setDescription('API documentation for the Auth module')
     .setVersion('1.0')
-    .addBearerAuth() // Enables Bearer token authentication
+    .addBearerAuth() 
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
