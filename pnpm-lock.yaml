@@ -113,7 +113,7 @@ importers:
         version: 5.0.1(express@4.21.0)
     devDependencies:
       '@nestjs/cli':
-        specifier: ^10.0.0
+        specifier: ^10.4.5
         version: 10.4.5
       '@nestjs/schematics':
         specifier: ^10.0.0

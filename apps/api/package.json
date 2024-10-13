@@ -5,14 +5,18 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "engines": {
+    "npm": ">=6.14.13",
+    "pnpm": ">=6.14.13"
+  },
   "scripts": {
+    "heroku-prebuild": "corepack enable && corepack prepare pnpm@8.6.12 --activate && pnpm add @nestjs/cli",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node dist/main.js",
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch --preserveWatchOutput",
     "start:prod": "npm run build && npm run start",
-    "heroku-postbuild": "corepack enable && corepack prepare pnpm@8.6.12 --activate && pnpm install && pnpm build",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
