@@ -40,7 +40,10 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
 
-  await app.listen(3000);
-  console.log(`Application is running on: ${await app.getUrl()}`);
+  const PORT = process.env.PORT || 3000;
+
+  // Start listening on the specified PORT and bind to all network interfaces
+  await app.listen(PORT, '0.0.0.0');
+  console.log(`Application is running on: http://0.0.0.0:${PORT}`);
 }
 bootstrap();
