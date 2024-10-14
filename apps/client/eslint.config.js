@@ -15,6 +15,8 @@ export default tseslint.config({
   plugins: {
     "react-hooks": reactHooks,
     "react-refresh": reactRefresh,
+    'eslint-plugin-react-compiler': require.resolve('eslint-plugin-react-compiler'),
+    
   },
   rules: {
     ...reactHooks.configs.recommended.rules,
@@ -22,5 +24,6 @@ export default tseslint.config({
       "warn",
       { allowConstantExport: true },
     ],
+    'react-compiler/react-compiler': "error",
   },
 });

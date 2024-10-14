@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { GradientContext } from "../contexts/GradientContext";
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.webp";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.webp";
@@ -40,8 +40,8 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   // TODO: Check if the screen is large enough to show the carousel
   // const isLargeScreen = window.innerWidth >= 1024;
-  const userContext = useContext(UserContext);
-  const gradientContext = useContext(GradientContext);
+  const userContext = use(UserContext);
+  const gradientContext = use(GradientContext);
 
   if (!userContext) {
     throw new Error("UserContext must be used within a UserProvider");

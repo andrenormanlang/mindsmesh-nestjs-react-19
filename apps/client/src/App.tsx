@@ -18,7 +18,7 @@ function App() {
       <Toaster />
       <Router>
         <UserProvider> 
-          <GradientProvider> 
+          <GradientProvider>
             <Navbar />
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
