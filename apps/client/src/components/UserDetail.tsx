@@ -9,6 +9,7 @@ import {
   CarouselPrevious,
 } from "./shadcn/ui/carousel";
 import { Badge } from "./shadcn/ui/badge";
+import { MdEmail } from "react-icons/md";
 import DefaultImage from "../assets/default-image.webp";
 
 interface UserDetailCardProps {
@@ -95,7 +96,7 @@ const UserDetailCard: React.FC<UserDetailCardProps> = ({ user }) => {
   href={`mailto:${user.email}`}
   className="bg-green-700 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm inline-block text-center font-bold"
 >
-  Contact by Email
+  <MdEmail />
 </a>
   </CardFooter>
       </Card>

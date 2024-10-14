@@ -204,7 +204,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
           <DialogTitle>Edit Skills</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-          {skills.map((skill, index) => (
+          {skills.map((_skill, index) => (
             <div key={index} className="p-4 bg-white shadow-md rounded-lg space-y-4">
               <div>
                 <Label htmlFor={`skills.${index}.title`}>Title</Label>
