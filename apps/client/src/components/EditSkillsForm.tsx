@@ -1,6 +1,6 @@
 // EditSkillsForm.tsx
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "./shadcn/ui/button";
