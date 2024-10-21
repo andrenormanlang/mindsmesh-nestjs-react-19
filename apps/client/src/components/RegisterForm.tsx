@@ -1,21 +1,12 @@
 import { useState } from "react";
-// import { useNavigate } from "react-router-dom";
 import { useForm, Controller, FieldError } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "./shadcn/ui/button";
 import { Input } from "./shadcn/ui/input";
 import { Label } from "./shadcn/ui/label";
-// import {
-//   Dialog,
-//   DialogHeader,
-//   DialogTitle,
-//   DialogContent,
-// } from "./shadcn/ui/dialog";
 import { useToast } from "./shadcn/ui/use-toast";
 import { register } from "../services/MindsMeshAPI";
-// import { SkillData } from "../types/types";
-// import SkillForm from "./SkillForm";
 import { AxiosError } from "axios";
 
 export type RegisterFormData = {
@@ -34,13 +25,7 @@ const registerSchema = z.object({
 
 const RegisterForm = ({ onClose }: { onClose: () => void }) => {
   const { toast } = useToast();
-  // const navigate = useNavigate();
   const [error, setError] = useState("");
-  // const [isSkillDialogOpen, setIsSkillDialogOpen] = useState(false);
-  // const [skills, setSkills] = useState<SkillData[]>([]);
-  // const [editingSkillIndex, setEditingSkillIndex] = useState<number | null>(
-  //   null
-  // );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
@@ -83,18 +68,6 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
   };
 
   const onSubmit = async (data: RegisterFormData) => {
-    // if (skills.length === 0) {
-    //   // Show a toast if no skills are added
-    //   toast({
-    //     title: "Missing Skills",
-    //     description:
-    //       "You must add at least one skill to offer before registering.",
-    //     variant: "destructive",
-    //     duration: 5000,
-    //   });
-    //   return; // Prevent form submission
-    // }
-
     const formData = new FormData();
     formData.append("username", data.username);
     formData.append("email", data.email);
@@ -152,30 +125,6 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
       }
     }
   };
-
-  // const handleAddSkill = (newSkill: SkillData) => {
-  //   const updatedSkills = [...skills];
-
-  //   if (editingSkillIndex !== null) {
-  //     updatedSkills[editingSkillIndex] = newSkill;
-  //     setEditingSkillIndex(null);
-  //   } else {
-  //     updatedSkills.push(newSkill);
-  //   }
-
-  //   setSkills(updatedSkills);
-  //   setIsSkillDialogOpen(false);
-  // };
-
-  // const handleEditSkill = (index: number) => {
-  //   setEditingSkillIndex(index);
-  //   setIsSkillDialogOpen(true);
-  // };
-
-  // const handleDeleteSkill = (index: number) => {
-  //   const updatedSkills = skills.filter((_, i) => i !== index);
-  //   setSkills(updatedSkills);
-  // };
 
   return (
     <>
@@ -267,65 +216,12 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
               ))}
             </div>
           )}
-
           {error && <p className="text-red-500">{error}</p>}
           <div className="flex space-x-4">
-            {/* <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsSkillDialogOpen(true)}
-            >
-              Add Skill
-            </Button> */}
             <Button type="submit">Submit</Button> 
           </div>
-        </form>
-        {/* Displaying the list of skills */}
-        {/* <div className="mt-4">
-          <h3 className="font-semibold text-lg">Skills</h3>
-          {skills.map((skill, index) => (
-            <div
-              key={index}
-              className="flex justify-between items-center p-2 bg-gray-100 rounded mb-2"
-            >
-              <span className="truncate max-w-xs">{skill.title}</span>
-              <div className="flex space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleEditSkill(index)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleDeleteSkill(index)}
-                >
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div> */}
+        </form>       
       </div>
-
-      {/* Skill Addition Dialog */}
-      {/* <Dialog open={isSkillDialogOpen} onOpenChange={setIsSkillDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>
-              {editingSkillIndex !== null ? "Edit Skill" : "Add Skill"}
-            </DialogTitle>
-          </DialogHeader>
-          <SkillForm
-            onAddSkill={handleAddSkill}
-            initialSkill={
-              editingSkillIndex !== null ? skills[editingSkillIndex] : undefined
-            }
-          />
-        </DialogContent>
-      </Dialog> */}
     </>
   );
 };
