@@ -1,14 +1,19 @@
-import { useState, useTransition, useOptimistic } from "react";
-import { useForm, Controller } from "react-hook-form";
+// EditSkillsForm.tsx
+
+import React, { useState } from "react";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 import { Button } from "./shadcn/ui/button";
 import { Input } from "./shadcn/ui/input";
 import { Label } from "./shadcn/ui/label";
 import { Textarea } from "./shadcn/ui/textarea";
+import { Switch } from "./shadcn/ui/switch";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "./shadcn/ui/dialog";
 import { User, Skill } from "../types/types";
 import {
@@ -17,7 +22,6 @@ import {
   deleteUserSkill,
 } from "../services/MindsMeshAPI";
 import { useToast } from "./shadcn/ui/use-toast";
-import { Switch } from "./shadcn/ui/switch";
 
 type EditSkillsFormProps = {
   user: User;
@@ -39,38 +43,38 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
     },
   });
 
-  // Use the useOptimistic hook with the correct signature
-  const [skills, updateSkills] = useOptimistic<Skill[]>(user.skills || []);
-  const [isPending] = useTransition();
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "skills",
+  });
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [skillToDelete, setSkillToDelete] = useState<number | null>(null);
+  const [skillToDeleteIndex, setSkillToDeleteIndex] = useState<number | null>(
+    null
+  );
 
   const handleFormSubmit = async (data: { skills: Skill[] }) => {
-    const previousSkills = [...skills]; // Backup for rollback
-
-    // Optimistically update the skills state
-    const optimisticSkills = data.skills.map((skill) => ({
-      ...skill,
-      price: parseFloat(skill.price.toString()),
-    }));
-
-    updateSkills(() => optimisticSkills);
-
+    // Convert price to number
+  const skillsWithNumberPrice = data.skills.map((skill) => ({
+    ...skill,
+    price: Number(skill.price),
+  }));
     try {
       const updatedSkills = await Promise.all(
-        optimisticSkills.map(async (skill) => {
-          if (skill.id) {
+        skillsWithNumberPrice.map(async (skill) => {
+          if (skill.id && user.skills.find((s) => s.id === skill.id)) {
             return await updateUserSkill(user.id, skill.id, skill);
           } else {
-            return await addSkillToUser(user.id, skill);
+            const addedSkill = await addSkillToUser(user.id, skill);
+            return addedSkill;
           }
         })
       );
 
+      reset({ skills: updatedSkills });
       const updatedUser = { ...user, skills: updatedSkills };
       setUser(updatedUser);
 
-      // Show success toast
       toast({
         title: "Skills Updated",
         description: "Your skills have been successfully updated.",
@@ -82,13 +86,10 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
     } catch (error) {
       console.error("Failed to update skills:", error);
 
-      // Rollback the optimistic update manually
-      updateSkills(() => previousSkills);
-
-      // Show error toast
       toast({
         title: "Failed to Update Skills",
-        description: "There was an error updating your skills. Please try again.",
+        description:
+          "There was an error updating your skills. Please try again.",
         variant: "destructive",
         duration: 5000,
       });
@@ -96,65 +97,62 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
   };
 
   const handleAddSkill = () => {
+    const tempId = uuidv4(); // Generate a temporary ID
     const newSkill: Skill = {
+      id: tempId,
       title: "",
       description: "",
       price: 0.0,
       isAvailable: false,
     };
-    const updatedSkills = [...skills, newSkill];
-
-    // Optimistically update the skills state
-    updateSkills(() => updatedSkills);
-
-    reset({ skills: updatedSkills });
+    append(newSkill);
   };
 
   const handleDeleteSkill = (index: number) => {
-    const skillToDeleteItem = skills[index];
-    if (!skillToDeleteItem) return;
+    setSkillToDeleteIndex(index);
+    setIsDeleteModalOpen(true);
+  };
 
-    // Optimistically remove the skill from the state
-    const updatedSkills = skills.filter((_, i) => i !== index);
-    updateSkills(() => updatedSkills);
+  const confirmDeleteSkill = async () => {
+    if (skillToDeleteIndex === null) return;
+    const skillToDelete = fields[skillToDeleteIndex];
 
-    // Backup for potential rollback
-    const previousSkills = [...skills];
+    remove(skillToDeleteIndex);
 
-    if (skillToDeleteItem.id) {
-      deleteUserSkill(user.id, skillToDeleteItem.id)
-        .then(() => {
-          // Show success toast
-          toast({
-            title: "Skill Deleted",
-            description: `The skill "${skillToDeleteItem.title}" has been deleted.`,
-            variant: "destructive",
-            duration: 5000,
-          });
-        })
-        .catch((error) => {
-          console.error("Failed to delete skill:", error);
+    if (skillToDelete.id && user.skills.find((s) => s.id === skillToDelete.id)) {
+      try {
+        await deleteUserSkill(user.id, skillToDelete.id);
 
-          // Rollback the optimistic update
-          updateSkills(() => previousSkills);
+        // Update user state
+        const updatedUser = {
+          ...user,
+          skills: user.skills.filter((s) => s.id !== skillToDelete.id),
+        };
+        setUser(updatedUser);
 
-          // Show error toast
-          toast({
-            title: "Failed to Delete Skill",
-            description: `There was an error deleting the skill "${skillToDeleteItem.title}". Please try again.`,
-            variant: "destructive",
-            duration: 5000,
-          });
-        })
-        .finally(() => {
-          setIsDeleteModalOpen(false);
-          setSkillToDelete(null);
+        toast({
+          title: "Skill Deleted",
+          description: `The skill "${skillToDelete.title}" has been deleted.`,
+          variant: "destructive",
+          duration: 5000,
         });
-    } else {
-      // Skill is only in local state
-      setIsDeleteModalOpen(false);
-      setSkillToDelete(null);
+      } catch (error) {
+        console.error("Failed to delete skill:", error);
+
+        // Rollback the optimistic removal
+        append(skillToDelete);
+
+        toast({
+          title: "Failed to Delete Skill",
+          description: `There was an error deleting the skill "${skillToDelete.title}". Please try again.`,
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
     }
+
+    setIsDeleteModalOpen(false);
+    setSkillToDeleteIndex(null);
   };
 
   return (
@@ -162,11 +160,15 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
       <DialogContent className="max-h-[90vh] max-w-3xl w-full overflow-y-auto p-4 space-y-4">
         <DialogHeader>
           <DialogTitle>Edit Skills</DialogTitle>
+          <DialogDescription>
+            Update your skills below. You can add new skills, edit existing ones,
+            or delete them.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-          {skills.map((skill, index) => (
+          {fields.map((field, index) => (
             <div
-              key={index}
+              key={field.id || index}
               className="p-4 bg-white shadow-md rounded-lg space-y-4"
             >
               <div>
@@ -174,14 +176,9 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
                 <Controller
                   name={`skills.${index}.title`}
                   control={control}
-                  defaultValue={skill.title}
                   rules={{ required: "Title is required" }}
                   render={({ field }) => (
-                    <Input
-                      {...field}
-                      placeholder="Title"
-                      className="w-full"
-                    />
+                    <Input {...field} placeholder="Title" className="w-full" />
                   )}
                 />
                 {errors.skills?.[index]?.title && (
@@ -196,7 +193,6 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
                 <Controller
                   name={`skills.${index}.description`}
                   control={control}
-                  defaultValue={skill.description}
                   render={({ field }) => (
                     <Textarea
                       {...field}
@@ -212,12 +208,12 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
                 <Controller
                   name={`skills.${index}.price`}
                   control={control}
-                  defaultValue={skill.price}
                   rules={{ required: "Price is required" }}
                   render={({ field }) => (
                     <Input
                       {...field}
                       type="number"
+                      step="0.01"
                       placeholder="Price"
                       className="w-full"
                     />
@@ -231,16 +227,12 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <Label
-                  htmlFor={`skills.${index}.isAvailable`}
-                  className="mr-2"
-                >
+                <Label htmlFor={`skills.${index}.isAvailable`} className="mr-2">
                   Available
                 </Label>
                 <Controller
                   name={`skills.${index}.isAvailable`}
                   control={control}
-                  defaultValue={skill.isAvailable}
                   render={({ field }) => (
                     <Switch
                       checked={field.value || false}
@@ -252,10 +244,8 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
 
               <Button
                 variant="destructive"
-                onClick={() => {
-                  setSkillToDelete(index);
-                  setIsDeleteModalOpen(true);
-                }}
+                type="button"
+                onClick={() => handleDeleteSkill(index)}
                 className="w-full mt-2"
               >
                 Delete Skill
@@ -274,7 +264,7 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
             type="submit"
             className="w-full bg-green-500 hover:bg-green-600 text-white"
           >
-            {isPending ? "Updating..." : "Update Skills"}
+            Update Skills
           </Button>
         </form>
       </DialogContent>
@@ -284,22 +274,18 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              {skillToDeleteIndex !== null && fields[skillToDeleteIndex]
+                ? fields[skillToDeleteIndex].title || "this skill"
+                : "this skill"}
+              ?
+            </DialogDescription>
           </DialogHeader>
-          <p>
-            Are you sure you want to delete{" "}
-            {skillToDelete !== null && skills[skillToDelete]
-              ? skills[skillToDelete].title
-              : "this skill"}
-            ?
-          </p>
           <div className="flex space-x-4 mt-4">
             <Button
               variant="destructive"
-              onClick={() => {
-                if (skillToDelete !== null) {
-                  handleDeleteSkill(skillToDelete);
-                }
-              }}
+              onClick={confirmDeleteSkill}
               className="w-full"
             >
               Yes, Delete

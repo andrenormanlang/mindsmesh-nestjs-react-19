@@ -1,4 +1,6 @@
-import { useState } from "react";
+// EditProfileForm.tsx
+
+import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Button } from "./shadcn/ui/button";
 import { Input } from "./shadcn/ui/input";
@@ -25,15 +27,10 @@ type EditProfileFormProps = {
 const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
   const { toast } = useToast();
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
-  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
-    useState(false);
-  const [existingimageUrls, setExistingimageUrls] = useState<string[]>(
-    user.imageUrls || []
-  );
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const [existingimageUrls, setExistingimageUrls] = useState<string[]>(user.imageUrls || []);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [targetDeleteIndex, setTargetDeleteIndex] = useState<number | null>(
-    null
-  );
+  const [targetDeleteIndex, setTargetDeleteIndex] = useState<number | null>(null);
 
   const {
     control,
@@ -75,8 +72,7 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
 
       toast({
         title: "Update Failed",
-        description:
-          "There was an issue updating your profile. Please try again.",
+        description: "There was an issue updating your profile. Please try again.",
         variant: "destructive",
         duration: 5000,
       });
@@ -98,15 +94,11 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
   const confirmDeleteImage = () => {
     if (targetDeleteIndex !== null) {
       if (targetDeleteIndex < existingimageUrls.length) {
-        const updatedUrls = existingimageUrls.filter(
-          (_, i) => i !== targetDeleteIndex
-        );
+        const updatedUrls = existingimageUrls.filter((_, i) => i !== targetDeleteIndex);
         setExistingimageUrls(updatedUrls);
       } else {
         const newIndex = targetDeleteIndex - existingimageUrls.length;
-        const updatedFiles = getValues("avatarFiles").filter(
-          (_, i) => i !== newIndex
-        );
+        const updatedFiles = getValues("avatarFiles").filter((_, i) => i !== newIndex);
         setValue("avatarFiles", updatedFiles);
       }
       setIsDeleteModalOpen(false);
@@ -128,9 +120,7 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
             )}
           />
           {errors.username && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.username.message}
-            </p>
+            <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
           )}
         </div>
 
@@ -141,9 +131,7 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
             <div className="grid grid-cols-2 gap-4 mt-2">
               {[
                 ...existingimageUrls,
-                ...getValues("avatarFiles").map((file) =>
-                  URL.createObjectURL(file)
-                ),
+                ...getValues("avatarFiles").map((file) => URL.createObjectURL(file)),
               ].map((url, index) => (
                 <div key={index} className="relative">
                   <img
@@ -180,10 +168,7 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
           Change Password
         </Button>
 
-        <Button
-          type="submit"
-          className="w-full bg-green-500 hover:bg-green-600 text-white"
-        >
+        <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white">
           Update Profile
         </Button>
       </form>
