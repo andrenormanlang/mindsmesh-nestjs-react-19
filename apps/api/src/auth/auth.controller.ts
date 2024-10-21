@@ -20,6 +20,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { MessageResponseDto } from './dto/message-response.dto';
 
 @ApiTags('auth') 
 @Controller('auth')
@@ -43,12 +44,10 @@ export class AuthController {
   @ApiOperation({ summary: 'User registration' })
   @ApiResponse({
     status: 201,
-    description:
-      'User registered successfully, returns JWT token.',
-    type: AuthResponseDto,
+    description: 'User registered successfully. Please verify your email.',
+    type: MessageResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request.' })
-  async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
+  async register(@Body() registerDto: RegisterDto): Promise<MessageResponseDto> {
     return this.authService.register(registerDto);
   }
 

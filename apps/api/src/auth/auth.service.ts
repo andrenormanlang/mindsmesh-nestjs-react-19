@@ -35,19 +35,23 @@ export class AuthService {
 
   async login(user: any) {
     const foundUser = await this.usersService.findByEmail(user.email);
-    console.log("Stored hashed password:", foundUser.password);
-console.log("Password comparison result:", await bcrypt.compare(user.password, foundUser.password));
-    if (
-      !foundUser ||
-      !(await bcrypt.compare(user.password, foundUser.password))
-    ) {
+  
+    if (!foundUser) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
+  
+    const passwordMatches = await bcrypt.compare(user.password, foundUser.password);
+    console.log('Password comparison result:', passwordMatches);
+    console.log('User isEmailVerified:', foundUser.isEmailVerified);
+  
+    if (!passwordMatches) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+  
     if (!foundUser.isEmailVerified) {
       throw new UnauthorizedException('Email not verified. Please check your email to verify your account.');
     }
-
+  
     const payload = {
       email: foundUser.email,
       sub: foundUser.id,
@@ -57,14 +61,15 @@ console.log("Password comparison result:", await bcrypt.compare(user.password, f
       access_token: this.jwtService.sign(payload),
     };
   }
-
+  
+  
   async register(user: any) {
     const hashedPassword = await bcrypt.hash(user.password, 10);
-    const newUser = await this.usersService.create({
+    await this.usersService.create({
       ...user,
       password: hashedPassword,
     });
-    return this.login(newUser);
+    return { message: 'Registration successful. Please verify your email.' };
   }
 
   async sendPasswordReset(email: string): Promise<void> {

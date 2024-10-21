@@ -82,19 +82,17 @@ export class UsersService {
     });
   }
 
-  async verifyEmail(userId: string): Promise<User> {
+  async verifyEmail(userId: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
   
     if (!user) {
-      throw new NotFoundException('Invalid verification token');
+      throw new NotFoundException('User not found');
     }
   
     user.isEmailVerified = true;
   
-    const updatedUser = await this.usersRepository.save(user);
-    console.log('User updated:', updatedUser); // Log the updated user to verify the changes
-  
-    return updatedUser;
+    await this.usersRepository.save(user);
+    console.log('User updated:', user); 
   }
   
   

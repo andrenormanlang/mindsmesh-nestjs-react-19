@@ -173,15 +173,7 @@ export class UsersController {
   @Get('verify-email')
   @ApiOperation({ summary: 'Verify user email' })
   async verifyEmail(@Query('userId') userId: string): Promise<{ message: string }> {
-    const user = await this.usersService.findOne(userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-  
-    // Update the isEmailVerified field to true
-    user.isEmailVerified = true;
-    await this.usersService.update(user.id, user);
-  
+    await this.usersService.verifyEmail(userId);
     return { message: 'Email successfully verified' };
   }
   

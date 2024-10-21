@@ -85,22 +85,15 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
         formData.get("password") as string,
         formData.get("email") as string,
         selectedFiles,
-        []
-        // skills
       );
-
+    
       onClose();
       toast({
         title: "Registration Successful",
-        description: "Please test your login.",
+        description: "Please check your email to verify your account.",
         variant: "success",
-        duration: 3000,
+        duration: 5000,
       });
-
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000); 
-  
     } catch (err: unknown) {
       console.error("Registration error:", err);
       const error = err as AxiosError;

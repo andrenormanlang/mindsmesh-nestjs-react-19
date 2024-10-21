@@ -95,18 +95,12 @@ export const register = async (
   password: string,
   email: string,
   imageUrls: File[] | null,
-  skills: {
-    title: string;
-    description: string;
-    price: number;
-    isAvailable: boolean;
-    id?: string;
-  }[] = []
+
 ): Promise<User> => {
   const formData = new FormData();
 
   formData.append("username", username);
-  formData.append("password", password); // Ensure password is appended correctly
+  formData.append("password", password);
   formData.append("email", email);
 
   if (imageUrls) {
@@ -115,14 +109,6 @@ export const register = async (
     });
   }
 
-  if (skills && skills.length > 0) {
-    skills.forEach((skill, index) => {
-      formData.append(`skills[${index}][title]`, skill.title);
-      formData.append(`skills[${index}][description]`, skill.description);
-      formData.append(`skills[${index}][price]`, skill.price.toString());
-      formData.append(`skills[${index}][isAvailable]`, skill.isAvailable.toString());
-    });
-  }
 
   try {
     const response = await api.post("/users/register", formData, {
@@ -138,10 +124,11 @@ export const register = async (
     throw error;
   }
 };
+
 export const verifyEmail = async (userId: string): Promise<void> => {
   try {
     const response = await api.get(`/users/verify-email`, { params: { userId } });
-    console.log(response.data.message); // Optional logging
+    console.log(response.data.message); 
   } catch (error) {
     console.error("Error verifying email:", error);
     throw error;
@@ -156,9 +143,6 @@ export const resendVerificationEmail = async (email: string): Promise<void> => {
     throw error;
   }
 };
-
-
-
 
 export const updateProfile = async (
   profileData: Partial<User>
