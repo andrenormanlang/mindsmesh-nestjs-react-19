@@ -11,7 +11,7 @@ export class SendGridService {
   async sendVerificationEmail(to: string, verificationLink: string): Promise<void> {
     const msg = {
       to,
-      from: 'your_verified_sendgrid_email@example.com',
+      from: 'andrenormanlang@gmail.com',
       subject: 'Email Verification',
       html: `
         <p>Thank you for registering. Please verify your email by clicking the link below:</p>

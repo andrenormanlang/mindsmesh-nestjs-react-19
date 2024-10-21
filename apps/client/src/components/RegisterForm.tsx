@@ -6,16 +6,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "./shadcn/ui/button";
 import { Input } from "./shadcn/ui/input";
 import { Label } from "./shadcn/ui/label";
-import {
-  Dialog,
-  DialogHeader,
-  DialogTitle,
-  DialogContent,
-} from "./shadcn/ui/dialog";
+// import {
+//   Dialog,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogContent,
+// } from "./shadcn/ui/dialog";
 import { useToast } from "./shadcn/ui/use-toast";
 import { register } from "../services/MindsMeshAPI";
-import { SkillData } from "../types/types";
-import SkillForm from "./SkillForm";
+// import { SkillData } from "../types/types";
+// import SkillForm from "./SkillForm";
 import { AxiosError } from "axios";
 
 export type RegisterFormData = {
@@ -36,11 +36,11 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
   const { toast } = useToast();
   // const navigate = useNavigate();
   const [error, setError] = useState("");
-  const [isSkillDialogOpen, setIsSkillDialogOpen] = useState(false);
-  const [skills, setSkills] = useState<SkillData[]>([]);
-  const [editingSkillIndex, setEditingSkillIndex] = useState<number | null>(
-    null
-  );
+  // const [isSkillDialogOpen, setIsSkillDialogOpen] = useState(false);
+  // const [skills, setSkills] = useState<SkillData[]>([]);
+  // const [editingSkillIndex, setEditingSkillIndex] = useState<number | null>(
+  //   null
+  // );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
@@ -83,17 +83,17 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
   };
 
   const onSubmit = async (data: RegisterFormData) => {
-    if (skills.length === 0) {
-      // Show a toast if no skills are added
-      toast({
-        title: "Missing Skills",
-        description:
-          "You must add at least one skill to offer before registering.",
-        variant: "destructive",
-        duration: 5000,
-      });
-      return; // Prevent form submission
-    }
+    // if (skills.length === 0) {
+    //   // Show a toast if no skills are added
+    //   toast({
+    //     title: "Missing Skills",
+    //     description:
+    //       "You must add at least one skill to offer before registering.",
+    //     variant: "destructive",
+    //     duration: 5000,
+    //   });
+    //   return; // Prevent form submission
+    // }
 
     const formData = new FormData();
     formData.append("username", data.username);
@@ -112,7 +112,8 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
         formData.get("password") as string,
         formData.get("email") as string,
         selectedFiles,
-        skills
+        []
+        // skills
       );
 
       onClose();
@@ -152,29 +153,29 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
-  const handleAddSkill = (newSkill: SkillData) => {
-    const updatedSkills = [...skills];
+  // const handleAddSkill = (newSkill: SkillData) => {
+  //   const updatedSkills = [...skills];
 
-    if (editingSkillIndex !== null) {
-      updatedSkills[editingSkillIndex] = newSkill;
-      setEditingSkillIndex(null);
-    } else {
-      updatedSkills.push(newSkill);
-    }
+  //   if (editingSkillIndex !== null) {
+  //     updatedSkills[editingSkillIndex] = newSkill;
+  //     setEditingSkillIndex(null);
+  //   } else {
+  //     updatedSkills.push(newSkill);
+  //   }
 
-    setSkills(updatedSkills);
-    setIsSkillDialogOpen(false);
-  };
+  //   setSkills(updatedSkills);
+  //   setIsSkillDialogOpen(false);
+  // };
 
-  const handleEditSkill = (index: number) => {
-    setEditingSkillIndex(index);
-    setIsSkillDialogOpen(true);
-  };
+  // const handleEditSkill = (index: number) => {
+  //   setEditingSkillIndex(index);
+  //   setIsSkillDialogOpen(true);
+  // };
 
-  const handleDeleteSkill = (index: number) => {
-    const updatedSkills = skills.filter((_, i) => i !== index);
-    setSkills(updatedSkills);
-  };
+  // const handleDeleteSkill = (index: number) => {
+  //   const updatedSkills = skills.filter((_, i) => i !== index);
+  //   setSkills(updatedSkills);
+  // };
 
   return (
     <>
@@ -269,18 +270,18 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
 
           {error && <p className="text-red-500">{error}</p>}
           <div className="flex space-x-4">
-            <Button
+            {/* <Button
               type="button"
               variant="outline"
               onClick={() => setIsSkillDialogOpen(true)}
             >
               Add Skill
-            </Button>
-            <Button type="submit">Submit</Button>
+            </Button> */}
+            <Button type="submit">Submit</Button> 
           </div>
         </form>
         {/* Displaying the list of skills */}
-        <div className="mt-4">
+        {/* <div className="mt-4">
           <h3 className="font-semibold text-lg">Skills</h3>
           {skills.map((skill, index) => (
             <div
@@ -306,11 +307,11 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
       </div>
 
       {/* Skill Addition Dialog */}
-      <Dialog open={isSkillDialogOpen} onOpenChange={setIsSkillDialogOpen}>
+      {/* <Dialog open={isSkillDialogOpen} onOpenChange={setIsSkillDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
@@ -324,7 +325,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
             }
           />
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </>
   );
 };

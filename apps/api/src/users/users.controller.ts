@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   InternalServerErrorException,
+  NotFoundException,
   Param,
   Post,
   Put,
@@ -12,11 +13,13 @@ import {
   UploadedFiles,
   UseGuards,
   UseInterceptors,
+
 } from '@nestjs/common';
+
 import { UsersService } from './users.service';
 import { UserResponseDto } from './dto/user-response.dto';
 import { CreateUserControllerDto } from './dto/create-user-controller.dto';
-import {CreateUsersDto} from './dto/create-users.dto';
+import { CreateUsersDto } from './dto/create-users.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { DeleteUsersDto } from './dto/delete.dto';
@@ -167,16 +170,27 @@ export class UsersController {
       throw new BadRequestException('Registration failed.');
     }
   }
-
   @Get('verify-email')
   @ApiOperation({ summary: 'Verify user email' })
-  async verifyEmail(@Query('token') token: string): Promise<{ message: string }> {
-    const user = await this.usersService.verifyEmail(token);
-    if (user) {
-      return { message: 'Email successfully verified' };
-    } else {
-      throw new BadRequestException('Invalid or expired verification token');
+  async verifyEmail(@Query('userId') userId: string): Promise<{ message: string }> {
+    const user = await this.usersService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
+  
+    // Update the isEmailVerified field to true
+    user.isEmailVerified = true;
+    await this.usersService.update(user.id, user);
+  
+    return { message: 'Email successfully verified' };
+  }
+  
+  @Post('resend-verification-email')
+  async resendVerificationEmail(
+    @Body('email') email: string
+  ): Promise<{ message: string }> {
+    await this.usersService.resendVerificationEmail(email);
+    return { message: 'Verification email resent. Please check your inbox.' };
   }
 
   @Get(':id')
@@ -238,33 +252,36 @@ export class UsersController {
     return plainToClass(UserResponseDto, updatedUser);
   }
 
-@Put(':id/update-password')
-@ApiOperation({ summary: 'Update user password' })
-@ApiConsumes('application/json')
-@ApiBody({
-  description: 'New password data',
-  type: UpdatePasswordDto,
-})
-@ApiResponse({
-  status: 200,
-  description: 'Password successfully updated',
-})
-@ApiResponse({ status: 400, description: 'Invalid input data' })
-@ApiResponse({ status: 401, description: 'Unauthorized' })
-async updatePassword(
-  @Param('id') id: string,
-  @Body() updatePasswordDto: UpdatePasswordDto
-): Promise<{ message: string }> {
-  // Optional: Verify current password
-  const user = await this.usersService.findOne(id);
-  const isMatch = await bcrypt.compare(updatePasswordDto.currentPassword, user.password);
-  if (!isMatch) {
-    throw new BadRequestException('Current password is incorrect.');
-  }
+  @Put(':id/update-password')
+  @ApiOperation({ summary: 'Update user password' })
+  @ApiConsumes('application/json')
+  @ApiBody({
+    description: 'New password data',
+    type: UpdatePasswordDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password successfully updated',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async updatePassword(
+    @Param('id') id: string,
+    @Body() updatePasswordDto: UpdatePasswordDto
+  ): Promise<{ message: string }> {
+    // Optional: Verify current password
+    const user = await this.usersService.findOne(id);
+    const isMatch = await bcrypt.compare(
+      updatePasswordDto.currentPassword,
+      user.password
+    );
+    if (!isMatch) {
+      throw new BadRequestException('Current password is incorrect.');
+    }
 
-  await this.usersService.updatePassword(id, updatePasswordDto.newPassword);
-  return { message: 'Password successfully updated' };
-}
+    await this.usersService.updatePassword(id, updatePasswordDto.newPassword);
+    return { message: 'Password successfully updated' };
+  }
 
   @Delete('delete-bulk')
   @ApiOperation({ summary: 'Bulk delete users' })

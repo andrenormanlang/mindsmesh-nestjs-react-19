@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -43,6 +44,7 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+    console.log('Generated email verification token:', emailVerificationToken);
   
     // Create a new user instance
     const newUser = this.usersRepository.create({
@@ -52,12 +54,12 @@ export class UsersService {
       isAdmin: createUserDto.isAdmin,
       imageUrls: createUserDto.imageUrls,
       isEmailVerified: false,
-      emailVerificationToken,
     });
   
     // Save the user first
     const savedUser = await this.usersRepository.save(newUser);
-  
+    console.log('Saved user:', savedUser);
+
     // Now create and associate skills if provided
     if (createUserDto.skills && createUserDto.skills.length > 0) {
       const skills = createUserDto.skills.map(skillDto => 
@@ -70,7 +72,7 @@ export class UsersService {
     }
 
     // Send verification email
-    const verificationLink = `${this.configService.get<string>('FRONTEND_URL')}/verify-email?token=${emailVerificationToken}`;
+    const verificationLink = `${this.configService.get<string>('FRONTEND_URL')}/verify-email?userId=${newUser.id}`;
     await this.sendGridService.sendVerificationEmail(newUser.email, verificationLink);
   
     // Return the user with associated skills
@@ -80,17 +82,38 @@ export class UsersService {
     });
   }
 
-  async verifyEmail(token: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { emailVerificationToken: token } });
+  async verifyEmail(userId: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+  
     if (!user) {
       throw new NotFoundException('Invalid verification token');
     }
-
+  
     user.isEmailVerified = true;
-    user.emailVerificationToken = null; // Clear the token after verification
-
-    return this.usersRepository.save(user);
+  
+    const updatedUser = await this.usersRepository.save(user);
+    console.log('User updated:', updatedUser); // Log the updated user to verify the changes
+  
+    return updatedUser;
   }
+  
+  
+  // users.service.ts
+  async resendVerificationEmail(email: string): Promise<void> {
+    const user = await this.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+  
+    if (user.isEmailVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+  
+    const verificationLink = `${this.configService.get<string>('FRONTEND_URL')}/verify-email?userId=${user.id}`;
+    await this.sendGridService.sendVerificationEmail(user.email, verificationLink);
+  }
+  
+
 
   async createBulk(usersData: CreateUserDto[]): Promise<User[]> {
     console.log('Received usersData:', usersData);
@@ -152,6 +175,10 @@ export class UsersService {
     if (updateUserDto.username) {
       user.username = updateUserDto.username;
     }
+    if (updateUserDto.isEmailVerified !== undefined) {
+      user.isEmailVerified = updateUserDto.isEmailVerified;
+    }
+  
     if (updateUserDto.role) {
       user.role = updateUserDto.role;
     }

@@ -22,6 +22,10 @@ export class UpdateUserDto {
   @IsOptional()
   username?: string;
 
+  @IsBoolean()
+  @IsOptional()
+  isEmailVerified?: boolean;
+
   @IsString()
   @IsOptional()
   role?: string;

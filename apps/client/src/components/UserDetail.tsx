@@ -9,7 +9,7 @@ import {
   CarouselPrevious,
 } from "./shadcn/ui/carousel";
 import { Badge } from "./shadcn/ui/badge";
-import { MdEmail } from "react-icons/md";
+import { MdEmail } from "react-icons/md"; // Import the close icon
 import DefaultImage from "../assets/default-image.webp";
 
 interface UserDetailCardProps {
@@ -19,8 +19,9 @@ interface UserDetailCardProps {
 const UserDetailCard: React.FC<UserDetailCardProps> = ({ user }) => {
   return (
     <div className="flex items-center justify-center m-0 p-0">
-      <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-900 shadow-lg rounded-lg overflow-hidden max-h-[90vh] flex flex-col">
+      <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-900 shadow-lg rounded-lg overflow-hidden max-h-[90vh] flex flex-col relative">
         <CardHeader className="p-0 m-0 flex-shrink-0 relative">
+         
           <Carousel className="w-full relative m-0 h-80">
             <CarouselContent>
               {user.imageUrls && user.imageUrls.length > 0 ? (
@@ -73,32 +74,28 @@ const UserDetailCard: React.FC<UserDetailCardProps> = ({ user }) => {
                   </p>
                   <span className="text-green-600 font-semibold mt-2 block text-lg">
                     ${skill.price}
-                <Badge
-                  className={`ml-4 ${
-                    skill.isAvailable ? "bg-green-500" : "bg-red-500"
-                  } text-white`}
-                >
-                  {skill.isAvailable ? "Available" : "Unavailable"}
-                </Badge>
+                    <Badge
+                      className={`ml-4 ${
+                        skill.isAvailable ? "bg-green-500" : "bg-red-500"
+                      } text-white`}
+                    >
+                      {skill.isAvailable ? "Available" : "Unavailable"}
+                    </Badge>
                   </span>
                 </div>
-            
               </li>
             ))}
           </ul>
         </CardContent>
         <CardFooter className="p-4 flex items-center justify-between">
-
-    
-
-    {/* Optional: Add a Contact button */}
-    <a
-  href={`mailto:${user.email}`}
-  className="bg-green-700 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm inline-block text-center font-bold"
->
-  <MdEmail />
-</a>
-  </CardFooter>
+          {/* Optional: Add a Contact button */}
+          <a
+            href={`mailto:${user.email}`}
+            className="bg-green-700 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm inline-block text-center font-bold"
+          >
+            <MdEmail />
+          </a>
+        </CardFooter>
       </Card>
     </div>
   );

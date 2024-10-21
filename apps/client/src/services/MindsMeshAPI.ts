@@ -138,10 +138,27 @@ export const register = async (
     throw error;
   }
 };
-
-export const verifyEmail = async (token: string): Promise<void> => {
-  await api.get(`/users/verify-email`, { params: { token } });
+export const verifyEmail = async (userId: string): Promise<void> => {
+  try {
+    const response = await api.get(`/users/verify-email`, { params: { userId } });
+    console.log(response.data.message); // Optional logging
+  } catch (error) {
+    console.error("Error verifying email:", error);
+    throw error;
+  }
 };
+
+export const resendVerificationEmail = async (email: string): Promise<void> => {
+  try {
+    await api.post('/users/resend-verification-email', { email });
+  } catch (error) {
+    console.error("Error resending verification email:", error);
+    throw error;
+  }
+};
+
+
+
 
 export const updateProfile = async (
   profileData: Partial<User>

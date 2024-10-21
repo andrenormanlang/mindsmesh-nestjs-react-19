@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import {
   login,
   requestPasswordReset,
+  resendVerificationEmail, 
 } from "../services/MindsMeshAPI";
 import {
   Dialog,
@@ -15,6 +16,7 @@ import {
   DialogTrigger,
 } from "./shadcn/ui/dialog";
 import { useToast } from "./shadcn/ui/use-toast";
+import axios from "axios"; // Import axios
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -23,8 +25,9 @@ const LoginForm = () => {
   const [resetEmail, setResetEmail] = useState("");
   const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false); // New state
   const navigate = useNavigate();
-  const { toast } = useToast(); 
+  const { toast } = useToast();
 
   const handleLogin = async () => {
     try {
@@ -36,21 +39,45 @@ const LoginForm = () => {
           duration: 4000,
           variant: "success",
         });
-        navigate("/"); 
+        navigate("/");
         setTimeout(() => {
           window.location.reload();
-        }, 2000); 
-    
+        }, 2000);
       }
-    } catch (err) {
-      setError("Login failed. Please check your email and password.");
-      toast({
-        title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
-        variant: "destructive",
-        duration: 5000,
-      });
+    } catch (err: unknown) {
       console.error("Login error:", err);
+
+      if (axios.isAxiosError(err)) {
+        if (
+          err.response &&
+          err.response.status === 401 &&
+          err.response.data?.message?.includes("Email not verified")
+        ) {
+          setError("Email not verified. Please check your email to verify your account.");
+          toast({
+            title: "Email Not Verified",
+            description: "Please check your email to verify your account.",
+            variant: "destructive",
+            duration: 5000,
+          });
+        } else {
+          setError("Login failed. Please check your email and password.");
+          toast({
+            title: "Login Failed",
+            description: "Invalid email or password. Please try again.",
+            variant: "destructive",
+            duration: 5000,
+          });
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
     }
   };
 
@@ -75,7 +102,28 @@ const LoginForm = () => {
     }
   };
 
-  
+  // New function to handle resending verification email
+  const handleResendVerificationEmail = async () => {
+    try {
+      await resendVerificationEmail(email);
+      setResendSuccess(true);
+      toast({
+        title: "Verification Email Sent",
+        description: "Please check your email.",
+        variant: "success",
+        duration: 5000,
+      });
+    } catch (err) {
+      console.error("Error resending verification email:", err);
+      toast({
+        title: "Failed to Resend Verification Email",
+        description: "Please try again later.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  };
+
   return (
     <div className="flex justify-center items-center">
       <Card className="w-full max-w-sm p-4">
@@ -99,6 +147,23 @@ const LoginForm = () => {
             <Button className="w-full" onClick={handleLogin}>
               Login
             </Button>
+
+            {/* Resend Verification Email */}
+            {error.includes("Email not verified") && (
+              <div className="text-center">
+                <p className="text-gray-600">Didn't receive the email?</p>
+                <Button
+                  variant="link"
+                  className="text-blue-600"
+                  onClick={handleResendVerificationEmail}
+                >
+                  Resend Verification Email
+                </Button>
+                {resendSuccess && (
+                  <p className="text-green-500">Verification email sent!</p>
+                )}
+              </div>
+            )}
 
             {/* Forgot Password Modal */}
             <Dialog>

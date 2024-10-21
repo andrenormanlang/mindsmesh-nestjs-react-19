@@ -1,6 +1,7 @@
 import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Skill } from '../../skills/entities/skill.entity';
+import { IsOptional } from 'class-validator';
 
 @Entity()
 export class User {
@@ -65,9 +66,9 @@ export class User {
   @Column({ default: false })
   isEmailVerified!: boolean;
 
-  @ApiHideProperty()
-  @Column({ nullable: true })
-  emailVerificationToken?: string;
+  // @ApiHideProperty()
+  // @Column({ nullable: true })
+  // emailVerificationToken?: string;
 
   @ApiProperty({
     type: () => Skill,
@@ -75,5 +76,6 @@ export class User {
     isArray: true,
   })
   @OneToMany(() => Skill, (skill) => skill.user, { cascade: true })
+  @IsOptional()
   skills!: Skill[];
 }

@@ -4,8 +4,10 @@ import { Input } from "./shadcn/ui/input";
 import { Label } from "./shadcn/ui/label";
 import { Textarea } from "./shadcn/ui/textarea";
 import { Switch } from "./shadcn/ui/switch";
+import { useEffect } from "react";
 
 export type SkillData = {
+  id?: string;
   title: string;
   description: string;
   price: number;
@@ -14,21 +16,43 @@ export type SkillData = {
 
 interface SkillFormProps {
   onAddSkill: (skill: SkillData) => void;
-  initialSkill?: SkillData;
+  onUpdateSkill: (skill: SkillData) => void;
+  editingSkill: SkillData | null;
+  setEditingSkill: (skill: SkillData | null) => void;
 }
-
-const SkillForm: React.FC<SkillFormProps> = ({ onAddSkill, initialSkill }) => {
-  const { control, handleSubmit } = useForm<SkillData>({
-    defaultValues: initialSkill || {
-      title: "",
-      description: "",
+export const SkillForm: React.FC<SkillFormProps> = ({
+  onAddSkill,
+  onUpdateSkill,
+  editingSkill,
+  setEditingSkill,
+}) => {
+  const { control, handleSubmit, reset } = useForm<SkillData>({
+    defaultValues: editingSkill || {
+      title: '',
+      description: '',
       price: 0,
       isAvailable: false,
     },
   });
 
+  // Reset form when editingSkill changes
+  useEffect(() => {
+    reset(editingSkill || {
+      title: '',
+      description: '',
+      price: 0,
+      isAvailable: false,
+    });
+  }, [editingSkill, reset]);
+
   const onSubmit = (data: SkillData) => {
-    onAddSkill(data);
+    if (editingSkill) {
+      onUpdateSkill({ ...data, id: editingSkill.id });
+    } else {
+      onAddSkill(data);
+    }
+    setEditingSkill(null);
+    reset();
   };
 
   return (
@@ -85,7 +109,7 @@ const SkillForm: React.FC<SkillFormProps> = ({ onAddSkill, initialSkill }) => {
         />
       </div>
       <Button type="submit">
-        {initialSkill ? "Update Skill" : "Add Skill"}
+        {editingSkill ? 'Update Skill' : 'Add Skill'}
       </Button>
     </form>
   );

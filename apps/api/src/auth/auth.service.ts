@@ -20,13 +20,17 @@ export class AuthService {
     private readonly sendGridService: SendGridService
   ) {}
 
-  async validateUser(email: string, pass: string): Promise<any> {
+  async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
-    if (user && (await bcrypt.compare(pass, user.password))) {
-      const { password, ...result } = user;
-      return result;
+    if (user && (await bcrypt.compare(password, user.password))) {
+      if (!user.isEmailVerified) {
+        throw new UnauthorizedException('Please verify your email before logging in.');
+      }
+      // User verified, continue login
+      return user;
+    } else {
+      throw new UnauthorizedException('Invalid credentials.');
     }
-    return null;
   }
 
   async login(user: any) {
@@ -38,6 +42,10 @@ console.log("Password comparison result:", await bcrypt.compare(user.password, f
       !(await bcrypt.compare(user.password, foundUser.password))
     ) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!foundUser.isEmailVerified) {
+      throw new UnauthorizedException('Email not verified. Please check your email to verify your account.');
     }
 
     const payload = {

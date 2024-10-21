@@ -61,6 +61,7 @@ export class CreateUserDto {
     description: 'Skills associated with the user',
     isArray: true,
   })
+  @IsOptional()
   @IsArray({ message: 'Skills must be an array of SkillDto objects' })
   @ValidateNested({
     each: true,

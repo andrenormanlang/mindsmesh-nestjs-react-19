@@ -1,4 +1,3 @@
-// EmailVerificationPage.jsx
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { verifyEmail } from '../services/MindsMeshAPI';
@@ -11,10 +10,10 @@ const EmailVerificationPage = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const token = params.get('token');
+    const userId = params.get('userId');
 
-    if (token) {
-      verifyEmail(token)
+    if (userId) {
+      verifyEmail(userId)
         .then(() => {
           setMessage('Email verified successfully!');
           toast({
@@ -27,7 +26,7 @@ const EmailVerificationPage = () => {
         })
         .catch((error) => {
           console.error('Email verification error:', error);
-          setMessage('Verification failed. The token may be invalid or expired.');
+          setMessage('Verification failed. The link may be invalid or expired.');
           toast({
             title: "Verification Failed",
             description: "The verification link is invalid or has expired.",

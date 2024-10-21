@@ -209,6 +209,7 @@ const Navbar: React.FC = () => {
               Logout
             </Button>
           </>
+          
         ) : (
           <>
             {/* Mobile Login Dialog */}

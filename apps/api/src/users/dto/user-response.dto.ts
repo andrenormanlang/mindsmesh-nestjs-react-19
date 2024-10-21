@@ -38,6 +38,12 @@ export class UserResponseDto {
   imageUrls?: string[];
 
   @ApiProperty({
+    example: true,
+    description: 'Indicates whether the user has verified their email address',
+  })
+  isEmailVerified: boolean;
+
+  @ApiProperty({
     example: false,
     description: 'Indicates whether the user has administrative privileges',
   })
