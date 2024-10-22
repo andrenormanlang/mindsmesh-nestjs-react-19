@@ -1,0 +1,7 @@
+{
+    "routes": [
+      { "src": "/verify-email", "dest": "/" },
+      { "src": "/reset-password", "dest": "/" },
+      { "src": "/", "dest": "/" }
+    ]
+  }
