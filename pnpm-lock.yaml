@@ -304,9 +304,6 @@ importers:
       axios:
         specifier: ^1.7.3
         version: 1.7.7
-      babel-plugin-react-compiler:
-        specifier: 0.0.0-experimental-ad3b12a-20241011
-        version: 0.0.0-experimental-ad3b12a-20241011
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0
@@ -325,9 +322,6 @@ importers:
       embla-carousel-react:
         specifier: ^8.1.8
         version: 8.3.0(react@19.0.0-rc-1460d67c-20241003)
-      eslint-plugin-react-compiler:
-        specifier: 0.0.0-experimental-45ae4c3-20241011
-        version: 0.0.0-experimental-45ae4c3-20241011(eslint@9.12.0(jiti@1.21.6))
       framer-motion:
         specifier: ^11.11.1
         version: 11.11.8(react-dom@19.0.0-rc-1460d67c-20241003(react@19.0.0-rc-1460d67c-20241003))(react@19.0.0-rc-1460d67c-20241003)
@@ -422,9 +416,15 @@ importers:
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.4.47)
+      babel-plugin-react-compiler:
+        specifier: 19.0.0-beta-8a03594-20241020
+        version: 19.0.0-beta-8a03594-20241020
       eslint:
         specifier: ^9.8.0
         version: 9.12.0(jiti@1.21.6)
+      eslint-plugin-react-compiler:
+        specifier: 19.0.0-beta-8a03594-20241020
+        version: 19.0.0-beta-8a03594-20241020(eslint@9.12.0(jiti@1.21.6))
       eslint-plugin-react-hooks:
         specifier: ^5.1.0-rc.0
         version: 5.1.0-rc-fb9a90fa48-20240614(eslint@9.12.0(jiti@1.21.6))
@@ -3844,8 +3844,8 @@ packages:
     resolution: {integrity: sha512-ESAc/RJvGTFEzRwOTT4+lNDk/GNHMkKbNzsvT0qKRfDyyYTskxB5rnU2njIDYVxXCBHHEI1c0YwHob3WaYujOg==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  babel-plugin-react-compiler@0.0.0-experimental-ad3b12a-20241011:
-    resolution: {integrity: sha512-nKOKInm8musJDa45Q9rCLJ8H0PMw1hSBWjEWoTvm+jRnufOdck2mVG3i8e5r5VRJatP6jdfbfXo/Q9iNUotz8g==}
+  babel-plugin-react-compiler@19.0.0-beta-8a03594-20241020:
+    resolution: {integrity: sha512-Wk0748DZzQEmjkEN4SbBujM5al4q5TfRBapA32ax0AID/Yek3emS+eyCvPvb4zPddYJTAF4LaJNLt8uHYfdKAQ==}
 
   babel-preset-current-node-syntax@1.1.0:
     resolution: {integrity: sha512-ldYss8SbBlWva1bs28q78Ju5Zq1F+8BrqBZZ0VFhLBvhh6lCpC2o3gDJi/5DRLs9FgYZCnmPYIVFU4lRXCkyUw==}
@@ -4498,8 +4498,8 @@ packages:
       eslint-config-prettier:
         optional: true
 
-  eslint-plugin-react-compiler@0.0.0-experimental-45ae4c3-20241011:
-    resolution: {integrity: sha512-m+BmeFtVWzrHt87sb5g5jLttHdo9YScPiuiingdEqLYtUv7pdVi6pQgY3nCOI4h09C4wmWS9xzpaVNEgiODOBg==}
+  eslint-plugin-react-compiler@19.0.0-beta-8a03594-20241020:
+    resolution: {integrity: sha512-bYg1COih1s3r14IV/AKdQs/SN7CQmNI0ZaMtPdgZ6gp1S1Q/KGP9P43w7R6dHJ4wYpuMBvekNJHQdVu+x6UM+A==}
     engines: {node: ^14.17.0 || ^16.0.0 || >= 18.0.0}
     peerDependencies:
       eslint: '>=7'
@@ -11561,7 +11561,7 @@ snapshots:
       '@types/babel__core': 7.20.5
       '@types/babel__traverse': 7.20.6
 
-  babel-plugin-react-compiler@0.0.0-experimental-ad3b12a-20241011:
+  babel-plugin-react-compiler@19.0.0-beta-8a03594-20241020:
     dependencies:
       '@babel/generator': 7.2.0
       '@babel/types': 7.25.8
@@ -12212,7 +12212,7 @@ snapshots:
     optionalDependencies:
       eslint-config-prettier: 9.1.0(eslint@8.57.1)
 
-  eslint-plugin-react-compiler@0.0.0-experimental-45ae4c3-20241011(eslint@9.12.0(jiti@1.21.6)):
+  eslint-plugin-react-compiler@19.0.0-beta-8a03594-20241020(eslint@9.12.0(jiti@1.21.6)):
     dependencies:
       '@babel/core': 7.25.8
       '@babel/parser': 7.25.8
