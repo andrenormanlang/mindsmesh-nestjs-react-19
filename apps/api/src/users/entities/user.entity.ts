@@ -2,6 +2,7 @@ import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Skill } from '../../skills/entities/skill.entity';
 import { IsOptional } from 'class-validator';
+import { ChatMessage } from '@/chat/entities/chat-message.entity';
 
 @Entity()
 export class User {
@@ -78,4 +79,11 @@ export class User {
   @OneToMany(() => Skill, (skill) => skill.user, { cascade: true })
   @IsOptional()
   skills!: Skill[];
+
+   // Relationships for Chat Messages
+   @OneToMany(() => ChatMessage, (chat) => chat.sender)
+   sentMessages!: ChatMessage[];
+ 
+   @OneToMany(() => ChatMessage, (chat) => chat.receiver)
+   receivedMessages!: ChatMessage[];
 }

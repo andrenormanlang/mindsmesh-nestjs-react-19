@@ -3,7 +3,13 @@ import { User } from "../types/types";
 import { Card, CardHeader, CardContent, CardFooter } from "./shadcn/ui/card";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { IoInformationCircleOutline } from "react-icons/io5";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "./shadcn/ui/carousel";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "./shadcn/ui/carousel";
 import DefaultImage from "../assets/default-image.webp";
 
 interface UserCardProps {
@@ -11,9 +17,16 @@ interface UserCardProps {
   onViewDetails: (user: User, event: React.MouseEvent) => void;
   onEdit?: (user: User) => void;
   onDelete?: (user: User) => void;
+  onChat?: (user: User, event: React.MouseEvent) => void; // Add correct type for onChat prop
 }
 
-const UserCard: React.FC<UserCardProps> = ({ user, onViewDetails, onEdit, onDelete }) => {
+const UserCard: React.FC<UserCardProps> = ({
+  user,
+  onViewDetails,
+  onEdit,
+  onDelete,
+  onChat,
+}) => {
   return (
     <Card className="flex flex-col bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
       <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
@@ -50,7 +63,10 @@ const UserCard: React.FC<UserCardProps> = ({ user, onViewDetails, onEdit, onDele
           <h3 className="text-lg font-semibold">{user.username}</h3>
         </div>
         <div className="text-left mt-2">
-          <a href={`mailto:${user.email}`} className="text-sm text-blue-500 hover:underline">
+          <a
+            href={`mailto:${user.email}`}
+            className="text-sm text-blue-500 hover:underline"
+          >
             {user.email}
           </a>
         </div>
@@ -65,7 +81,9 @@ const UserCard: React.FC<UserCardProps> = ({ user, onViewDetails, onEdit, onDele
             </span>
           ))}
           {user.skills.length > 3 && (
-            <span className="text-xs text-gray-500">+{user.skills.length - 3} more</span>
+            <span className="text-xs text-gray-500">
+              +{user.skills.length - 3} more
+            </span>
           )}
         </div>
       </CardContent>
@@ -74,8 +92,16 @@ const UserCard: React.FC<UserCardProps> = ({ user, onViewDetails, onEdit, onDele
           onClick={(e) => onViewDetails(user, e)}
           className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
         >
-         <IoInformationCircleOutline/>
+          <IoInformationCircleOutline />
         </button>
+        {onChat && (
+          <button
+            onClick={(e) => onChat(user, e)}
+            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
+          >
+            Chat
+          </button>
+        )}
         {(onEdit || onDelete) && (
           <div className="flex space-x-2">
             {onEdit && (
@@ -91,7 +117,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, onViewDetails, onEdit, onDele
                 onClick={() => onDelete(user)}
                 className="text-red-500 hover:text-red-700"
               >
-                <FaTrash/>
+                <FaTrash />
               </button>
             )}
           </div>

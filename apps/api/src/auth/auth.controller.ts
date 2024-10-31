@@ -58,7 +58,6 @@ export class AuthController {
   async forgotPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
   ) {
-    console.log('forgotPassword endpoint hit');
     await this.authService.sendPasswordReset(forgotPasswordDto.email);
     return { message: 'Password reset email sent' };
   }

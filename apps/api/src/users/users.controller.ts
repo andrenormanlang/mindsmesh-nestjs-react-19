@@ -143,8 +143,6 @@ export class UsersController {
     @Body() createUserControllerDto: CreateUserControllerDto,
     @UploadedFiles() avatars: Express.Multer.File[]
   ): Promise<UserResponseDto> {
-    console.log('Incoming registration data:', createUserControllerDto); // Log the incoming data
-    console.log('Uploaded files:', avatars); // Log the uploaded files
 
     try {
       // Process avatars if any
@@ -155,7 +153,7 @@ export class UsersController {
         createUserControllerDto.imageUrls = uploadResults.map(
           (result) => result.secure_url
         );
-        console.log('Uploaded avatars:', createUserControllerDto.imageUrls); // Log the URLs from Cloudinary
+        console.log('Uploaded avatars:', createUserControllerDto.imageUrls);
       }
 
       // Log before creating the user
@@ -198,7 +196,7 @@ export class UsersController {
     if (!this.isValidUUID(id)) {
       throw new BadRequestException('Invalid UUID');
     }
-    console.log(`Fetching user with ID: ${id}`);
+    // console.log(`Fetching user with ID: ${id}`);
     const user = await this.usersService.findOne(id);
     return plainToClass(UserResponseDto, user);
   }

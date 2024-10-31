@@ -5,24 +5,33 @@ import { UserContext } from "../contexts/UserContext";
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.webp";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.webp";
 import { Input } from "../components/shadcn/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/shadcn/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../components/shadcn/ui/dialog";
 import { deleteUser, fetchUsersWithSkills } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
-import UserCard from "../components/UserCard"; 
+import UserCard from "../components/UserCard";
 import EditProfileForm from "../components/EditProfileForm";
 import DeleteAccountModal from "../components/DeleteAccountConfirm";
 import UserDetailCard from "../components/UserDetail";
 import useDebounce from "../hooks/useDebounce";
 import LoadingSpinner from "../helpers/LoadingSpinner";
+import ChatComponent from "../components/Chat";
 
 const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResultPhrase, setSearchResultPhrase] = useState<string | null>(null);
+  const [searchResultPhrase, setSearchResultPhrase] = useState<string | null>(
+    null
+  );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const navigate = useNavigate();
@@ -32,7 +41,9 @@ const HomePage = () => {
   const gradientContext = use(GradientContext);
 
   if (!userContext || !gradientContext) {
-    throw new Error("UserContext and GradientContext must be used within their respective providers");
+    throw new Error(
+      "UserContext and GradientContext must be used within their respective providers"
+    );
   }
 
   const { refreshUser, setUser } = userContext;
@@ -41,10 +52,16 @@ const HomePage = () => {
     setIsLoading(true);
     setSearchResultPhrase(null);
     try {
-      const users = await fetchUsersWithSkills(debouncedSearchQuery.toLowerCase());
-      const filteredUsers = users.filter((user: User) => user.skills && user.skills.length > 0);
+      const users = await fetchUsersWithSkills(
+        debouncedSearchQuery.toLowerCase()
+      );
+      const filteredUsers = users.filter(
+        (user: User) => user.skills && user.skills.length > 0
+      );
       setUsersWithSkills(filteredUsers);
-      setSearchResultPhrase(`You found ${filteredUsers.length} user${filteredUsers.length !== 1 ? 's' : ''} with the skill "${debouncedSearchQuery}".`);
+      setSearchResultPhrase(
+        `You found ${filteredUsers.length} user${filteredUsers.length !== 1 ? "s" : ""} with the skill "${debouncedSearchQuery}".`
+      );
       await refreshUser();
     } catch (error) {
       console.error("Failed to fetch users or profile", error);
@@ -57,11 +74,14 @@ const HomePage = () => {
     loadUsersAndProfile();
   }, [loadUsersAndProfile]);
 
-  const handleDeleteAccount = useCallback(async (userId: string) => {
-    await deleteUser(userId);
-    setSelectedUser(null);
-    navigate("/");
-  }, [navigate]);
+  const handleDeleteAccount = useCallback(
+    async (userId: string) => {
+      await deleteUser(userId);
+      setSelectedUser(null);
+      navigate("/");
+    },
+    [navigate]
+  );
 
   const openEditModal = useCallback((user: User) => {
     setSelectedUser(user);
@@ -79,21 +99,32 @@ const HomePage = () => {
     setIsViewModalOpen(true);
   }, []);
 
-  const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
+  const openChatModal = useCallback((user: User, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setSelectedUser(user);
+    setIsChatModalOpen(true);
   }, []);
 
+
+  const handleSearchChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(event.target.value);
+    },
+    []
+  );
+
   const memoizedUserCards = useMemo(() => (
-    usersWithSkills.map((user) => (
-      <UserCard
-        key={user.id}
-        user={user}
-        onViewDetails={openViewModal}
-        onEdit={user.id === userContext.user?.id ? openEditModal : undefined}
-        onDelete={user.id === userContext.user?.id ? openDeleteModal : undefined}
-      />
-    ))
-  ), [usersWithSkills, openViewModal, openEditModal, openDeleteModal, userContext.user]);
+  usersWithSkills.map((user) => (
+    <UserCard
+      key={user.id}
+      user={user}
+      onViewDetails={openViewModal}
+      onEdit={user.id === userContext.user?.id ? openEditModal : undefined}
+      onDelete={user.id === userContext.user?.id ? openDeleteModal : undefined}
+      onChat={user.id === userContext.user?.id ? openChatModal : undefined} // Show chat only for logged-in user
+    />
+  ))
+), [usersWithSkills, openViewModal, openEditModal, openDeleteModal, openChatModal, userContext.user]);
 
   return (
     <div className="min-h-screen text-white relative">
@@ -143,7 +174,9 @@ const HomePage = () => {
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
           </DialogHeader>
-          {selectedUser && <EditProfileForm user={selectedUser} setUser={setUser} />}
+          {selectedUser && (
+            <EditProfileForm user={selectedUser} setUser={setUser} />
+          )}
         </DialogContent>
       </Dialog>
 
@@ -163,6 +196,13 @@ const HomePage = () => {
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
         <DialogContent className="w-full sm:max-w-[700px] p-4 m-0">
           {selectedUser && <UserDetailCard user={selectedUser} />}
+        </DialogContent>
+      </Dialog>
+
+       {/* Chat Modal */}
+       <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
+        <DialogContent className="w-full sm:max-w-[700px] p-4 m-0">
+          {selectedUser && <ChatComponent freelancer={selectedUser} />}
         </DialogContent>
       </Dialog>
     </div>

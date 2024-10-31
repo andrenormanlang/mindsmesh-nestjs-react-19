@@ -1,7 +1,12 @@
 // EditSkillsForm.tsx
 
 import { useState } from "react";
-import { useForm, Controller, useFieldArray } from "react-hook-form";
+import {
+  useForm,
+  Controller,
+  useFieldArray,
+  useFormState,  
+} from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "./shadcn/ui/button";
 import { Input } from "./shadcn/ui/input";
@@ -43,6 +48,9 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
     },
   });
 
+
+  const { isSubmitting, isValid } = useFormState({ control });
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: "skills",
@@ -55,10 +63,10 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
 
   const handleFormSubmit = async (data: { skills: Skill[] }) => {
     // Convert price to number
-  const skillsWithNumberPrice = data.skills.map((skill) => ({
-    ...skill,
-    price: Number(skill.price),
-  }));
+    const skillsWithNumberPrice = data.skills.map((skill) => ({
+      ...skill,
+      price: Number(skill.price),
+    }));
     try {
       const updatedSkills = await Promise.all(
         skillsWithNumberPrice.map(async (skill) => {
@@ -119,7 +127,10 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
 
     remove(skillToDeleteIndex);
 
-    if (skillToDelete.id && user.skills.find((s) => s.id === skillToDelete.id)) {
+    if (
+      skillToDelete.id &&
+      user.skills.find((s) => s.id === skillToDelete.id)
+    ) {
       try {
         await deleteUserSkill(user.id, skillToDelete.id);
 
@@ -161,8 +172,8 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
         <DialogHeader>
           <DialogTitle>Edit Skills</DialogTitle>
           <DialogDescription>
-            Update your skills below. You can add new skills, edit existing ones,
-            or delete them.
+            Update your skills below. You can add new skills, edit existing
+            ones, or delete them.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
@@ -189,7 +200,9 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
               </div>
 
               <div>
-                <Label htmlFor={`skills.${index}.description`}>Description</Label>
+                <Label htmlFor={`skills.${index}.description`}>
+                  Description
+                </Label>
                 <Controller
                   name={`skills.${index}.description`}
                   control={control}
@@ -263,9 +276,12 @@ const EditSkillsForm = ({ user, setUser, onClose }: EditSkillsFormProps) => {
           <Button
             type="submit"
             className="w-full bg-green-500 hover:bg-green-600 text-white"
+            disabled={isSubmitting || !isValid}
           >
             Update Skills
           </Button>
+          <div>
+          </div>
         </form>
       </DialogContent>
 

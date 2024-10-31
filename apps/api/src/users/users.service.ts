@@ -251,4 +251,22 @@ export class UsersService {
     }
     return user;
   }
+
+  // Used for chat service
+  async findById(id: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id }, relations: ['skills'] });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  // This method would use your authentication system, like a request context, to determine the authenticated user.
+  async getAuthenticatedUser(authUserId: string): Promise<User> {
+    const user = await this.findById(authUserId);
+    if (!user) {
+      throw new NotFoundException('Authenticated user not found');
+    }
+    return user;
+  }
 }

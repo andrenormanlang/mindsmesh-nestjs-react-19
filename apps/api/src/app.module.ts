@@ -11,7 +11,8 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { SendGridModule } from './sendgrid/sendgrid.module';
-
+import { ChatGateway } from './chat/chat.gateway';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -40,11 +41,13 @@ import { SendGridModule } from './sendgrid/sendgrid.module';
     AuthModule,
     UsersModule,
     SkillsModule,
-    SendGridModule
+    SendGridModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    ChatGateway,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard, // Apply throttling globally

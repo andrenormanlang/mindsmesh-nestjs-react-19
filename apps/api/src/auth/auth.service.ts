@@ -41,8 +41,7 @@ export class AuthService {
     }
   
     const passwordMatches = await bcrypt.compare(user.password, foundUser.password);
-    console.log('Password comparison result:', passwordMatches);
-    console.log('User isEmailVerified:', foundUser.isEmailVerified);
+
   
     if (!passwordMatches) {
       throw new UnauthorizedException('Invalid credentials');
@@ -59,6 +58,7 @@ export class AuthService {
     };
     return {
       access_token: this.jwtService.sign(payload),
+      userId: foundUser.id,
     };
   }
   

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { User, Skill, Lesson, Review, UserAuth } from "../types/types";
+import { User, Skill, UserAuth } from "../types/types";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
@@ -13,14 +13,18 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    console.log("No token found in localStorage.");
   }
   return config;
 });
+
 
 // Authentication and User Management
 export const login = async (email: string, password: string): Promise<User> => {
   const response = await api.post("/auth/login", { email, password });
   localStorage.setItem("token", response.data.access_token);
+  localStorage.setItem("userId", response.data.userId);
   return await getProfile();
 };
 
@@ -273,38 +277,6 @@ export const updateSkill = async (
 
 export const deleteSkill = async (skillId: string): Promise<void> => {
   await api.delete(`/skills/${skillId}`);
-};
-
-// Booking Management
-export const bookLesson = async (lessonData: Partial<Lesson>): Promise<Lesson> => {
-  const response = await api.post("/lessons", lessonData);
-  return response.data;
-};
-
-export const getAllBookings = async (): Promise<Lesson[]> => {
-  const response = await api.get("/bookings");
-  return response.data;
-};
-
-export const getBookingById = async (bookingId: string): Promise<Lesson> => {
-  const response = await api.get(`/bookings/${bookingId}`);
-  return response.data;
-};
-
-// Review Management
-export const leaveReview = async (reviewData: Partial<Review>): Promise<Review> => {
-  const response = await api.post("/reviews", reviewData);
-  return response.data;
-};
-
-export const getReviewsForSkill = async (skillId: string): Promise<Review[]> => {
-  const response = await api.get(`/reviews/skill/${skillId}`);
-  return response.data;
-};
-
-export const getReviewsByUser = async (userId: string): Promise<Review[]> => {
-  const response = await api.get(`/reviews/user/${userId}`);
-  return response.data;
 };
 
 // Admin Management

@@ -41,29 +41,10 @@ export type SkillData = {
   isAvailable: boolean;
 };
 
-export type Lesson = {
-  id: string;
-  skillId: string;
-  userId: string;
-  date: string;
-  status: string;
+
+export type Message = {
+  senderId: string;
+  receiverId: string;
+  text: string;
 };
 
-export type Review = {
-  id: string;
-  skillId: string;
-  userId: string;
-  rating: number;
-  comment: string;
-};
-
-export type RoleUpdate = {
-  role: string;
-};
-
-export type Listing = {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-};
