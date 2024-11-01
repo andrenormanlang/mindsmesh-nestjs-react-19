@@ -124,29 +124,32 @@ const HomePage = () => {
   const memoizedUserCards = useMemo(
     () =>
       usersWithSkills.map((user) => {
-        // Log user and role data for better debugging
-        console.log("User:", user);
-        console.log("Logged-in user:", userContext.user);
-
+        // Determine if the chat button should be visible
+        let showChatButton = false;
+  
+        if (userContext?.user) {
+          if (userContext.user.role === "freelancer" && userContext.user.id === user.id) {
+            // Freelancer can see their own chat button
+            showChatButton = true;
+          } else if (userContext.user.role === "employer" && user.isOnline) {
+            // Employer can see chat buttons for online freelancers
+            showChatButton = true;
+          }
+        }
+  
         return (
-          userContext.user && (
-            <UserCard
-              key={user.id}
-              user={user}
-              onViewDetails={openViewModal}
-              onEdit={
-                user.id === userContext.user?.id ? openEditModal : undefined
-              }
-              onDelete={
-                user.id === userContext.user?.id ? openDeleteModal : undefined
-              }
-              onChat={
-                userContext.user?.role === "employer" && user.isOnline
-                  ? openChatModal
-                  : undefined
-              }
-            />
-          )
+          <UserCard
+            key={user.id}
+            user={user}
+            onViewDetails={openViewModal}
+            onEdit={
+              userContext?.user?.id === user.id ? openEditModal : undefined
+            }
+            onDelete={
+              userContext?.user?.id === user.id ? openDeleteModal : undefined
+            }
+            onChat={showChatButton ? openChatModal : undefined}
+          />
         );
       }),
     [
@@ -155,13 +158,10 @@ const HomePage = () => {
       openEditModal,
       openDeleteModal,
       openChatModal,
-      userContext.user,
+      userContext?.user,
     ]
   );
-
-  if (!userContext.user) {
-    return <LoadingSpinner />;
-  }
+  
 
   return (
     <div className="min-h-screen text-white relative">

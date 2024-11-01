@@ -85,8 +85,16 @@ export const login = async (email: string, password: string): Promise<User> => {
 };
 
 export const logout = async (): Promise<void> => {
+  const userId = localStorage.getItem("userId");
+
+  if (userId) {
+    await api.post(`/auth/logout`); 
+  }
+  
   localStorage.removeItem("token");
+  localStorage.removeItem("userId");
 };
+
 
 // Password Management
 export const requestPasswordReset = async (email: string): Promise<void> => {

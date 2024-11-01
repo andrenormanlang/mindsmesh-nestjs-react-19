@@ -44,20 +44,18 @@ const Navbar: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      localStorage.removeItem("user"); // Remove user from local storage on logout
       setUser(null); // Update UserContext state
-
       toast({
         title: "Logged Out",
         description: "You've safely signed out. Come back soon!",
         variant: "success",
         duration: 5000,
       });
-
+  
       navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
-
+  
       toast({
         title: "Logout Failed",
         description: "There was an error while logging out. Please try again.",
@@ -66,6 +64,7 @@ const Navbar: React.FC = () => {
       });
     }
   };
+  
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
