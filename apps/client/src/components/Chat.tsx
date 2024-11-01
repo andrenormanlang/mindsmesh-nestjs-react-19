@@ -4,29 +4,32 @@ import { Button } from "./shadcn/ui/button";
 import { Card, CardHeader, CardContent, CardFooter } from "./shadcn/ui/card";
 import { Input } from "./shadcn/ui/input";
 import { X, Send, Loader2 } from "lucide-react";
-import { sendMessage } from "../services/MindsMeshAPI";
+import { format } from 'date-fns';
+import { sendMessage, getChatMessages } from "../services/MindsMeshAPI";
 import { io, Socket } from "socket.io-client";
 
 const formatTime = (date: Date) => {
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return format(new Date(date), 'HH:mm');
 };
 
-const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({ 
-  freelancer, 
-  onClose 
+const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
+  freelancer,
+  onClose,
 }) => {
-  const [messages, setMessages] = useState<Array<{
-    senderId: string;
-    text: string;
-    timestamp: Date;
-    status?: 'sending' | 'sent' | 'error';
-  }>>([]);
+  const [messages, setMessages] = useState<
+    Array<{
+      senderId: string;
+      text: string;
+      timestamp: Date;
+      status?: "sending" | "sent" | "error";
+    }>
+  >([]);
   const [newMessage, setNewMessage] = useState("");
   const [isConnecting, setIsConnecting] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const senderId = localStorage.getItem("userId");
-  
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -36,37 +39,67 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
   }, [messages]);
 
   useEffect(() => {
+    const loadChatHistory = async () => {
+      if (senderId && freelancer.id) {
+        try {
+          // Fetch existing messages between senderId and freelancer.id
+          const response = await getChatMessages(senderId, freelancer.id);
+
+          // Update the messages state with the history
+          setMessages(response.map((msg) => ({
+            senderId: msg.sender.id,
+            text: msg.message,
+            timestamp: new Date(msg.createdAt),
+            status: "sent",
+          })));
+        } catch (error) {
+          console.error("Error loading chat history:", error);
+        }
+      }
+    };
+
+    loadChatHistory();
+  }, [senderId, freelancer.id]);
+
+  useEffect(() => {
     const token = localStorage.getItem("token");
     if (token && senderId) {
-      const newSocket = io("http://localhost:3000/api", {
+      const newSocket = io("http://localhost:3000", {
         auth: { token },
       });
-
+  
       setSocket(newSocket);
-
+  
       newSocket.on("connect", () => {
         setIsConnecting(false);
         console.log("Connected to socket");
       });
-
+  
+      // Listen for the receiveMessage event
       newSocket.on("receiveMessage", (message) => {
-        setMessages(prev => [...prev, {
-          ...message,
-          timestamp: new Date(),
-          status: 'sent'
-        }]);
+        console.log("Received message:", message);  // Verify message content
+        setMessages((prev) => [
+          ...prev,
+          {
+            senderId: message.sender.id,
+            text: message.message,
+            timestamp: new Date(message.createdAt),
+            status: "sent",
+          },
+        ]);
       });
-
+            
       newSocket.on("connect_error", (err) => {
         setIsConnecting(false);
         console.error("Socket connection error:", err);
       });
-
+  
       return () => {
         newSocket.disconnect();
       };
     }
   }, [senderId]);
+  
 
   const handleSendMessage = async () => {
     if (!senderId || !newMessage.trim()) return;
@@ -76,40 +109,40 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
       receiverId: freelancer.id,
       text: newMessage.trim(),
       timestamp: new Date(),
-      status: 'sending' as const
+      status: "sending" as const,
     };
 
-    setMessages(prev => [...prev, messageObj]);
+    setMessages((prev) => [...prev, messageObj]);
     setNewMessage("");
 
     try {
       await sendMessage(freelancer.id, messageObj.text);
-      
+
       if (socket) {
-        socket.emit("sendMessage", messageObj);
+        socket.emit("sendMessage", {
+          senderId: messageObj.senderId,
+          receiverId: messageObj.receiverId,
+          text: messageObj.text,
+        });
       }
 
-      setMessages(prev => 
-        prev.map(msg => 
-          msg === messageObj 
-            ? { ...msg, status: 'sent' as const } 
-            : msg
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg === messageObj ? { ...msg, status: "sent" as const } : msg
         )
       );
     } catch (error) {
       console.error("Error sending message:", error);
-      setMessages(prev => 
-        prev.map(msg => 
-          msg === messageObj 
-            ? { ...msg, status: 'error' as const } 
-            : msg
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg === messageObj ? { ...msg, status: "error" as const } : msg
         )
       );
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -125,20 +158,22 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
                 {freelancer.username.charAt(0).toUpperCase()}
               </span>
             </div>
-            <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ${
-              isConnecting ? 'bg-yellow-400' : 'bg-green-400'
-            }`} />
+            <div
+              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ${
+                isConnecting ? "bg-yellow-400" : "bg-green-400"
+              }`}
+            />
           </div>
           <div>
             <h3 className="font-semibold">{freelancer.username}</h3>
             <p className="text-sm text-gray-500">
-              {isConnecting ? 'Connecting...' : 'Online'}
+              {isConnecting ? "Connecting..." : "Online"}
             </p>
           </div>
         </div>
         {onClose && (
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={onClose}
             className="hover:bg-gray-100 rounded-full"
@@ -153,30 +188,32 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex ${msg.senderId === senderId ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${msg.senderId === senderId ? "justify-end" : "justify-start"}`}
             >
               <div className="flex flex-col space-y-1 max-w-[75%]">
                 <div
                   className={`rounded-2xl px-4 py-2 ${
                     msg.senderId === senderId
-                      ? 'bg-blue-600 text-white rounded-br-none'
-                      : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                      ? "bg-blue-600 text-white rounded-br-none"
+                      : "bg-gray-100 text-gray-900 rounded-bl-none"
                   }`}
                 >
                   {msg.text}
                 </div>
-                <div className={`flex items-center space-x-2 text-xs ${
-                  msg.senderId === senderId ? 'justify-end' : 'justify-start'
-                }`}>
+                <div
+                  className={`flex items-center space-x-2 text-xs ${
+                    msg.senderId === senderId ? "justify-end" : "justify-start"
+                  }`}
+                >
                   <span className="text-gray-500">
                     {formatTime(msg.timestamp)}
                   </span>
                   {msg.senderId === senderId && (
                     <span>
-                      {msg.status === 'sending' && (
+                      {msg.status === "sending" && (
                         <Loader2 className="h-3 w-3 animate-spin" />
                       )}
-                      {msg.status === 'error' && (
+                      {msg.status === "error" && (
                         <span className="text-red-500">!</span>
                       )}
                     </span>

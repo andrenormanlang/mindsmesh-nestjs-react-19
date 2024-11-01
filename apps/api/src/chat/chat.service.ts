@@ -28,7 +28,9 @@ export class ChatService {
       receiver,
       message,
     });
-    return await this.chatRepository.save(chatMessage);
+    const savedMessage = await this.chatRepository.save(chatMessage);
+    console.log("Saved message with createdAt:", savedMessage.createdAt);
+    return savedMessage;
   }
 
   async getMessages(userId1: string, userId2: string): Promise<ChatMessage[]> {

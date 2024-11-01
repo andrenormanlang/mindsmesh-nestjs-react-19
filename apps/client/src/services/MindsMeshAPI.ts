@@ -314,3 +314,14 @@ export const sendMessage = async (freelancerId: string, message: string) => {
     throw error;
   }
 };
+
+export const getChatMessages = async (userId1: string, userId2: string) => {
+  try {
+    const response = await api.get(`/chat/${userId1}/${userId2}/messages`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching chat messages:", error);
+    throw error;
+  }
+};
+
