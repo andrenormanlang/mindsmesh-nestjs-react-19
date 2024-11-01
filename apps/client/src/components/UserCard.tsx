@@ -95,12 +95,15 @@ const UserCard: React.FC<UserCardProps> = ({
           <IoInformationCircleOutline />
         </button>
         {onChat && (
-          <button
-            onClick={(e) => onChat(user, e)}
-            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
-          >
-            Chat
-          </button>
+          <>
+            {console.log("Chat button displayed for user:", user.username)}
+            <button
+              onClick={(e) => onChat(user, e)}
+              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
+            >
+              Chat
+            </button>
+          </>
         )}
         {(onEdit || onDelete) && (
           <div className="flex space-x-2">

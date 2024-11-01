@@ -21,12 +21,12 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { MessageResponseDto } from './dto/message-response.dto';
+import { JwtPayload } from './interfaces/jwt-payload.interface'; // Import JwtPayload
 
-@ApiTags('auth') 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
 
   @Post('login')
   @ApiOperation({ summary: 'User login' })
@@ -40,6 +40,17 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'User logout' })
+  @ApiResponse({ status: 200, description: 'Successful logout' })
+  async logout(@Request() req: ExpressRequest): Promise<{ message: string }> {
+    const user = req.user as JwtPayload; // Cast to JwtPayload
+    await this.authService.logout(user.sub);
+    return { message: 'Successfully logged out' };
+  }
+
   @Post('register')
   @ApiOperation({ summary: 'User registration' })
   @ApiResponse({
@@ -47,7 +58,9 @@ export class AuthController {
     description: 'User registered successfully. Please verify your email.',
     type: MessageResponseDto,
   })
-  async register(@Body() registerDto: RegisterDto): Promise<MessageResponseDto> {
+  async register(
+    @Body() registerDto: RegisterDto
+  ): Promise<MessageResponseDto> {
     return this.authService.register(registerDto);
   }
 
@@ -55,9 +68,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Request password reset' })
   @ApiResponse({ status: 200, description: 'Password reset email sent.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  async forgotPassword(
-    @Body() forgotPasswordDto: ForgotPasswordDto,
-  ) {
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     await this.authService.sendPasswordReset(forgotPasswordDto.email);
     return { message: 'Password reset email sent' };
   }
@@ -66,27 +77,22 @@ export class AuthController {
   @ApiOperation({ summary: 'Reset user password' })
   @ApiResponse({ status: 200, description: 'Password has been reset.' })
   @ApiResponse({ status: 400, description: 'Invalid or expired token.' })
-  async resetPassword(
-    @Body() resetPasswordDto: ResetPasswordDto,
-  ) {
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     await this.authService.resetPassword(
       resetPasswordDto.token,
-      resetPasswordDto.newPassword,
+      resetPasswordDto.newPassword
     );
     return { message: 'Password has been reset' };
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  @ApiBearerAuth() 
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user profile' })
   @ApiResponse({ status: 200, description: 'Returns user profile.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   getProfile(@Request() req: ExpressRequest) {
-    return req.user;
+    const user = req.user as JwtPayload; // Cast to JwtPayload
+    return user;
   }
-
-  
 }
-
-

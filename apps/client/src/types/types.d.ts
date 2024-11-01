@@ -6,7 +6,8 @@ export type User = {
   role: string;
   profile: UserProfile;
   skills: Skill[];
-  imageUrls?: string[]; 
+  imageUrls?: string[];
+  isOnline?: boolean; 
 };
 
 export type UserAuth = {

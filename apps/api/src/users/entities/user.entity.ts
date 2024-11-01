@@ -68,6 +68,15 @@ export class User {
   @Column({ default: false })
   isEmailVerified!: boolean;
 
+  @ApiProperty({
+    example: false,
+    description: 'Indicates whether the user is currently online',
+    required: false,
+  })
+  @Column({ default: false })
+  isOnline: boolean = false;
+  
+
   // @ApiHideProperty()
   // @Column({ nullable: true })
   // emailVerificationToken?: string;

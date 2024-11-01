@@ -190,6 +190,12 @@ export class UsersService {
     if (updateUserDto.password) {
       user.password = await bcrypt.hash(updateUserDto.password, 10);
     }
+
+    
+  if (updateUserDto.isOnline !== undefined) {
+    user.isOnline = updateUserDto.isOnline;
+  }
+
   
     // Add new skills if provided
     if (updateUserDto.skills && updateUserDto.skills.length > 0) {

@@ -41,8 +41,6 @@ export class AuthService {
     }
   
     const passwordMatches = await bcrypt.compare(user.password, foundUser.password);
-
-  
     if (!passwordMatches) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -50,6 +48,9 @@ export class AuthService {
     if (!foundUser.isEmailVerified) {
       throw new UnauthorizedException('Email not verified. Please check your email to verify your account.');
     }
+  
+    // Set user as online
+    await this.usersService.update(foundUser.id, { isOnline: true });
   
     const payload = {
       email: foundUser.email,
@@ -60,6 +61,15 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
       userId: foundUser.id,
     };
+  }
+  
+  async logout(userId: string): Promise<void> {
+    const user = await this.usersService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    user.isOnline = false;
+    await this.usersService.update(userId, { isOnline: false });
   }
   
   

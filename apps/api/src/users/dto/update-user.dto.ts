@@ -42,6 +42,10 @@ export class UpdateUserDto {
   @IsOptional()
   isAdmin?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  isOnline?: boolean; // Add the isOnline property to the DTO
+
   @ValidateNested({ each: true }) // Validate each item in the array
   @Type(() => Skill) // Transform plain object to Skill class instance
   @IsOptional()

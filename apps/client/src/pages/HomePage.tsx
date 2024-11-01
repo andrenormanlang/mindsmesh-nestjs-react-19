@@ -46,7 +46,7 @@ const HomePage = () => {
     );
   }
 
-  const { refreshUser, setUser } = userContext;
+  const { user, refreshUser, setUser } = userContext;
 
   const loadUsersAndProfile = useCallback(async () => {
     setIsLoading(true);
@@ -55,13 +55,22 @@ const HomePage = () => {
       const users = await fetchUsersWithSkills(
         debouncedSearchQuery.toLowerCase()
       );
+
+      // Ensure all users have an `isOnline` property.
       const filteredUsers = users.filter(
-        (user: User) => user.skills && user.skills.length > 0
+        (user: User) =>
+          user?.skills &&
+          user?.skills.length > 0 &&
+          typeof user?.isOnline !== "undefined"
       );
+
       setUsersWithSkills(filteredUsers);
       setSearchResultPhrase(
-        `You found ${filteredUsers.length} user${filteredUsers.length !== 1 ? "s" : ""} with the skill "${debouncedSearchQuery}".`
+        `You found ${filteredUsers.length} user${
+          filteredUsers.length !== 1 ? "s" : ""
+        } with the skill "${debouncedSearchQuery}".`
       );
+
       await refreshUser();
     } catch (error) {
       console.error("Failed to fetch users or profile", error);
@@ -114,24 +123,32 @@ const HomePage = () => {
 
   const memoizedUserCards = useMemo(
     () =>
-      usersWithSkills.map((user) => (
-        <UserCard
-          key={user.id}
-          user={user}
-          onViewDetails={openViewModal}
-          onEdit={user.id === userContext.user?.id ? openEditModal : undefined}
-          onDelete={
-            user.id === userContext.user?.id ? openDeleteModal : undefined
-          }
-          onChat={
-            userContext.user?.role === "employer" ||
-            (userContext.user?.role === "freelancer" &&
-              user.id === userContext.user?.id)
-              ? openChatModal
-              : undefined
-          }
-        />
-      )),
+      usersWithSkills.map((user) => {
+        // Log user and role data for better debugging
+        console.log("User:", user);
+        console.log("Logged-in user:", userContext.user);
+
+        return (
+          userContext.user && (
+            <UserCard
+              key={user.id}
+              user={user}
+              onViewDetails={openViewModal}
+              onEdit={
+                user.id === userContext.user?.id ? openEditModal : undefined
+              }
+              onDelete={
+                user.id === userContext.user?.id ? openDeleteModal : undefined
+              }
+              onChat={
+                userContext.user?.role === "employer" && user.isOnline
+                  ? openChatModal
+                  : undefined
+              }
+            />
+          )
+        );
+      }),
     [
       usersWithSkills,
       openViewModal,
@@ -141,6 +158,10 @@ const HomePage = () => {
       userContext.user,
     ]
   );
+
+  if (!userContext.user) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="min-h-screen text-white relative">

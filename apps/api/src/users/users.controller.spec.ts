@@ -142,6 +142,7 @@ describe('UsersController', () => {
       isAdmin: false,
       skills: [],
       isEmailVerified: true,
+      isOnline: false,
       sentMessages: [],
       receivedMessages: []
     };
