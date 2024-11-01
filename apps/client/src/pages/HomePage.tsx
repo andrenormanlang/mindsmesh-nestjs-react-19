@@ -19,7 +19,7 @@ import DeleteAccountModal from "../components/DeleteAccountConfirm";
 import UserDetailCard from "../components/UserDetail";
 import useDebounce from "../hooks/useDebounce";
 import LoadingSpinner from "../helpers/LoadingSpinner";
-import ChatComponent from "../components/Chat";
+import Chat from "../components/Chat";
 
 const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
@@ -201,8 +201,8 @@ const HomePage = () => {
 
        {/* Chat Modal */}
        <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
-        <DialogContent className="w-full sm:max-w-[700px] p-4 m-0">
-          {selectedUser && <ChatComponent freelancer={selectedUser} />}
+        <DialogContent className="w-full sm:max-w-[400px] p-0 m-0">
+          {selectedUser && <Chat freelancer={selectedUser} />}
         </DialogContent>
       </Dialog>
     </div>

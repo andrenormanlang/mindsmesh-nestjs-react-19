@@ -19,81 +19,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-
-// Authentication and User Management
-export const login = async (email: string, password: string): Promise<User> => {
-  const response = await api.post("/auth/login", { email, password });
-  localStorage.setItem("token", response.data.access_token);
-  localStorage.setItem("userId", response.data.userId);
-  return await getProfile();
-};
-
-export const logout = async (): Promise<void> => {
-  localStorage.removeItem("token");
-};
-
-export const getProfile = async (): Promise<User> => {
-  try {
-    const response = await api.get("/auth/profile");
-    const profile: UserAuth = response.data;
-    return await getUserById(profile.sub);
-  } catch (error) {
-    console.error("Error fetching profile:", error);
-    throw error;
-  }
-};
-
-export const fetchUsersWithSkills = async (query: string = ""): Promise<User[]> => {
-  try {
-    const endpoint = query.trim() ? "/skills/search" : "/users";
-    const response = await api.get(endpoint, {
-      params: query.trim() ? { q: query, t: Date.now() } : {},
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching users with skills:", error);
-    throw error;
-  }
-};
-
-export const getAllSkillTitles = async (): Promise<{ title: string }[]> => {
-  try {
-    const response = await api.get("/skills/all");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching all skills:", error);
-    throw error;
-  }
-};
-
-export const searchUsersBySkill = async (query: string): Promise<User[]> => {
-  try {
-    const response = await api.get(`/skills/search`, { params: { q: query } });
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching users by skill:", error);
-    throw error;
-  }
-};
-
-export const getProfileWithFullUserData = async (): Promise<User> => {
-  const profileResponse = await api.get("/auth/profile");
-  const profile: UserAuth = profileResponse.data;
-  const fullUserResponse = await api.get(`/users/${profile.sub}`);
-  return fullUserResponse.data;
-};
-
-export const sendPasswordResetEmail = async (email: string): Promise<void> => {
-  await api.post("/auth/forgot-password", { email });
-};
-
-export const resetPassword = async (
-  token: string,
-  newPassword: string
-): Promise<void> => {
-  await api.post(`/auth/reset-password`, { token, newPassword });
-};
-
+// Registration and Email existence Verification
 export const register = async (
   username: string,
   password: string,
@@ -148,13 +74,49 @@ export const resendVerificationEmail = async (email: string): Promise<void> => {
   }
 };
 
-export const updateProfile = async (
-  profileData: Partial<User>
-): Promise<User> => {
-  const response = await api.put(`/users/${profileData.id}`, profileData);
-  return response.data;
+// Login and logout
+export const login = async (email: string, password: string): Promise<User> => {
+  const response = await api.post("/auth/login", { email, password });
+  localStorage.setItem("token", response.data.access_token);
+  localStorage.setItem("userId", response.data.userId);
+  return await getProfile();
 };
 
+export const logout = async (): Promise<void> => {
+  localStorage.removeItem("token");
+};
+
+// Password Management
+export const requestPasswordReset = async (email: string): Promise<void> => {
+  await api.post("/auth/forgot-password", { email });
+};
+
+export const sendPasswordResetEmail = async (email: string): Promise<void> => {
+  await api.post("/auth/forgot-password", { email });
+};
+
+export const resetPassword = async (
+  token: string,
+  newPassword: string
+): Promise<void> => {
+  await api.post(`/auth/reset-password`, { token, newPassword });
+};
+
+export const updatePassword = async (userId: string, newPassword: string, currentPassword: string) => {
+  const response = await fetch(`/api/users/${userId}/update-password`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ newPassword, currentPassword }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update password');
+  }
+  return response.json();
+};
+
+// User Management
 export const getAllUsers = async (): Promise<User[]> => {
   const response = await api.get("/users");
   return response.data;
@@ -206,22 +168,75 @@ export const updateUser = async (data: {
   return response.data;
 };
 
-// services/MindsMeshAPI.ts
-export const updatePassword = async (userId: string, newPassword: string, currentPassword: string) => {
-  const response = await fetch(`/api/users/${userId}/update-password`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ newPassword, currentPassword }),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update password');
-  }
-  return response.json();
+// Admin Management
+export const manageUserRoles = async (
+  userId: string,
+  role: string
+): Promise<void> => {
+  await api.put(`/admin/users/${userId}/role`, { role });
 };
 
+// Profile Management
+export const getProfile = async (): Promise<User> => {
+  try {
+    const response = await api.get("/auth/profile");
+    const profile: UserAuth = response.data;
+    return await getUserById(profile.sub);
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    throw error;
+  }
+};
 
+export const updateProfile = async (
+  profileData: Partial<User>
+): Promise<User> => {
+  const response = await api.put(`/users/${profileData.id}`, profileData);
+  return response.data;
+};
+
+// Displaying Users and Skills
+export const fetchUsersWithSkills = async (query: string = ""): Promise<User[]> => {
+  try {
+    const endpoint = query.trim() ? "/skills/search" : "/users";
+    const response = await api.get(endpoint, {
+      params: query.trim() ? { q: query, t: Date.now() } : {},
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching users with skills:", error);
+    throw error;
+  }
+};
+
+export const getAllSkillTitles = async (): Promise<{ title: string }[]> => {
+  try {
+    const response = await api.get("/skills/all");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching all skills:", error);
+    throw error;
+  }
+};
+
+export const searchUsersBySkill = async (query: string): Promise<User[]> => {
+  try {
+    const response = await api.get(`/skills/search`, { params: { q: query } });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching users by skill:", error);
+    throw error;
+  }
+};
+
+export const getProfileWithFullUserData = async (): Promise<User> => {
+  const profileResponse = await api.get("/auth/profile");
+  const profile: UserAuth = profileResponse.data;
+  const fullUserResponse = await api.get(`/users/${profile.sub}`);
+  return fullUserResponse.data;
+};
+
+// Skill Management
 export const addSkillToUser = async (
   userId: string,
   skillData: Partial<Skill>
@@ -279,14 +294,13 @@ export const deleteSkill = async (skillId: string): Promise<void> => {
   await api.delete(`/skills/${skillId}`);
 };
 
-// Admin Management
-export const manageUserRoles = async (
-  userId: string,
-  role: string
-): Promise<void> => {
-  await api.put(`/admin/users/${userId}/role`, { role });
-};
-
-export const requestPasswordReset = async (email: string): Promise<void> => {
-  await api.post("/auth/forgot-password", { email });
+// Messaging
+export const sendMessage = async (freelancerId: string, message: string) => {
+  try {
+    const response = await api.post(`/chat/${freelancerId}/send`, { message });
+    return response.data;
+  } catch (error) {
+    console.error("Error sending message:", error);
+    throw error;
+  }
 };
