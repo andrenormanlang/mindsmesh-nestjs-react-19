@@ -1,34 +1,64 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { User } from "../types/types";
 import { Button } from "./shadcn/ui/button";
-import { sendMessage } from "../services/MindsMeshAPI"; // Import sendMessage from services
+import { Card, CardHeader, CardContent, CardFooter } from "./shadcn/ui/card";
+import { Input } from "./shadcn/ui/input";
+import { X, Send, Loader2 } from "lucide-react";
+import { sendMessage } from "../services/MindsMeshAPI";
 import { io, Socket } from "socket.io-client";
 
-const Chat: React.FC<{ freelancer: User }> = ({ freelancer }) => {
-  const [messages, setMessages] = useState<{ senderId: string; text: string }[]>([]);
-  const [newMessage, setNewMessage] = useState<string>("");
-  const senderId = localStorage.getItem("userId");
+const formatTime = (date: Date) => {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({ 
+  freelancer, 
+  onClose 
+}) => {
+  const [messages, setMessages] = useState<Array<{
+    senderId: string;
+    text: string;
+    timestamp: Date;
+    status?: 'sending' | 'sent' | 'error';
+  }>>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [isConnecting, setIsConnecting] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const senderId = localStorage.getItem("userId");
+  
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token && senderId) {
       const newSocket = io("http://localhost:3000/api", {
-        auth: {
-          token,
-        },
+        auth: { token },
       });
+
       setSocket(newSocket);
 
       newSocket.on("connect", () => {
-        console.log("Successfully connected to the socket");
+        setIsConnecting(false);
+        console.log("Connected to socket");
       });
 
       newSocket.on("receiveMessage", (message) => {
-        setMessages((prev) => [...prev, message]);
+        setMessages(prev => [...prev, {
+          ...message,
+          timestamp: new Date(),
+          status: 'sent'
+        }]);
       });
 
       newSocket.on("connect_error", (err) => {
+        setIsConnecting(false);
         console.error("Socket connection error:", err);
       });
 
@@ -41,73 +71,144 @@ const Chat: React.FC<{ freelancer: User }> = ({ freelancer }) => {
   const handleSendMessage = async () => {
     if (!senderId || !newMessage.trim()) return;
 
-    const message = {
+    const messageObj = {
       senderId,
       receiverId: freelancer.id,
-      text: newMessage,
+      text: newMessage.trim(),
+      timestamp: new Date(),
+      status: 'sending' as const
     };
 
-    try {
-      await sendMessage(freelancer.id, newMessage); 
+    setMessages(prev => [...prev, messageObj]);
+    setNewMessage("");
 
+    try {
+      await sendMessage(freelancer.id, messageObj.text);
+      
       if (socket) {
-        socket.emit("sendMessage", message);
+        socket.emit("sendMessage", messageObj);
       }
 
-      setMessages((prev) => [...prev, message]);
-      setNewMessage("");
+      setMessages(prev => 
+        prev.map(msg => 
+          msg === messageObj 
+            ? { ...msg, status: 'sent' as const } 
+            : msg
+        )
+      );
     } catch (error) {
       console.error("Error sending message:", error);
+      setMessages(prev => 
+        prev.map(msg => 
+          msg === messageObj 
+            ? { ...msg, status: 'error' as const } 
+            : msg
+        )
+      );
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="w-full max-w-md p-4 bg-white rounded-lg shadow-lg overflow-hidden">
-        <div className="flex justify-between items-center p-4 border-b border-gray-200">
-          <h3 className="font-semibold text-lg">Chat with {freelancer.username}</h3>
-          <button
-            className="text-gray-500 hover:text-gray-800"
-            onClick={() => setSocket(null)} // Close button
-          >
-            &times;
-          </button>
+    <Card className="w-full max-w-md shadow-lg">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
+        <div className="flex items-center space-x-3">
+          <div className="relative">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-blue-600 font-semibold">
+                {freelancer.username.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ${
+              isConnecting ? 'bg-yellow-400' : 'bg-green-400'
+            }`} />
+          </div>
+          <div>
+            <h3 className="font-semibold">{freelancer.username}</h3>
+            <p className="text-sm text-gray-500">
+              {isConnecting ? 'Connecting...' : 'Online'}
+            </p>
+          </div>
         </div>
-        <div className="chat-window p-4 overflow-y-auto h-64 flex flex-col-reverse">
+        {onClose && (
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={onClose}
+            className="hover:bg-gray-100 rounded-full"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </CardHeader>
+
+      <CardContent className="p-4">
+        <div className="h-96 overflow-y-auto space-y-4">
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`message flex ${msg.senderId === senderId ? "justify-end" : "justify-start"} mb-2`}
+              className={`flex ${msg.senderId === senderId ? 'justify-end' : 'justify-start'}`}
             >
-              <div
-                className={`message-bubble ${
-                  msg.senderId === senderId
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-300 text-black"
-                } p-3 rounded-lg shadow-sm max-w-xs`}
-              >
-                {msg.text}
+              <div className="flex flex-col space-y-1 max-w-[75%]">
+                <div
+                  className={`rounded-2xl px-4 py-2 ${
+                    msg.senderId === senderId
+                      ? 'bg-blue-600 text-white rounded-br-none'
+                      : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                  }`}
+                >
+                  {msg.text}
+                </div>
+                <div className={`flex items-center space-x-2 text-xs ${
+                  msg.senderId === senderId ? 'justify-end' : 'justify-start'
+                }`}>
+                  <span className="text-gray-500">
+                    {formatTime(msg.timestamp)}
+                  </span>
+                  {msg.senderId === senderId && (
+                    <span>
+                      {msg.status === 'sending' && (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      )}
+                      {msg.status === 'error' && (
+                        <span className="text-red-500">!</span>
+                      )}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
-        <div className="chat-input flex items-center p-2 border-t border-gray-200">
-          <input
-            type="text"
+      </CardContent>
+
+      <CardFooter className="p-4 border-t">
+        <div className="flex w-full items-center space-x-2">
+          <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            className="flex-grow p-3 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Type your message here..."
+            onKeyPress={handleKeyPress}
+            placeholder="Type a message..."
+            className="flex-1"
           />
           <Button
             onClick={handleSendMessage}
-            className="p-3 rounded-r-lg bg-blue-600 hover:bg-blue-700 text-white"
+            disabled={!newMessage.trim()}
+            size="icon"
+            className="rounded-full"
           >
-            Send
+            <Send className="h-4 w-4" />
           </Button>
         </div>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 };
 
