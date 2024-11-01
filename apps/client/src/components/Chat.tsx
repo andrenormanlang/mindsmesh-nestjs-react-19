@@ -7,6 +7,7 @@ import { X, Send, Loader2 } from "lucide-react";
 import { format } from 'date-fns';
 import { sendMessage, getChatMessages } from "../services/MindsMeshAPI";
 import { io, Socket } from "socket.io-client";
+import { v4 as uuidv4 } from 'uuid'; 
 
 const formatTime = (date: Date) => {
   return format(new Date(date), 'HH:mm');
@@ -18,6 +19,7 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
 }) => {
   const [messages, setMessages] = useState<
     Array<{
+      id: string;
       senderId: string;
       text: string;
       timestamp: Date;
@@ -47,6 +49,7 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
 
           // Update the messages state with the history
           setMessages(response.map((msg) => ({
+            id: msg.id,
             senderId: msg.sender.id,
             text: msg.message,
             timestamp: new Date(msg.createdAt),
@@ -67,44 +70,55 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
       const newSocket = io("http://localhost:3000", {
         auth: { token },
       });
-  
+
       setSocket(newSocket);
-  
+
       newSocket.on("connect", () => {
         setIsConnecting(false);
         console.log("Connected to socket");
       });
-  
+
       // Listen for the receiveMessage event
       newSocket.on("receiveMessage", (message) => {
         console.log("Received message:", message);  // Verify message content
-        setMessages((prev) => [
-          ...prev,
-          {
-            senderId: message.sender.id,
-            text: message.message,
-            timestamp: new Date(message.createdAt),
-            status: "sent",
-          },
-        ]);
+
+        // Check if the message already exists to prevent duplication
+        setMessages((prev) => {
+          if (prev.some((msg) => msg.id === message.id)) {
+            return prev; // Message already exists, do nothing
+          }
+          return [
+            ...prev,
+            {
+              id: message.id,
+              senderId: message.sender.id,
+              text: message.message,
+              timestamp: new Date(message.createdAt),
+              status: "sent",
+            },
+          ];
+        });
       });
-            
+
       newSocket.on("connect_error", (err) => {
         setIsConnecting(false);
         console.error("Socket connection error:", err);
       });
-  
+
       return () => {
         newSocket.disconnect();
       };
     }
   }, [senderId]);
-  
 
   const handleSendMessage = async () => {
     if (!senderId || !newMessage.trim()) return;
 
+    // Generate a UUID to identify the message uniquely
+    const tempId = uuidv4();
+
     const messageObj = {
+      id: tempId, // UUID for unique ID
       senderId,
       receiverId: freelancer.id,
       text: newMessage.trim(),
@@ -112,30 +126,37 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
       status: "sending" as const,
     };
 
+    // Add the message immediately to the state to reflect UI changes
     setMessages((prev) => [...prev, messageObj]);
     setNewMessage("");
 
     try {
-      await sendMessage(freelancer.id, messageObj.text);
+      // Send the message via API
+      const savedMessage = await sendMessage(freelancer.id, messageObj.text);
 
+      // Emit the message via socket after it has been successfully saved
       if (socket) {
         socket.emit("sendMessage", {
-          senderId: messageObj.senderId,
-          receiverId: messageObj.receiverId,
-          text: messageObj.text,
+          id: savedMessage.id,
+          senderId: savedMessage.sender.id,
+          receiverId: savedMessage.receiver.id,
+          text: savedMessage.message,
+          createdAt: savedMessage.createdAt,
         });
       }
 
+      // Update message status to 'sent'
       setMessages((prev) =>
         prev.map((msg) =>
-          msg === messageObj ? { ...msg, status: "sent" as const } : msg
+          msg.id === messageObj.id ? { ...msg, status: "sent" as const, id: savedMessage.id } : msg
         )
       );
     } catch (error) {
       console.error("Error sending message:", error);
+      // Update message status to 'error'
       setMessages((prev) =>
         prev.map((msg) =>
-          msg === messageObj ? { ...msg, status: "error" as const } : msg
+          msg.id === messageObj.id ? { ...msg, status: "error" as const } : msg
         )
       );
     }
@@ -185,9 +206,9 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
 
       <CardContent className="p-4">
         <div className="h-96 overflow-y-auto space-y-4">
-          {messages.map((msg, idx) => (
+          {messages.map((msg) => (
             <div
-              key={idx}
+              key={msg.id}
               className={`flex ${msg.senderId === senderId ? "justify-end" : "justify-start"}`}
             >
               <div className="flex flex-col space-y-1 max-w-[75%]">
@@ -250,3 +271,5 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
 };
 
 export default Chat;
+
+
