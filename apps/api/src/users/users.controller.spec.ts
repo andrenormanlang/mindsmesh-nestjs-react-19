@@ -13,6 +13,7 @@ import { SkillDto } from '@/users/dto/skill-service.dto';
 import _ from 'lodash';
 import { CreateUsersDto } from './dto/create-users-test';
 import { Skill } from '@/skills/entities/skill.entity';
+import { UserRole } from './enums/user-role.enum';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -92,6 +93,7 @@ describe('UsersController', () => {
           email: 'test@example.com',
           password: 'password',
           username: 'Test User',
+          role: UserRole.FREELANCER,
           isAdmin: false,
           skills: [mockSkill as SkillDto],
         },
@@ -104,20 +106,20 @@ describe('UsersController', () => {
     // Mock the result after creation in the service
     const generatedUserId = uuidv4(); // Simulate a generated user ID
   
-    const createdUsers: User[] = [
+    const createdUsers: DeepPartial<User>[] = [
       {
         id: generatedUserId,
         email: createUsersDto.users[0].email,
         username: createUsersDto.users[0].username,
         isAdmin: createUsersDto.users[0].isAdmin,
         password: 'hashedPassword', // Assume password would be hashed by the service
-        role: 'user',
+        role: createUsersDto.users[0].role,
         skills: [mockSkill as Skill], // No reference to the user itself here
-      } as User,
+      },
     ];
   
     // Mock the createBulk service method
-    jest.spyOn(service, 'createBulk').mockResolvedValue(createdUsers);
+    // jest.spyOn(service, 'createBulk').mockResolvedValue(createdUsers);
   
     // Call the controller method and check the result
     const result = await controller.createBulk([], copiedCreateUsersDto);
@@ -136,11 +138,14 @@ describe('UsersController', () => {
       email: 'test@example.com',
       password: 'password',
       username: 'Test User',
-      role: 'user',
+      role: UserRole.FREELANCER,
       isAdmin: false,
       skills: [],
+      isEmailVerified: true,
+      sentMessages: [],
+      receivedMessages: []
     };
-
+    
     const result = await controller.update(validUuid, updateUserDto, []);
     expect(result).toEqual({});
     expect(service.update).toHaveBeenCalledWith(validUuid, updateUserDto);

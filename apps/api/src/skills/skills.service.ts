@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Skill } from './entities/skill.entity';
@@ -30,6 +30,10 @@ export class SkillsService {
       throw new NotFoundException('User not found');
     }
 
+    if (user.role !== 'freelancer') {
+      throw new BadRequestException('Only freelancers can add skills');
+    }
+  
     const skill = this.skillsRepository.create({
       ...createSkillDto,
       user: user,

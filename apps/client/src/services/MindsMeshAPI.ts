@@ -22,6 +22,7 @@ api.interceptors.request.use((config) => {
 // Registration and Email existence Verification
 export const register = async (
   username: string,
+  role: "freelancer" | "employer", 
   password: string,
   email: string,
   imageUrls: File[] | null,
@@ -30,6 +31,7 @@ export const register = async (
   const formData = new FormData();
 
   formData.append("username", username);
+  formData.append("role", role); 
   formData.append("password", password);
   formData.append("email", email);
 

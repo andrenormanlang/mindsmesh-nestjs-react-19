@@ -3,6 +3,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Skill } from '../../skills/entities/skill.entity';
 import { IsOptional } from 'class-validator';
 import { ChatMessage } from '@/chat/entities/chat-message.entity';
+import { UserRole } from '../enums/user-role.enum';
 
 @Entity()
 export class User {
@@ -32,12 +33,12 @@ export class User {
   username!: string;
 
   @ApiProperty({
-    example: 'user',
+    example: 'freelancer',
     description: 'The role of the user',
-    enum: ['admin', 'user', 'guest'], 
+    enum: UserRole,
   })
-  @Column({ default: 'user' })
-  role!: string;
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.FREELANCER })
+  role!: UserRole;
 
   @ApiProperty({
     example: [

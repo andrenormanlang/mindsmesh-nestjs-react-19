@@ -105,7 +105,6 @@ const HomePage = () => {
     setIsChatModalOpen(true);
   }, []);
 
-
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(event.target.value);
@@ -113,18 +112,35 @@ const HomePage = () => {
     []
   );
 
-  const memoizedUserCards = useMemo(() => (
-  usersWithSkills.map((user) => (
-    <UserCard
-      key={user.id}
-      user={user}
-      onViewDetails={openViewModal}
-      onEdit={user.id === userContext.user?.id ? openEditModal : undefined}
-      onDelete={user.id === userContext.user?.id ? openDeleteModal : undefined}
-      onChat={user.id === userContext.user?.id ? openChatModal : undefined} // Show chat only for logged-in user
-    />
-  ))
-), [usersWithSkills, openViewModal, openEditModal, openDeleteModal, openChatModal, userContext.user]);
+  const memoizedUserCards = useMemo(
+    () =>
+      usersWithSkills.map((user) => (
+        <UserCard
+          key={user.id}
+          user={user}
+          onViewDetails={openViewModal}
+          onEdit={user.id === userContext.user?.id ? openEditModal : undefined}
+          onDelete={
+            user.id === userContext.user?.id ? openDeleteModal : undefined
+          }
+          onChat={
+            userContext.user?.role === "employer" ||
+            (userContext.user?.role === "freelancer" &&
+              user.id === userContext.user?.id)
+              ? openChatModal
+              : undefined
+          }
+        />
+      )),
+    [
+      usersWithSkills,
+      openViewModal,
+      openEditModal,
+      openDeleteModal,
+      openChatModal,
+      userContext.user,
+    ]
+  );
 
   return (
     <div className="min-h-screen text-white relative">
@@ -199,8 +215,8 @@ const HomePage = () => {
         </DialogContent>
       </Dialog>
 
-       {/* Chat Modal */}
-       <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
+      {/* Chat Modal */}
+      <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
         <DialogContent className="w-full sm:max-w-[400px] p-0 m-0">
           {selectedUser && <Chat freelancer={selectedUser} />}
         </DialogContent>

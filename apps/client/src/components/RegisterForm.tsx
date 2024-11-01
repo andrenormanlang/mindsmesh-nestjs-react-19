@@ -13,6 +13,7 @@ export type RegisterFormData = {
   username: string;
   email: string;
   password: string;
+  role: "freelancer" | "employer";
   imageUrls?: File[];
 };
 
@@ -20,6 +21,7 @@ const registerSchema = z.object({
   username: z.string().min(1, "Username is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  role: z.enum(["freelancer", "employer"]),
   imageUrls: z.any().optional(),
 });
 
@@ -39,6 +41,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
       username: "",
       email: "",
       password: "",
+      role: "freelancer",
       imageUrls: undefined,
     },
   });
@@ -72,6 +75,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
     formData.append("username", data.username);
     formData.append("email", data.email);
     formData.append("password", data.password);
+    formData.append("role", data.role);
 
     if (selectedFiles.length > 0) {
       selectedFiles.forEach((file) => {
@@ -82,6 +86,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
     try {
       await register(
         formData.get("username") as string,
+        formData.get("role") as "freelancer" | "employer",
         formData.get("password") as string,
         formData.get("email") as string,
         selectedFiles,
@@ -122,8 +127,6 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
   return (
     <>
       <div className="overflow-y-auto">
-        {" "}
-        {/* Scrollable container */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <Label htmlFor="username">Username</Label>
@@ -173,6 +176,41 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
           </div>
 
           <div>
+            <Label htmlFor="role">Role</Label>
+            <Controller
+              name="role"
+              control={control}
+              render={({ field }) => (
+                <div className="flex space-x-4">
+                  <label>
+                    <input
+                      {...field}
+                      type="radio"
+                      value="freelancer"
+                      checked={field.value === "freelancer"}
+                      onChange={() => field.onChange("freelancer")}
+                    />
+                    Freelancer
+                  </label>
+                  <label>
+                    <input
+                      {...field}
+                      type="radio"
+                      value="employer"
+                      checked={field.value === "employer"}
+                      onChange={() => field.onChange("employer")}
+                    />
+                    Employer
+                  </label>
+                </div>
+              )}
+            />
+            {errors.role && (
+              <p className="text-red-500">{errors.role.message}</p>
+            )}
+          </div>
+
+          <div>
             <Label htmlFor="avatars">Images (Max 4)</Label>
             <Input
               type="file"
@@ -211,9 +249,9 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
           )}
           {error && <p className="text-red-500">{error}</p>}
           <div className="flex space-x-4">
-            <Button type="submit">Submit</Button> 
+            <Button type="submit">Submit</Button>
           </div>
-        </form>       
+        </form>
       </div>
     </>
   );

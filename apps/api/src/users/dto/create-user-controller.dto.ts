@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsEmail,
+  IsEnum,
   IsOptional,
   IsString,
   Matches,
@@ -12,6 +13,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Skill } from '../../skills/entities/skill.entity';
+import { UserRole } from '../enums/user-role.enum';
 
 export class CreateUserControllerDto {
   @ApiProperty({
@@ -20,6 +22,14 @@ export class CreateUserControllerDto {
   })
   @IsEmail()
   email: string;
+
+  @ApiProperty({
+    example: 'freelancer',
+    description: 'The role of the user (freelancer or employer)',
+    enum: UserRole,
+  })
+  @IsEnum(UserRole, { message: 'Role must be either freelancer or employer' })
+  role: UserRole;
 
   @ApiProperty({
     example: 'StrongPassword123!',

@@ -5,9 +5,13 @@ import {
   IsString,
   MinLength,
   ValidateNested,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Skill } from '../../skills/entities/skill.entity'; 
+import { Skill } from '../../skills/entities/skill.entity';
+import { UserRole } from '../enums/user-role.enum';
+
+
 export class UpdateUserDto {
   @IsEmail()
   @IsOptional()
@@ -26,9 +30,9 @@ export class UpdateUserDto {
   @IsOptional()
   isEmailVerified?: boolean;
 
-  @IsString()
+  @IsEnum(UserRole, { message: 'Role must be either freelancer or employer' })
   @IsOptional()
-  role?: string;
+  role?: UserRole;
 
   @IsString({ each: true })
   @IsOptional()
