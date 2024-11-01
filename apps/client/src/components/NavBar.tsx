@@ -96,14 +96,17 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
-                <Button
-                  variant="ghost"
-                  className="text-white flex items-center"
-                  onClick={() => setIsProfileOpen(true)}
-                >
-                  <PersonIcon className="h-5 w-5 mr-1" />
-                  Profile
-                </Button>
+                {/* Show Profile button only if user is NOT an employer */}
+                {user.role !== "employer" && (
+                  <Button
+                    variant="ghost"
+                    className="text-white flex items-center"
+                    onClick={() => setIsProfileOpen(true)}
+                  >
+                    <PersonIcon className="h-5 w-5 mr-1" />
+                    Profile
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   className="text-white flex items-center"
@@ -186,17 +189,20 @@ const Navbar: React.FC = () => {
       <div className={`mobileMenu md:hidden ${menuOpen ? "active" : ""}`}>
         {user ? (
           <>
-            <Button
-              variant="ghost"
-              className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
-              onClick={() => {
-                setMenuOpen(false);
-                setIsProfileOpen(true);
-              }}
-            >
-              <PersonIcon className="h-5 w-5 mr-2" />
-              Profile
-            </Button>
+            {/* Show Profile button only if user is NOT an employer */}
+            {user.role !== "employer" && (
+              <Button
+                variant="ghost"
+                className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setIsProfileOpen(true);
+                }}
+              >
+                <PersonIcon className="h-5 w-5 mr-2" />
+                Profile
+              </Button>
+            )}
             <Button
               variant="ghost"
               className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
@@ -209,7 +215,6 @@ const Navbar: React.FC = () => {
               Logout
             </Button>
           </>
-          
         ) : (
           <>
             {/* Mobile Login Dialog */}
@@ -274,7 +279,6 @@ const Navbar: React.FC = () => {
           {user && (
             <EditProfileForm
               user={user}
-              // onClose={() => setIsProfileOpen(false)}
               setUser={(updatedUser) => {
                 setUser(updatedUser);
                 setIsProfileOpen(false);
