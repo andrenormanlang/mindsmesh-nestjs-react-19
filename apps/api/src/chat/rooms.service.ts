@@ -30,10 +30,16 @@ export class RoomsService {
     return this.roomRepository.save(room);
   }
 
-  async getRoomsForFreelancer(freelancerId: string): Promise<Room[]> {
-    return this.roomRepository.find({
+  async getRoomsForFreelancer(freelancerId: string): Promise<any[]> {
+    const rooms = await this.roomRepository.find({
       where: { freelancer: { id: freelancerId } },
       relations: ['employer'],
     });
+
+    return rooms.map(room => ({
+      ...room,
+      employerName: room.employer.username, 
+    }));
   }
 }
+

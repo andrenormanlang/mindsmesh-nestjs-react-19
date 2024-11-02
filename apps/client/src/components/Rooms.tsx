@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./shadcn/ui/dialog";
-import { fetchRoomsForFreelancer } from "../services/MindsMeshAPI"; // Create an API function to fetch rooms
+import { fetchRoomsForFreelancer } from "../services/MindsMeshAPI";
 import { Room } from "../types/types";
+import { io } from "socket.io-client";
+
+const socket = io(import.meta.env.VITE_BASE_URL, {
+  auth: {
+    token: localStorage.getItem("token"), 
+  },
+});
 
 interface RoomsProps {
   isOpen: boolean;
@@ -10,7 +17,7 @@ interface RoomsProps {
 }
 
 const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
-    const [rooms, setRooms] = useState<Room[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
 
   useEffect(() => {
     const loadRooms = async () => {
@@ -48,7 +55,7 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
                       <button
                         className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md"
                         onClick={() => {
-                          // Logic to enter the room and start chatting
+                          socket.emit('joinRoom', { roomId: room.id });
                         }}
                       >
                         Join

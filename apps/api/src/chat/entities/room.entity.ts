@@ -12,7 +12,7 @@ export class Room {
 
   @ManyToOne(() => User, (user) => user.createdRooms, { eager: true })
   employer!: User;
-
+  
   @ManyToOne(() => User, (user) => user.assignedRooms, { eager: true })
   freelancer!: User;
 
