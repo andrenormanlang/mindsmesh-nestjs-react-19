@@ -96,4 +96,11 @@ export class ChatController {
       throw error;
     }
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('active-chats')
+  async getActiveChats(@Request() req) {
+    const userId = req.user.id;
+    return await this.chatService.getActiveChats(userId);
+  }
 }

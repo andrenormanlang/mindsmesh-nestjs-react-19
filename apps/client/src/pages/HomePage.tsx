@@ -11,7 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/shadcn/ui/dialog";
-import { deleteUser, fetchUsersByRole, fetchUsersWithSkills } from "../services/MindsMeshAPI";
+import {
+  deleteUser,
+  fetchUsersWithSkills,
+} from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import UserCard from "../components/UserCard";
 import EditProfileForm from "../components/EditProfileForm";
@@ -48,38 +51,40 @@ const HomePage = () => {
 
   const { user, refreshUser, setUser } = userContext;
 
-useEffect(() => {
-  const loadUsersAndProfile = async () => {
-    setIsLoading(true);
-    setSearchResultPhrase(null);
-    try {
-      await refreshUser();
+  useEffect(() => {
+    const loadUsersAndProfile = async () => {
+      setIsLoading(true);
+      setSearchResultPhrase(null);
+      try {
+        await refreshUser();
 
-      let users: User[] = [];
-      if (userContext?.user?.role === 'employer') {
-        // Employers fetch freelancers with skills
-        users = await fetchUsersWithSkills(debouncedSearchQuery.toLowerCase());
-      } else if (userContext?.user?.role === 'freelancer') {
-        // Freelancers don't see other users
-        users = [];
-      } else {
-        // User is not logged in, fetch freelancers with skills
-        users = await fetchUsersWithSkills(debouncedSearchQuery.toLowerCase());
+        let users: User[] = [];
+        if (userContext?.user?.role === "employer") {
+          // Employers fetch freelancers with skills
+          users = await fetchUsersWithSkills(
+            debouncedSearchQuery.toLowerCase()
+          );
+        } else if (userContext?.user?.role === "freelancer") {
+          // Freelancers see only their own profile
+          users = [userContext.user];
+        } else {
+          // Unauthenticated users fetch freelancers with skills
+          users = await fetchUsersWithSkills(
+            debouncedSearchQuery.toLowerCase()
+          );
+        }
+
+        setUsersWithSkills(users);
+        setSearchResultPhrase(`You found ${users.length} user(s).`);
+      } catch (error) {
+        console.error("Failed to fetch users or profile", error);
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      setUsersWithSkills(users);
-      setSearchResultPhrase(`You found ${users.length} user(s).`);
-    } catch (error) {
-      console.error("Failed to fetch users or profile", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  loadUsersAndProfile();
-}, [debouncedSearchQuery, refreshUser, userContext?.user?.role]);
-
-
+    loadUsersAndProfile();
+  }, [debouncedSearchQuery, refreshUser, userContext?.user?.role]);
 
   // useEffect(() => {
   //   loadUsersAndProfile();
@@ -110,11 +115,27 @@ useEffect(() => {
     setIsViewModalOpen(true);
   }, []);
 
-  const openChatModal = useCallback((user: User, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setSelectedUser(user);
-    setIsChatModalOpen(true);
-  }, []);
+  // HomePage.tsx
+
+  const openChatModal = useCallback(
+    (user: User, event: React.MouseEvent) => {
+      event.stopPropagation();
+
+      if (
+        userContext?.user?.role === "freelancer" &&
+        userContext.user.id === user.id
+      ) {
+        // Freelancer clicked on their own card; set selectedUser to null
+        setSelectedUser(null);
+      } else {
+        // Employer clicked on a freelancer's card; set selectedUser to that freelancer
+        setSelectedUser(user);
+      }
+
+      setIsChatModalOpen(true);
+    },
+    [userContext?.user]
+  );
 
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,48 +144,51 @@ useEffect(() => {
     []
   );
 
- 
-  // In HomePage.tsx
-const memoizedUserCards = useMemo(
-  () =>
-    usersWithSkills.map((user) => {
-      let showChatButton = false;
+  const memoizedUserCards = useMemo(
+    () =>
+      usersWithSkills
+        .filter((user) => user.role !== "employer") // Exclude employers
+        .map((user) => {
+          let showChatButton = false;
 
-      if (userContext?.user) {
-        if (
-          (userContext.user.role === "freelancer" && user.role === "employer") ||
-          (userContext.user.role === "employer" && user.role === "freelancer")
-        ) {
-          // Show chat button if the roles are complementary
-          showChatButton = true;
-        }
-      }
-
-      return (
-        <UserCard
-          key={user.id}
-          user={user}
-          onViewDetails={openViewModal}
-          onEdit={
-            userContext?.user?.id === user.id ? openEditModal : undefined
+          if (
+            userContext?.user?.role === "employer" &&
+            user.role === "freelancer"
+          ) {
+            // Employers can chat with freelancers
+            showChatButton = true;
+          } else if (
+            userContext?.user?.role === "freelancer" &&
+            userContext.user.id === user.id
+          ) {
+            // Freelancers see chat button on their own card
+            showChatButton = true;
           }
-          onDelete={
-            userContext?.user?.id === user.id ? openDeleteModal : undefined
-          }
-          onChat={showChatButton ? openChatModal : undefined}
-        />
-      );
-    }),
-  [
-    usersWithSkills,
-    openViewModal,
-    openEditModal,
-    openDeleteModal,
-    openChatModal,
-    userContext?.user,
-  ]
-);
 
+          return (
+            <UserCard
+              key={user.id}
+              user={user}
+              onViewDetails={openViewModal}
+              onEdit={
+                userContext?.user?.id === user.id ? openEditModal : undefined
+              }
+              onDelete={
+                userContext?.user?.id === user.id ? openDeleteModal : undefined
+              }
+              onChat={showChatButton ? openChatModal : undefined}
+            />
+          );
+        }),
+    [
+      usersWithSkills,
+      openViewModal,
+      openEditModal,
+      openDeleteModal,
+      openChatModal,
+      userContext?.user,
+    ]
+  );
 
   return (
     <div className="min-h-screen text-white relative">
@@ -242,7 +266,7 @@ const memoizedUserCards = useMemo(
       {/* Chat Modal */}
       <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
         <DialogContent className="w-full sm:max-w-[400px] p-0 m-0">
-          {selectedUser && <Chat chatPartner={selectedUser} />}
+          <Chat chatPartner={selectedUser} />
         </DialogContent>
       </Dialog>
     </div>

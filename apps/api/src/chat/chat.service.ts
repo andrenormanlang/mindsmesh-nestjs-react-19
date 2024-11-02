@@ -65,5 +65,27 @@ export class ChatService {
       },
     });
   }
+
+  async getActiveChats(userId: string): Promise<User[]> {
+    const messages = await this.chatRepository.find({
+      where: [
+        { sender: { id: userId } },
+        { receiver: { id: userId } },
+      ],
+      relations: ['sender', 'receiver'],
+    });
+  
+    const chatPartnersMap = new Map<string, User>();
+  
+    messages.forEach((message) => {
+      const otherUser =
+        message.sender.id === userId ? message.receiver : message.sender;
+      if (otherUser.role === 'employer') {
+        chatPartnersMap.set(otherUser.id, otherUser);
+      }
+    });
+  
+    return Array.from(chatPartnersMap.values());
+  }
   
 }

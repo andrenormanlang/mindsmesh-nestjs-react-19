@@ -21,7 +21,7 @@ export class ChatGateway implements OnGatewayConnection {
 
   constructor(
     private readonly chatService: ChatService,
-    private readonly jwtService: JwtService,
+    private readonly jwtService: JwtService
   ) {}
 
   async handleConnection(client: Socket) {
@@ -60,11 +60,18 @@ export class ChatGateway implements OnGatewayConnection {
   }
 
   @SubscribeMessage('sendMessage')
+  @SubscribeMessage('sendMessage')
   async handleSendMessage(
-    @MessageBody() message: { id: string; senderId: string; receiverId: string; text: string },
+    @MessageBody()
+    message: { id: string; senderId: string; receiverId: string; text: string },
     @ConnectedSocket() client: Socket
   ) {
-    console.log('Received message from:', message.senderId, 'to:', message.receiverId);
+    console.log(
+      'Received message from:',
+      message.senderId,
+      'to:',
+      message.receiverId
+    );
 
     try {
       // Prevent sending a message to oneself
@@ -82,30 +89,42 @@ export class ChatGateway implements OnGatewayConnection {
         (sender.role === 'employer' && receiver.role === 'freelancer')
       ) {
         // Check if a message with this unique ID is already saved to avoid re-processing
-        const existingMessage = await this.chatService.findMessageById(message.id);
+        const existingMessage = await this.chatService.findMessageById(
+          message.id
+        );
         if (existingMessage) {
-          console.log(`Message with ID ${message.id} already exists, skipping emission.`);
+          console.log(
+            `Message with ID ${message.id} already exists, skipping emission.`
+          );
           return;
         }
 
         // Save the message to the database
-        const savedMessage = await this.chatService.sendMessageWithId(sender, receiver, message.text, message.id);
-        console.log("Emitting saved message:", savedMessage);
+        const savedMessage = await this.chatService.sendMessageWithId(
+          sender,
+          receiver,
+          message.text,
+          message.id
+        );
+        console.log('Emitting saved message:', savedMessage);
 
         // Emit the saved message to both sender and receiver rooms
-        this.server.to([message.senderId, message.receiverId]).emit('receiveMessage', {
-          id: savedMessage.id,
-          senderId: savedMessage.sender.id,
-          receiverId: savedMessage.receiver.id,
-          text: savedMessage.message,
-          timestamp: savedMessage.createdAt,
-        });
+        this.server
+          .to([message.senderId, message.receiverId])
+          .emit('receiveMessage', {
+            id: savedMessage.id,
+            senderId: savedMessage.sender.id,
+            receiverId: savedMessage.receiver.id,
+            text: savedMessage.message,
+            timestamp: savedMessage.createdAt,
+          });
       } else {
-        console.error('Invalid chat roles: Chats can only occur between an employer and a freelancer');
+        console.error(
+          'Invalid chat roles: Chats can only occur between an employer and a freelancer'
+        );
       }
     } catch (error) {
       console.error('Error saving message:', error);
     }
   }
 }
-
