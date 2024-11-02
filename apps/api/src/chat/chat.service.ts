@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { ChatMessage } from './entities/chat-message.entity';
+import { Room } from './entities/room.entity';
 
 @Injectable()
 export class ChatService {
@@ -12,6 +13,9 @@ export class ChatService {
 
     @InjectRepository(User) // Inject the User repository
     private userRepository: Repository<User>,
+
+    @InjectRepository(Room)
+    private roomRepository: Repository<Room>,
   ) {}
 
   async getUserById(id: string): Promise<User> {
@@ -86,6 +90,24 @@ export class ChatService {
     });
   
     return Array.from(chatPartnersMap.values());
+  }
+
+  async sendMessageToRoom(room: Room, message: string): Promise<ChatMessage> {
+    const chatMessage = this.chatRepository.create({
+      message,
+      room,
+    });
+    return this.chatRepository.save(chatMessage);
+  }
+  
+  async findRoomBetweenUsers(user1: User, user2: User): Promise<Room | null> {
+    const room = await this.roomRepository.findOne({
+      where: [
+        { employer: user1, freelancer: user2 },
+        { employer: user2, freelancer: user1 },
+      ],
+    });
+    return room || null;
   }
   
 }

@@ -42,6 +42,21 @@ export type SkillData = {
   isAvailable: boolean;
 };
 
+interface Message {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  text: string;
+  timestamp: Date;
+  status?: "sending" | "sent" | "error";
+}
+
+export interface Room {
+  id: string;
+  roomName: string;
+  employerName: string; 
+}
+
 
 // export type Message = {
 //   senderId: string;

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { use } from "react";
 import { User } from "../types/types";
+import { UserContext } from "../contexts/UserContext";
 import { Card, CardHeader, CardContent, CardFooter } from "./shadcn/ui/card";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { IoInformationCircleOutline } from "react-icons/io5";
@@ -27,6 +28,8 @@ const UserCard: React.FC<UserCardProps> = ({
   onDelete,
   onChat,
 }) => {
+  const userContext = use(UserContext);
+
   return (
     <Card className="flex flex-col bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
       <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
@@ -94,19 +97,30 @@ const UserCard: React.FC<UserCardProps> = ({
         >
           <IoInformationCircleOutline />
         </button>
-        {onChat && (
+        {userContext?.user?.role === "freelancer" &&
+        userContext.user.id === user.id ? (
           <button
-            onClick={(e) => onChat(user, e)}
-            className={`px-3 py-1 rounded-md text-sm ${
-              user.isOnline
-                ? "bg-green-500 hover:bg-green-600 text-white"
-                : "bg-gray-500 text-white cursor-not-allowed"
-            }`}
-            disabled={!user.isOnline}
+            onClick={(e) => onChat && onChat(user, e)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
           >
-            {user.isOnline ? "Chat" : "Offline"}
+            Rooms
           </button>
+        ) : (
+          user.role === "freelancer" && (
+            <button
+              onClick={(e) => onChat && onChat(user, e)}
+              className={`px-3 py-1 rounded-md text-sm ${
+                user.isOnline
+                  ? "bg-green-500 hover:bg-green-600 text-white"
+                  : "bg-gray-500 text-white cursor-not-allowed"
+              }`}
+              disabled={!user.isOnline}
+            >
+              {user.isOnline ? "Chat" : "Offline"}
+            </button>
+          )
         )}
+
         {(onEdit || onDelete) && (
           <div className="flex space-x-2">
             {onEdit && (

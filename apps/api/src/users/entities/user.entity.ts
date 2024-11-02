@@ -4,6 +4,7 @@ import { Skill } from '../../skills/entities/skill.entity';
 import { IsOptional } from 'class-validator';
 import { ChatMessage } from '@/chat/entities/chat-message.entity';
 import { UserRole } from '../enums/user-role.enum';
+import { Room } from '@/chat/entities/room.entity';
 
 @Entity()
 export class User {
@@ -96,4 +97,10 @@ export class User {
  
    @OneToMany(() => ChatMessage, (chat) => chat.receiver)
    receivedMessages!: ChatMessage[];
+
+   @OneToMany(() => Room, (room) => room.employer)
+   createdRooms!: Room[];
+ 
+   @OneToMany(() => Room, (room) => room.freelancer)
+   assignedRooms!: Room[];
 }

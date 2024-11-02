@@ -11,10 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/shadcn/ui/dialog";
-import {
-  deleteUser,
-  fetchUsersWithSkills,
-} from "../services/MindsMeshAPI";
+import { deleteUser, fetchUsersWithSkills } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import UserCard from "../components/UserCard";
 import EditProfileForm from "../components/EditProfileForm";
@@ -23,6 +20,7 @@ import UserDetailCard from "../components/UserDetail";
 import useDebounce from "../hooks/useDebounce";
 import LoadingSpinner from "../helpers/LoadingSpinner";
 import Chat from "../components/Chat";
+import Rooms from "../components/Rooms";
 
 const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
@@ -34,6 +32,7 @@ const HomePage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isRoomsModalOpen, setIsRoomsModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
@@ -62,7 +61,8 @@ const HomePage = () => {
         if (userContext?.user?.role === "employer") {
           // Employers fetch freelancers with skills
           users = await fetchUsersWithSkills(
-            debouncedSearchQuery.toLowerCase()
+            debouncedSearchQuery.toLowerCase(),
+            "freelancer"
           );
         } else if (userContext?.user?.role === "freelancer") {
           // Freelancers see only their own profile
@@ -70,7 +70,8 @@ const HomePage = () => {
         } else {
           // Unauthenticated users fetch freelancers with skills
           users = await fetchUsersWithSkills(
-            debouncedSearchQuery.toLowerCase()
+            debouncedSearchQuery.toLowerCase(),
+            "freelancer"
           );
         }
 
@@ -144,48 +145,47 @@ const HomePage = () => {
     []
   );
 
+  const openChatOrRoomsModal = (user: User, event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    if (
+      userContext?.user?.role === "freelancer" &&
+      userContext.user.id === user.id
+    ) {
+      // Freelancer clicks on their own card to see rooms
+      setSelectedUser(user);
+      setIsRoomsModalOpen(true);
+    } else {
+      // Employer clicks to chat with a freelancer
+      setSelectedUser(user);
+      setIsChatModalOpen(true);
+    }
+  };
+
   const memoizedUserCards = useMemo(
     () =>
       usersWithSkills
         .filter((user) => user.role !== "employer") // Exclude employers
-        .map((user) => {
-          let showChatButton = false;
-
-          if (
-            userContext?.user?.role === "employer" &&
-            user.role === "freelancer"
-          ) {
-            // Employers can chat with freelancers
-            showChatButton = true;
-          } else if (
-            userContext?.user?.role === "freelancer" &&
-            userContext.user.id === user.id
-          ) {
-            // Freelancers see chat button on their own card
-            showChatButton = true;
-          }
-
-          return (
-            <UserCard
-              key={user.id}
-              user={user}
-              onViewDetails={openViewModal}
-              onEdit={
-                userContext?.user?.id === user.id ? openEditModal : undefined
-              }
-              onDelete={
-                userContext?.user?.id === user.id ? openDeleteModal : undefined
-              }
-              onChat={showChatButton ? openChatModal : undefined}
-            />
-          );
-        }),
+        .map((user) => (
+          <UserCard
+            key={user.id}
+            user={user}
+            onViewDetails={openViewModal}
+            onEdit={
+              userContext?.user?.id === user.id ? openEditModal : undefined
+            }
+            onDelete={
+              userContext?.user?.id === user.id ? openDeleteModal : undefined
+            }
+            onChat={openChatOrRoomsModal}
+          />
+        )),
     [
       usersWithSkills,
       openViewModal,
       openEditModal,
       openDeleteModal,
-      openChatModal,
+      openChatOrRoomsModal,
       userContext?.user,
     ]
   );
@@ -267,6 +267,19 @@ const HomePage = () => {
       <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
         <DialogContent className="w-full sm:max-w-[400px] p-0 m-0">
           <Chat chatPartner={selectedUser} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Rooms Modal */}
+      <Dialog open={isRoomsModalOpen} onOpenChange={setIsRoomsModalOpen}>
+        <DialogContent className="w-full sm:max-w-[500px] p-4">
+          {userContext.user && (
+            <Rooms
+              isOpen={isRoomsModalOpen}
+              freelancerId={userContext.user.id}
+              onClose={() => setIsRoomsModalOpen(false)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

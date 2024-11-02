@@ -13,6 +13,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { SendGridModule } from './sendgrid/sendgrid.module';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatModule } from './chat/chat.module';
+import { RoomsModule } from './chat/rooms.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { ChatModule } from './chat/chat.module';
     SkillsModule,
     SendGridModule,
     ChatModule,
+    RoomsModule,
   ],
   controllers: [AppController],
   providers: [

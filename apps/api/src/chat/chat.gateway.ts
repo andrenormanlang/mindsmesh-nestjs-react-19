@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException, Inject, Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtPayload } from '@/auth/interfaces/jwt-payload.interface';
+import { RoomsService } from './rooms.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class ChatGateway implements OnGatewayConnection {
@@ -21,6 +22,7 @@ export class ChatGateway implements OnGatewayConnection {
 
   constructor(
     private readonly chatService: ChatService,
+    private readonly roomsService: RoomsService,
     private readonly jwtService: JwtService
   ) {}
 
@@ -60,7 +62,6 @@ export class ChatGateway implements OnGatewayConnection {
   }
 
   @SubscribeMessage('sendMessage')
-  @SubscribeMessage('sendMessage')
   async handleSendMessage(
     @MessageBody()
     message: { id: string; senderId: string; receiverId: string; text: string },
@@ -88,15 +89,19 @@ export class ChatGateway implements OnGatewayConnection {
         (sender.role === 'freelancer' && receiver.role === 'employer') ||
         (sender.role === 'employer' && receiver.role === 'freelancer')
       ) {
-        // Check if a message with this unique ID is already saved to avoid re-processing
-        const existingMessage = await this.chatService.findMessageById(
-          message.id
+        // Check if a room already exists between the sender and receiver
+        let room = await this.chatService.findRoomBetweenUsers(
+          sender,
+          receiver
         );
-        if (existingMessage) {
-          console.log(
-            `Message with ID ${message.id} already exists, skipping emission.`
+
+        if (!room) {
+          // Create a new room if one doesn't exist
+          room = await this.roomsService.createRoom(
+            sender.id,
+            receiver.id,
+            `${sender.username}-${receiver.username}`
           );
-          return;
         }
 
         // Save the message to the database

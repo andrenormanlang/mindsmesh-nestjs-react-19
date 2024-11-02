@@ -1,5 +1,5 @@
 import axios from "axios";
-import { User, Skill, UserAuth } from "../types/types";
+import { User, Skill, UserAuth, Room } from "../types/types";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
@@ -206,18 +206,26 @@ export const updateProfile = async (
 };
 
 // Displaying Users and Skills
-export const fetchUsersWithSkills = async (query: string = ""): Promise<User[]> => {
+export const fetchUsersWithSkills = async (
+  query: string = "",
+  role?: string
+): Promise<User[]> => {
   try {
     const endpoint = query.trim() ? "/skills/search" : "/users";
-    const response = await api.get(endpoint, {
-      params: query.trim() ? { q: query, t: Date.now() } : {},
-    });
+    const params: any = query.trim()
+      ? { q: query, t: Date.now() }
+      : {};
+    if (role) {
+      params.role = role;
+    }
+    const response = await api.get(endpoint, { params });
     return response.data;
   } catch (error) {
     console.error("Error fetching users with skills:", error);
     throw error;
   }
 };
+
 
 export const getAllSkillTitles = async (): Promise<{ title: string }[]> => {
   try {
@@ -348,6 +356,29 @@ export const getActiveChats = async (): Promise<User[]> => {
     return response.data;
   } catch (error) {
     console.error('Error fetching active chats:', error);
+    throw error;
+  }
+};
+
+export const createRoom = async (freelancerId: string, roomName: string) => {
+  try {
+    const response = await api.post('/rooms/create', {
+      freelancerId,
+      roomName,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating room:', error);
+    throw error;
+  }
+};
+
+export const fetchRoomsForFreelancer = async (freelancerId: string): Promise<Room[]> => {
+  try {
+    const response = await api.get(`/rooms/freelancer/${freelancerId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching rooms for freelancer:", error);
     throw error;
   }
 };

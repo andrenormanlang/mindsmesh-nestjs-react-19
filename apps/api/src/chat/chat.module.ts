@@ -1,19 +1,22 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ChatMessage } from './entities/chat-message.entity';
 import { ChatService } from './chat.service';
 import { ChatGateway } from './chat.gateway';
 import { UsersModule } from '@/users/users.module';
 import { ChatController } from './chat.controller';
-import { AuthModule } from '@/auth/auth.module'; // Import AuthModule to reuse its JwtModule
+import { AuthModule } from '@/auth/auth.module';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Room } from './entities/room.entity'; 
+import { ChatMessage } from './entities/chat-message.entity';
+import { RoomsModule } from './rooms.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ChatMessage]),
+    TypeOrmModule.forFeature([ChatMessage, Room]), // Include Room entity here
     UsersModule,
-    AuthModule, // Import AuthModule that has JwtModule properly registered
+    AuthModule,
+    RoomsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -23,9 +26,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       }),
     }),
   ],
-  providers: [ChatService, ChatGateway, JwtService, ConfigService], // Ensure JwtService is in providers
+  providers: [ChatService, ChatGateway, JwtService, ConfigService],
   controllers: [ChatController],
   exports: [ChatService],
 })
 export class ChatModule {}
-

@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { Room } from './room.entity';
 
 @Entity()
 export class ChatMessage {
@@ -31,6 +32,9 @@ export class ChatMessage {
   })
   @ManyToOne(() => User, (user) => user.receivedMessages, { eager: true })
   receiver!: User;
+
+  @ManyToOne(() => Room, (room) => room.messages)
+  room!: Room;
 
   @ApiProperty({
     example: '2024-10-28T12:34:56Z',
