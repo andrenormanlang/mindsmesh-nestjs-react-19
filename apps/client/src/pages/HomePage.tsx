@@ -48,7 +48,6 @@ const HomePage = () => {
 
   const { user, refreshUser, setUser } = userContext;
 
-  // In HomePage.tsx
 useEffect(() => {
   const loadUsersAndProfile = async () => {
     setIsLoading(true);
@@ -61,8 +60,11 @@ useEffect(() => {
         // Employers fetch freelancers with skills
         users = await fetchUsersWithSkills(debouncedSearchQuery.toLowerCase());
       } else if (userContext?.user?.role === 'freelancer') {
-        // Freelancers fetch employers
-        users = await fetchUsersByRole('employer');
+        // Freelancers don't see other users
+        users = [];
+      } else {
+        // User is not logged in, fetch freelancers with skills
+        users = await fetchUsersWithSkills(debouncedSearchQuery.toLowerCase());
       }
 
       setUsersWithSkills(users);
@@ -76,6 +78,7 @@ useEffect(() => {
 
   loadUsersAndProfile();
 }, [debouncedSearchQuery, refreshUser, userContext?.user?.role]);
+
 
 
   // useEffect(() => {
