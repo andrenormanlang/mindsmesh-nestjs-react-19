@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./shadcn/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "./shadcn/ui/dialog";
 import { fetchRoomsForFreelancer } from "../services/MindsMeshAPI";
 import { Room } from "../types/types";
 import { io } from "socket.io-client";
 
 const socket = io(import.meta.env.VITE_BASE_URL, {
   auth: {
-    token: localStorage.getItem("token"), 
+    token: localStorage.getItem("token"),
   },
 });
 
@@ -22,8 +27,18 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
   useEffect(() => {
     const loadRooms = async () => {
       if (isOpen && freelancerId) {
-        const roomsData = await fetchRoomsForFreelancer(freelancerId);
-        setRooms(roomsData);
+        try {
+          const roomsData = await fetchRoomsForFreelancer(freelancerId);
+
+          // After fetching rooms, map the employerName property properly
+          const processedRooms = roomsData.map((room) => ({
+            ...room,
+            employerName: room.employer?.username || "Unknown Employer",
+          }));
+          setRooms(processedRooms);
+        } catch (error) {
+          console.error("Error fetching rooms:", error);
+        }
       }
     };
 
@@ -55,7 +70,14 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
                       <button
                         className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md"
                         onClick={() => {
-                          socket.emit('joinRoom', { roomId: room.id });
+                          if (socket && room.id) {
+                            socket.emit("joinRoom", { roomId: room.id });
+                            console.log(`Joining room with ID: ${room.id}`); // Add logging to confirm the event is emitted
+                          } else {
+                            console.error(
+                              "Socket not initialized or room ID missing"
+                            );
+                          }
                         }}
                       >
                         Join

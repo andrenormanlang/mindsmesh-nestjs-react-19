@@ -376,9 +376,11 @@ export const createRoom = async (freelancerId: string, roomName: string) => {
 export const fetchRoomsForFreelancer = async (freelancerId: string): Promise<Room[]> => {
   try {
     const response = await api.get(`/rooms/freelancer/${freelancerId}`);
+    console.log("Rooms fetched for freelancer:", response.data); // Add logging to confirm response data
     return response.data;
   } catch (error) {
     console.error("Error fetching rooms for freelancer:", error);
     throw error;
   }
 };
+

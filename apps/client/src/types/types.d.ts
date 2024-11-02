@@ -51,10 +51,11 @@ interface Message {
   status?: "sending" | "sent" | "error";
 }
 
-export interface Room {
+export type Room = {
   id: string;
   roomName: string;
-  employerName: string; 
+  employer: User; 
+  employerName?: string; 
 }
 
 
