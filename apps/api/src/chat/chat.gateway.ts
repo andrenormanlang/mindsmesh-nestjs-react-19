@@ -134,17 +134,17 @@ export class ChatGateway implements OnGatewayConnection {
   }
 
   @SubscribeMessage('joinRoom')
-  async handleJoinRoom(
-    @MessageBody() data: { roomId: string },
-    @ConnectedSocket() client: Socket
-  ) {
-    try {
-      // Join the client to the specified room
-      client.join(data.roomId);
-      this.logger.log(`User ${client.data.userId} joined room: ${data.roomId}`);
-    } catch (error) {
-      this.logger.error('Error joining room:', error.message);
-    }
+async handleJoinRoom(
+  @MessageBody() data: { roomId: string },
+  @ConnectedSocket() client: Socket
+) {
+  try {
+    // Join the client to the specified room
+    client.join(data.roomId);
+    this.logger.log(`Received joinRoom event for room ID: ${data.roomId} from user ID: ${client.data.userId}`);
+  } catch (error) {
+    this.logger.error('Error joining room:', error.message);
   }
+}
 }
 
