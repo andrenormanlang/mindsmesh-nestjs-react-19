@@ -305,16 +305,19 @@ export const deleteSkill = async (skillId: string): Promise<void> => {
 };
 
 // Messaging
-export const sendMessage = async (freelancerId: string, message: string) => {
+export const sendMessage = async (receiverId: string, text: string, messageId?: string) => {
   try {
-    const response = await api.post(`/chat/${freelancerId}/send`, { message });
+    const response = await api.post(`/chat/${receiverId}/send`, {
+      receiverId,
+      text,
+      messageId, // Include the messageId if provided
+    });
     return response.data;
   } catch (error) {
-    console.error("Error sending message:", error);
+    console.error('Error sending message:', error);
     throw error;
   }
 };
-
 export const getChatMessages = async (userId1: string, userId2: string) => {
   try {
     const response = await api.get(`/chat/${userId1}/${userId2}/messages`);

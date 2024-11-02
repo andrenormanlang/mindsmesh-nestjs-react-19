@@ -10,21 +10,22 @@ export class JwtAuthGuard implements CanActivate {
     private reflector: Reflector
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
     
     if (!token) {
+      console.log("No token found in request headers");
       return false;
     }
-
+  
     try {
       const secret = process.env.JWT_SECRET;
       if (!secret) {
         console.log("JWT_SECRET is missing from environment variables");
         return false;
       }
-
+  
       const payload = this.jwtService.verify<JwtPayload>(token, { secret });
       request['user'] = payload; // Setting the verified payload as the user
     } catch (e) {

@@ -239,7 +239,7 @@ const HomePage = () => {
       {/* Chat Modal */}
       <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
         <DialogContent className="w-full sm:max-w-[400px] p-0 m-0">
-          {selectedUser && <Chat freelancer={selectedUser} />}
+          {selectedUser && <Chat chatPartner={selectedUser} />}
         </DialogContent>
       </Dialog>
     </div>

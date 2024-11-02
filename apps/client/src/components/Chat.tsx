@@ -9,23 +9,25 @@ import { sendMessage, getChatMessages } from "../services/MindsMeshAPI";
 import { io, Socket } from "socket.io-client";
 import { v4 as uuidv4 } from 'uuid'; 
 
+interface Message {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  text: string;
+  timestamp: Date;
+  status?: "sending" | "sent" | "error";
+  createdAt?: string;
+}
+
 const formatTime = (date: Date) => {
   return format(new Date(date), 'HH:mm');
 };
 
-const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
-  freelancer,
+const Chat: React.FC<{ chatPartner: User; onClose?: () => void }> = ({
+  chatPartner,
   onClose,
 }) => {
-  const [messages, setMessages] = useState<
-    Array<{
-      id: string;
-      senderId: string;
-      text: string;
-      timestamp: Date;
-      status?: "sending" | "sent" | "error";
-    }>
-  >([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isConnecting, setIsConnecting] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -42,18 +44,18 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
 
   useEffect(() => {
     const loadChatHistory = async () => {
-      if (senderId && freelancer.id) {
+      if (senderId && chatPartner.id) {
         try {
-          // Fetch existing messages between senderId and freelancer.id
-          const response = await getChatMessages(senderId, freelancer.id);
+          // Fetch existing messages between senderId and chatPartner.id
+          const response = await getChatMessages(senderId, chatPartner.id);
 
           // Update the messages state with the history
-          setMessages(response.map((msg) => ({
+          setMessages(response.map((msg: { id: string; sender: { id: string }; message: string; createdAt: string }) => ({
             id: msg.id,
             senderId: msg.sender.id,
             text: msg.message,
-            timestamp: new Date(msg.createdAt),
-            status: "sent",
+            timestamp: new Date(msg.createdAt), // Convert createdAt to a Date object
+            status: 'sent'
           })));
         } catch (error) {
           console.error("Error loading chat history:", error);
@@ -62,7 +64,7 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
     };
 
     loadChatHistory();
-  }, [senderId, freelancer.id]);
+  }, [senderId, chatPartner.id]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -70,97 +72,95 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
       const newSocket = io("http://localhost:3000", {
         auth: { token },
       });
-
+  
       setSocket(newSocket);
-
+  
       newSocket.on("connect", () => {
         setIsConnecting(false);
         console.log("Connected to socket");
       });
-
+  
       // Listen for the receiveMessage event
-      newSocket.on("receiveMessage", (message) => {
+      newSocket.off("receiveMessage").on("receiveMessage", (message: Message) => {
         console.log("Received message:", message);  // Verify message content
-
-        // Check if the message already exists to prevent duplication
-        setMessages((prev) => {
-          if (prev.some((msg) => msg.id === message.id)) {
-            return prev; // Message already exists, do nothing
+        if (message.createdAt) {
+          try {
+            message.timestamp = new Date(message.createdAt);
+            if (isNaN(message.timestamp.getTime())) {
+              throw new Error("Invalid timestamp");
+            }
+          } catch (error) {
+            console.error("Invalid timestamp received:", message.createdAt);
+            message.timestamp = new Date(); // Fallback to the current date/time if parsing fails
           }
-          return [
-            ...prev,
-            {
-              id: message.id,
-              senderId: message.sender.id,
-              text: message.message,
-              timestamp: new Date(message.createdAt),
-              status: "sent",
-            },
-          ];
-        });
+        } else {
+          console.error("No createdAt timestamp received.");
+          message.timestamp = new Date();
+        }
+      
+        setMessages((prev) => [
+          ...prev,
+          {
+            ...message,
+            status: "sent",
+          },
+        ]);
       });
-
+            
       newSocket.on("connect_error", (err) => {
         setIsConnecting(false);
         console.error("Socket connection error:", err);
       });
-
+  
       return () => {
         newSocket.disconnect();
       };
     }
   }, [senderId]);
+  
 
   const handleSendMessage = async () => {
     if (!senderId || !newMessage.trim()) return;
-
-    // Generate a UUID to identify the message uniquely
-    const tempId = uuidv4();
-
-    const messageObj = {
-      id: tempId, // UUID for unique ID
+  
+    const messageObj: Message = {
+      id: uuidv4(), // Add a unique ID for the message
       senderId,
-      receiverId: freelancer.id,
+      receiverId: chatPartner.id,
       text: newMessage.trim(),
       timestamp: new Date(),
-      status: "sending" as const,
+      status: "sending",
     };
-
-    // Add the message immediately to the state to reflect UI changes
+  
     setMessages((prev) => [...prev, messageObj]);
     setNewMessage("");
-
+  
     try {
-      // Send the message via API
-      const savedMessage = await sendMessage(freelancer.id, messageObj.text);
-
-      // Emit the message via socket after it has been successfully saved
+      await sendMessage(chatPartner.id, messageObj.text);
+  
       if (socket) {
         socket.emit("sendMessage", {
-          id: savedMessage.id,
-          senderId: savedMessage.sender.id,
-          receiverId: savedMessage.receiver.id,
-          text: savedMessage.message,
-          createdAt: savedMessage.createdAt,
+          id: messageObj.id,
+          senderId: messageObj.senderId,
+          receiverId: messageObj.receiverId,
+          text: messageObj.text,
         });
       }
-
-      // Update message status to 'sent'
+  
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === messageObj.id ? { ...msg, status: "sent" as const, id: savedMessage.id } : msg
+          msg.id === messageObj.id ? { ...msg, status: "sent" } : msg
         )
       );
     } catch (error) {
       console.error("Error sending message:", error);
-      // Update message status to 'error'
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === messageObj.id ? { ...msg, status: "error" as const } : msg
+          msg.id === messageObj.id ? { ...msg, status: "error" } : msg
         )
       );
     }
   };
+  
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -176,7 +176,7 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
           <div className="relative">
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
               <span className="text-blue-600 font-semibold">
-                {freelancer.username.charAt(0).toUpperCase()}
+                {chatPartner.username.charAt(0).toUpperCase()}
               </span>
             </div>
             <div
@@ -186,7 +186,7 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
             />
           </div>
           <div>
-            <h3 className="font-semibold">{freelancer.username}</h3>
+            <h3 className="font-semibold">{chatPartner.username}</h3>
             <p className="text-sm text-gray-500">
               {isConnecting ? "Connecting..." : "Online"}
             </p>
@@ -271,5 +271,3 @@ const Chat: React.FC<{ freelancer: User; onClose?: () => void }> = ({
 };
 
 export default Chat;
-
-

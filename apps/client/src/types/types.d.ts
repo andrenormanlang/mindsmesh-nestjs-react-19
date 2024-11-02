@@ -43,9 +43,9 @@ export type SkillData = {
 };
 
 
-export type Message = {
-  senderId: string;
-  receiverId: string;
-  text: string;
-};
+// export type Message = {
+//   senderId: string;
+//   receiverId: string;
+//   text: string;
+// };
 

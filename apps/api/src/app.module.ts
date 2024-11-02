@@ -47,7 +47,6 @@ import { ChatModule } from './chat/chat.module';
   controllers: [AppController],
   providers: [
     AppService,
-    ChatGateway,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard, // Apply throttling globally

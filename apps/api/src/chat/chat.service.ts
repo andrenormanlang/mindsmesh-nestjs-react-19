@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { ChatMessage } from './entities/chat-message.entity';
 
@@ -24,6 +24,24 @@ export class ChatService {
 
   async sendMessage(sender: User, receiver: User, message: string): Promise<ChatMessage> {
     const chatMessage = this.chatRepository.create({
+      sender,
+      receiver,
+      message,
+    });
+    const savedMessage = await this.chatRepository.save(chatMessage);
+    console.log("Saved message with createdAt:", savedMessage.createdAt);
+    return savedMessage;
+  }
+
+
+  async findMessageById(id: string): Promise<ChatMessage | null> {
+    const message = await this.chatRepository.findOne({ where: { id } });
+    return message || null;
+  }
+
+  async sendMessageWithId(sender: User, receiver: User, message: string, id: string): Promise<ChatMessage> {
+    const chatMessage = this.chatRepository.create({
+      id,  // Set the unique ID for the message
       sender,
       receiver,
       message,
