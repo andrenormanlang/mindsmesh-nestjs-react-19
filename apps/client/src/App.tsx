@@ -9,6 +9,7 @@ import "./App.css";
 import { Toaster } from "./components/shadcn/ui/toaster";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
+import { SocketProvider } from "./contexts/SocketContext";
 
 const HomePage = React.lazy(() => import("./pages/HomePage")); // Lazy load the HomePage
 
@@ -18,20 +19,25 @@ function App() {
       <Toaster />
       <Router>
         <UserProvider>
-          <GradientProvider>
-            <Navbar />
-            <Suspense fallback={<LoadingSpinner />}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route
-                  path="/verify-email"
-                  element={<EmailVerificationPage />}
-                />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-              </Routes>
-            </Suspense>
-            <Footer />
-          </GradientProvider>
+          <SocketProvider>
+            <GradientProvider>
+              <Navbar />
+              <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route
+                    path="/verify-email"
+                    element={<EmailVerificationPage />}
+                  />
+                  <Route
+                    path="/reset-password"
+                    element={<ResetPasswordPage />}
+                  />
+                </Routes>
+              </Suspense>
+              <Footer />
+            </GradientProvider>
+          </SocketProvider>
         </UserProvider>
       </Router>
     </>

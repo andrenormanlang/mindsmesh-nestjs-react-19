@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "./shadcn/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./shadcn/ui/dialog";
 import { fetchRoomsForFreelancer } from "../services/MindsMeshAPI";
 import { Room, User } from "../types/types";
-import { io, Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import Chat from "./Chat"; // Import the Chat component
+
+const socket = io(import.meta.env.VITE_BASE_URL, {
+  auth: {
+    token: localStorage.getItem("token"),
+  },
+});
 
 interface RoomsProps {
   isOpen: boolean;
@@ -20,51 +21,13 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [activeChatPartner, setActiveChatPartner] = useState<User | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [socket, setSocket] = useState<Socket | null>(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      // Initialize socket connection
-      const newSocket = io(import.meta.env.VITE_BASE_URL, {
-        auth: { token },
-        reconnectionAttempts: 5, // Limit the number of reconnection attempts
-        reconnectionDelay: 1000, // 1-second delay between attempts
-      });
-
-      setSocket(newSocket);
-
-      // Socket event listeners
-      newSocket.on("connect", () => {
-        console.log("Connected to socket");
-      });
-
-      newSocket.on("disconnect", (reason) => {
-        console.log("Socket disconnected. Reason:", reason);
-        if (reason === "io server disconnect") {
-          newSocket.connect(); // Manually reconnect if the server disconnected the socket
-        }
-      });
-
-      newSocket.on("connect_error", (error) => {
-        console.error("Connection error:", error);
-      });
-
-      newSocket.on("error", (error) => {
-        console.error("Socket error:", error);
-      });
-
-      return () => {
-        newSocket.disconnect();
-      };
-    }
-  }, []);
 
   useEffect(() => {
     const loadRooms = async () => {
       if (isOpen && freelancerId) {
         try {
           const roomsData = await fetchRoomsForFreelancer(freelancerId);
+          // After fetching rooms, map the employerName property properly
           const processedRooms = roomsData.map((room) => ({
             ...room,
             employerName: room.employer?.username || "Unknown Employer",
@@ -79,15 +42,15 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
   }, [isOpen, freelancerId]);
 
   const handleJoinRoom = (room: Room) => {
-    if (socket && socket.connected && room.id) {
+    if (socket && room.id) {
       socket.emit("joinRoom", { roomId: room.id });
-      console.log(`Joining room with ID: ${room.id}`);
+      console.log(`Joining room with ID: ${room.id}`); // Add logging to confirm the event is emitted
 
+      // Set the active chat partner and room
       setActiveChatPartner(room.employer);
       setIsChatOpen(true);
-      onClose(); // Close the room modal before opening the chat
     } else {
-      console.error("Socket not initialized, not connected, or room ID missing");
+      console.error("Socket not initialized or room ID missing");
     }
   };
 
@@ -144,3 +107,4 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
 };
 
 export default Rooms;
+
