@@ -4,10 +4,10 @@ import { Button } from "./shadcn/ui/button";
 import { Card, CardHeader, CardContent, CardFooter } from "./shadcn/ui/card";
 import { Input } from "./shadcn/ui/input";
 import { X, Send, Loader2 } from "lucide-react";
-import { format } from 'date-fns';
-import { sendMessage, getChatMessages } from "../services/MindsMeshAPI";
+import { format } from "date-fns";
+import { getChatMessages } from "../services/MindsMeshAPI";
 import { io, Socket } from "socket.io-client";
-import { v4 as uuidv4 } from 'uuid'; 
+import { v4 as uuidv4 } from "uuid";
 
 interface Message {
   id: string;
@@ -16,11 +16,10 @@ interface Message {
   text: string;
   timestamp: Date;
   status?: "sending" | "sent" | "error";
-  createdAt?: string;
 }
 
 const formatTime = (date: Date) => {
-  return format(new Date(date), 'HH:mm');
+  return format(new Date(date), "HH:mm");
 };
 
 const Chat: React.FC<{ chatPartner: User; onClose?: () => void }> = ({
@@ -38,25 +37,27 @@ const Chat: React.FC<{ chatPartner: User; onClose?: () => void }> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Scroll to the bottom whenever messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  // Load chat history when the component is first mounted
   useEffect(() => {
     const loadChatHistory = async () => {
       if (senderId && chatPartner.id) {
         try {
-          // Fetch existing messages between senderId and chatPartner.id
           const response = await getChatMessages(senderId, chatPartner.id);
-
-          // Update the messages state with the history
-          setMessages(response.map((msg: { id: string; sender: { id: string }; message: string; createdAt: string }) => ({
-            id: msg.id,
-            senderId: msg.sender.id,
-            text: msg.message,
-            timestamp: new Date(msg.createdAt), // Convert createdAt to a Date object
-            status: 'sent'
-          })));
+          setMessages(
+            response.map((msg: any) => ({
+              id: msg.id,
+              senderId: msg.sender.id,
+              receiverId: msg.receiver.id,
+              text: msg.message,
+              timestamp: new Date(msg.createdAt),
+              status: "sent",
+            }))
+          );
         } catch (error) {
           console.error("Error loading chat history:", error);
         }
@@ -64,103 +65,82 @@ const Chat: React.FC<{ chatPartner: User; onClose?: () => void }> = ({
     };
 
     loadChatHistory();
-  }, [senderId, chatPartner.id]);
+  }, [chatPartner.id, senderId]); // Only load messages once for the specific chat partner and sender
 
+  // Setup socket connection once when component mounts
   useEffect(() => {
     const token = localStorage.getItem("token");
+
     if (token && senderId) {
       const newSocket = io("http://localhost:3000", {
         auth: { token },
       });
-  
+
       setSocket(newSocket);
-  
+
       newSocket.on("connect", () => {
         setIsConnecting(false);
         console.log("Connected to socket");
       });
-  
+
       // Listen for the receiveMessage event
-      newSocket.off("receiveMessage").on("receiveMessage", (message: Message) => {
-        console.log("Received message:", message);  // Verify message content
-        if (message.createdAt) {
-          try {
-            message.timestamp = new Date(message.createdAt);
-            if (isNaN(message.timestamp.getTime())) {
-              throw new Error("Invalid timestamp");
-            }
-          } catch (error) {
-            console.error("Invalid timestamp received:", message.createdAt);
-            message.timestamp = new Date(); // Fallback to the current date/time if parsing fails
-          }
-        } else {
-          console.error("No createdAt timestamp received.");
-          message.timestamp = new Date();
-        }
-      
+      newSocket.on("receiveMessage", (message: Message) => {
         setMessages((prev) => [
           ...prev,
           {
             ...message,
+            timestamp: new Date(message.timestamp),
             status: "sent",
           },
         ]);
       });
-            
-      newSocket.on("connect_error", (err) => {
-        setIsConnecting(false);
-        console.error("Socket connection error:", err);
+
+      newSocket.on("disconnect", () => {
+        console.log("Socket disconnected. Attempting to reconnect...");
       });
-  
+
+      // Cleanup to avoid multiple socket connections
       return () => {
         newSocket.disconnect();
       };
     }
-  }, [senderId]);
-  
+  }, [senderId]); // Set up socket connection only once using senderId
 
-  const handleSendMessage = async () => {
-    if (!senderId || !newMessage.trim()) return;
-  
-    const messageObj: Message = {
-      id: uuidv4(), // Add a unique ID for the message
-      senderId,
-      receiverId: chatPartner.id,
-      text: newMessage.trim(),
-      timestamp: new Date(),
-      status: "sending",
-    };
-  
-    setMessages((prev) => [...prev, messageObj]);
-    setNewMessage("");
-  
-    try {
-      await sendMessage(chatPartner.id, messageObj.text);
-  
-      if (socket) {
-        socket.emit("sendMessage", {
-          id: messageObj.id,
-          senderId: messageObj.senderId,
-          receiverId: messageObj.receiverId,
-          text: messageObj.text,
-        });
-      }
-  
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === messageObj.id ? { ...msg, status: "sent" } : msg
-        )
-      );
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === messageObj.id ? { ...msg, status: "error" } : msg
-        )
-      );
-    }
+  // In Chat.tsx
+const handleSendMessage = async () => {
+  if (!senderId || !newMessage.trim()) return;
+
+  const messageObj: Message = {
+    id: uuidv4(),
+    senderId,
+    receiverId: chatPartner.id,
+    text: newMessage.trim(),
+    timestamp: new Date(),
+    status: "sending",
   };
-  
+
+  setMessages((prev) => [...prev, messageObj]);
+  setNewMessage("");
+
+  try {
+    if (socket) {
+      socket.emit("sendMessage", messageObj);
+    }
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageObj.id ? { ...msg, status: "sent" } : msg
+      )
+    );
+  } catch (error) {
+    console.error("Error sending message:", error);
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageObj.id ? { ...msg, status: "error" } : msg
+      )
+    );
+  }
+};
+
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -209,7 +189,9 @@ const Chat: React.FC<{ chatPartner: User; onClose?: () => void }> = ({
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex ${msg.senderId === senderId ? "justify-end" : "justify-start"}`}
+              className={`flex ${
+                msg.senderId === senderId ? "justify-end" : "justify-start"
+              }`}
             >
               <div className="flex flex-col space-y-1 max-w-[75%]">
                 <div

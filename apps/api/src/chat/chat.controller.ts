@@ -22,45 +22,56 @@ export class ChatController {
   ) {}
 
   @Post(':receiverId/send')
-@UseGuards(JwtAuthGuard)
-async sendMessage(
-  @Request() req,
-  @Param('receiverId') receiverId: string,
-  @Body('text') text: string,
-  @Body('messageId') messageId: string
-) {
-  if (!text.trim()) {
-    throw new BadRequestException('Message cannot be empty');
-  }
-
-  console.log('Request user:', req.user); // Log the user object to debug
-
-  try {
-    const sender = await this.userService.getAuthenticatedUser(req.user.id);
-    const receiver = await this.userService.findById(receiverId);
-
-    if (!sender) {
-      throw new NotFoundException(`Sender with ID ${req.user.id} not found`);
+  @UseGuards(JwtAuthGuard)
+  async sendMessage(
+    @Request() req,
+    @Param('receiverId') receiverId: string,
+    @Body('text') text: string,
+    @Body('messageId') messageId: string
+  ) {
+    if (!text.trim()) {
+      throw new BadRequestException('Message cannot be empty');
     }
 
-    if (!receiver) {
-      throw new NotFoundException(`Receiver with ID ${receiverId} not found`);
+    console.log('Request user:', req.user); // Log the user object to debug
+
+    try {
+      const sender = await this.userService.getAuthenticatedUser(req.user.id);
+      const receiver = await this.userService.findById(receiverId);
+
+      if (!sender) {
+        throw new NotFoundException(`Sender with ID ${req.user.id} not found`);
+      }
+
+      if (!receiver) {
+        throw new NotFoundException(`Receiver with ID ${receiverId} not found`);
+      }
+
+      console.log(
+        `Sending message from ${sender.id} to ${receiver.id}: ${text}`
+      );
+      return await this.chatService.sendMessageWithId(
+        sender,
+        receiver,
+        text,
+        messageId
+      );
+    } catch (error) {
+      console.error('Error sending message:', error.message);
+      throw error;
     }
-
-    console.log(`Sending message from ${sender.id} to ${receiver.id}: ${text}`);
-    return await this.chatService.sendMessageWithId(sender, receiver, text, messageId);
-  } catch (error) {
-    console.error('Error sending message:', error.message);
-    throw error;
   }
-}
 
-  @UseGuards(JwtAuthGuard) // Protect this route as well
+  @UseGuards(JwtAuthGuard)
   @Get(':userId1/:userId2/messages')
   async getMessages(
     @Param('userId1') userId1: string,
     @Param('userId2') userId2: string
   ) {
+    if (userId1 === userId2) {
+      throw new BadRequestException('Cannot retrieve messages with oneself');
+    }
+
     try {
       // Validate that users exist
       const user1 = await this.userService.findById(userId1);

@@ -305,6 +305,19 @@ export const deleteSkill = async (skillId: string): Promise<void> => {
 };
 
 // Messaging
+// In MindsMeshAPI.ts
+export const fetchUsersByRole = async (role: string): Promise<User[]> => {
+  try {
+    const response = await api.get('/users', {
+      params: { role },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching users by role:", error);
+    throw error;
+  }
+};
+
 export const sendMessage = async (receiverId: string, text: string, messageId?: string) => {
   try {
     const response = await api.post(`/chat/${receiverId}/send`, {

@@ -21,13 +21,12 @@ export class ChatGateway implements OnGatewayConnection {
 
   constructor(
     private readonly chatService: ChatService,
-    private readonly jwtService: JwtService // Make sure JwtService is properly injected here
+    private readonly jwtService: JwtService,
   ) {}
 
-  async handleConnection(client: Socket, payload: JwtPayload) {
+  async handleConnection(client: Socket) {
     const token = client.handshake.auth?.token;
     if (!token) {
-      this.logger.log(`User connected with ID: ${payload.sub}`);
       this.logger.warn('No token provided during connection handshake');
       client.disconnect();
       return;
@@ -54,7 +53,6 @@ export class ChatGateway implements OnGatewayConnection {
       client.join(client.data.userId);
 
       this.logger.log(`User joined room: ${client.data.userId}`);
-      this.logger.log(`User connected with ID: ${payload.sub}`);
     } catch (err) {
       this.logger.error('Token verification failed:', err.message);
       client.disconnect();
@@ -62,38 +60,52 @@ export class ChatGateway implements OnGatewayConnection {
   }
 
   @SubscribeMessage('sendMessage')
-async handleSendMessage(
-  @MessageBody() message: { id: string; senderId: string; receiverId: string; text: string },
-  @ConnectedSocket() client: Socket
-) {
-  console.log('Received message from:', message.senderId, 'to:', message.receiverId);
+  async handleSendMessage(
+    @MessageBody() message: { id: string; senderId: string; receiverId: string; text: string },
+    @ConnectedSocket() client: Socket
+  ) {
+    console.log('Received message from:', message.senderId, 'to:', message.receiverId);
 
-  try {
-    // Check if a message with this unique ID is already saved to avoid re-processing
-    const existingMessage = await this.chatService.findMessageById(message.id);
-    if (existingMessage) {
-      console.log(`Message with ID ${message.id} already exists, skipping emission.`);      
-      return;
+    try {
+      // Prevent sending a message to oneself
+      if (message.senderId === message.receiverId) {
+        console.error('Sender and receiver cannot be the same.');
+        return;
+      }
+
+      const sender = await this.chatService.getUserById(message.senderId);
+      const receiver = await this.chatService.getUserById(message.receiverId);
+
+      // Ensure that the chat is only between an employer and a freelancer
+      if (
+        (sender.role === 'freelancer' && receiver.role === 'employer') ||
+        (sender.role === 'employer' && receiver.role === 'freelancer')
+      ) {
+        // Check if a message with this unique ID is already saved to avoid re-processing
+        const existingMessage = await this.chatService.findMessageById(message.id);
+        if (existingMessage) {
+          console.log(`Message with ID ${message.id} already exists, skipping emission.`);
+          return;
+        }
+
+        // Save the message to the database
+        const savedMessage = await this.chatService.sendMessageWithId(sender, receiver, message.text, message.id);
+        console.log("Emitting saved message:", savedMessage);
+
+        // Emit the saved message to both sender and receiver rooms
+        this.server.to([message.senderId, message.receiverId]).emit('receiveMessage', {
+          id: savedMessage.id,
+          senderId: savedMessage.sender.id,
+          receiverId: savedMessage.receiver.id,
+          text: savedMessage.message,
+          timestamp: savedMessage.createdAt,
+        });
+      } else {
+        console.error('Invalid chat roles: Chats can only occur between an employer and a freelancer');
+      }
+    } catch (error) {
+      console.error('Error saving message:', error);
     }
-
-    const sender = await this.chatService.getUserById(message.senderId);
-    const receiver = await this.chatService.getUserById(message.receiverId);
-
-    // Save the message to the database
-    const savedMessage = await this.chatService.sendMessageWithId(sender, receiver, message.text, message.id);
-    console.log("Emitting saved message:", savedMessage);
-
-    // Emit the saved message to both sender and receiver rooms
-    this.server.to([message.senderId, message.receiverId]).emit('receiveMessage', {
-      id: savedMessage.id,
-      senderId: savedMessage.sender.id,
-      receiverId: savedMessage.receiver.id,
-      text: savedMessage.message,
-      timestamp: savedMessage.createdAt,
-    });
-  } catch (error) {
-    console.error('Error saving message:', error);
   }
 }
 
-}

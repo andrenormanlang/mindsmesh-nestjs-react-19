@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
@@ -33,7 +33,6 @@ export class ChatService {
     return savedMessage;
   }
 
-
   async findMessageById(id: string): Promise<ChatMessage | null> {
     const message = await this.chatRepository.findOne({ where: { id } });
     return message || null;
@@ -52,6 +51,10 @@ export class ChatService {
   }
 
   async getMessages(userId1: string, userId2: string): Promise<ChatMessage[]> {
+    if (userId1 === userId2) {
+      throw new BadRequestException('User cannot retrieve messages with themselves');
+    }
+  
     return this.chatRepository.find({
       where: [
         { sender: { id: userId1 }, receiver: { id: userId2 } },
@@ -62,4 +65,5 @@ export class ChatService {
       },
     });
   }
+  
 }

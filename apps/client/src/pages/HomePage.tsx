@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/shadcn/ui/dialog";
-import { deleteUser, fetchUsersWithSkills } from "../services/MindsMeshAPI";
+import { deleteUser, fetchUsersByRole, fetchUsersWithSkills } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import UserCard from "../components/UserCard";
 import EditProfileForm from "../components/EditProfileForm";
@@ -48,40 +48,39 @@ const HomePage = () => {
 
   const { user, refreshUser, setUser } = userContext;
 
-  const loadUsersAndProfile = useCallback(async () => {
+  // In HomePage.tsx
+useEffect(() => {
+  const loadUsersAndProfile = async () => {
     setIsLoading(true);
     setSearchResultPhrase(null);
     try {
-      const users = await fetchUsersWithSkills(
-        debouncedSearchQuery.toLowerCase()
-      );
-
-      // Ensure all users have an `isOnline` property.
-      const filteredUsers = users.filter(
-        (user: User) =>
-          user?.skills &&
-          user?.skills.length > 0 &&
-          typeof user?.isOnline !== "undefined"
-      );
-
-      setUsersWithSkills(filteredUsers);
-      setSearchResultPhrase(
-        `You found ${filteredUsers.length} user${
-          filteredUsers.length !== 1 ? "s" : ""
-        } with the skill "${debouncedSearchQuery}".`
-      );
-
       await refreshUser();
+
+      let users: User[] = [];
+      if (userContext?.user?.role === 'employer') {
+        // Employers fetch freelancers with skills
+        users = await fetchUsersWithSkills(debouncedSearchQuery.toLowerCase());
+      } else if (userContext?.user?.role === 'freelancer') {
+        // Freelancers fetch employers
+        users = await fetchUsersByRole('employer');
+      }
+
+      setUsersWithSkills(users);
+      setSearchResultPhrase(`You found ${users.length} user(s).`);
     } catch (error) {
       console.error("Failed to fetch users or profile", error);
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedSearchQuery, refreshUser]);
+  };
 
-  useEffect(() => {
-    loadUsersAndProfile();
-  }, [loadUsersAndProfile]);
+  loadUsersAndProfile();
+}, [debouncedSearchQuery, refreshUser, userContext?.user?.role]);
+
+
+  // useEffect(() => {
+  //   loadUsersAndProfile();
+  // }, [loadUsersAndProfile]);
 
   const handleDeleteAccount = useCallback(
     async (userId: string) => {
@@ -121,47 +120,48 @@ const HomePage = () => {
     []
   );
 
-  const memoizedUserCards = useMemo(
-    () =>
-      usersWithSkills.map((user) => {
-        // Determine if the chat button should be visible
-        let showChatButton = false;
-  
-        if (userContext?.user) {
-          if (userContext.user.role === "freelancer" && userContext.user.id === user.id) {
-            // Freelancer can see their own chat button
-            showChatButton = true;
-          } else if (userContext.user.role === "employer" && user.isOnline) {
-            // Employer can see chat buttons for online freelancers
-            showChatButton = true;
-          }
+ 
+  // In HomePage.tsx
+const memoizedUserCards = useMemo(
+  () =>
+    usersWithSkills.map((user) => {
+      let showChatButton = false;
+
+      if (userContext?.user) {
+        if (
+          (userContext.user.role === "freelancer" && user.role === "employer") ||
+          (userContext.user.role === "employer" && user.role === "freelancer")
+        ) {
+          // Show chat button if the roles are complementary
+          showChatButton = true;
         }
-  
-        return (
-          <UserCard
-            key={user.id}
-            user={user}
-            onViewDetails={openViewModal}
-            onEdit={
-              userContext?.user?.id === user.id ? openEditModal : undefined
-            }
-            onDelete={
-              userContext?.user?.id === user.id ? openDeleteModal : undefined
-            }
-            onChat={showChatButton ? openChatModal : undefined}
-          />
-        );
-      }),
-    [
-      usersWithSkills,
-      openViewModal,
-      openEditModal,
-      openDeleteModal,
-      openChatModal,
-      userContext?.user,
-    ]
-  );
-  
+      }
+
+      return (
+        <UserCard
+          key={user.id}
+          user={user}
+          onViewDetails={openViewModal}
+          onEdit={
+            userContext?.user?.id === user.id ? openEditModal : undefined
+          }
+          onDelete={
+            userContext?.user?.id === user.id ? openDeleteModal : undefined
+          }
+          onChat={showChatButton ? openChatModal : undefined}
+        />
+      );
+    }),
+  [
+    usersWithSkills,
+    openViewModal,
+    openEditModal,
+    openDeleteModal,
+    openChatModal,
+    userContext?.user,
+  ]
+);
+
 
   return (
     <div className="min-h-screen text-white relative">
