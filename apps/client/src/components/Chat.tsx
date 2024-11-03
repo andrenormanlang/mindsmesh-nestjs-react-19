@@ -31,7 +31,7 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
   const [isConnecting, setIsConnecting] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const backendUrl = import.meta.env.VITE_BASE_URL;
+  const backendUrl_Employer = import.meta.env.VITE_BASE_URL_CHAT_EMPLOYER;
   const senderId = localStorage.getItem("userId");
 
   useEffect(() => {
@@ -79,7 +79,7 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
     const token = localStorage.getItem("token");
 
     if (token && senderId && chatPartner) {
-      const newSocket = io(backendUrl, {
+      const newSocket = io(backendUrl_Employer, {
         auth: { token },
       });
 
