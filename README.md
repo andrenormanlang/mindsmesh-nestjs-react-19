@@ -21,7 +21,7 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 
 ### 👤 User Profiles
 
-- **Profile Management:** Users can create and update profiles with bio, photo, skills offered, etc.
+- **Profile Management:** Users can create and update profiles with bio, photo, images examples of there work, skills offered, etc.
 - **Public Profiles:** Profiles are accessible publicly with user statistics.
 
 ### 🎯 Skill Offering
