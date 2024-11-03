@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { Equal, FindOptionsWhere, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { ChatMessage } from './entities/chat-message.entity';
 import { Room } from './entities/room.entity';
@@ -103,8 +103,8 @@ export class ChatService {
   async findRoomBetweenUsers(user1: User, user2: User): Promise<Room | null> {
     const room = await this.roomRepository.findOne({
       where: [
-        { employer: user1, freelancer: user2 },
-        { employer: user2, freelancer: user1 },
+        { employer: Equal(user1.id), freelancer: Equal(user2.id) },
+        { employer: Equal(user2.id), freelancer: Equal(user1.id) },
       ],
     });
     return room || null;

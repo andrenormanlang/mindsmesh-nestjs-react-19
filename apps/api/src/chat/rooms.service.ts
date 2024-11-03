@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Equal, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { Room } from './entities/room.entity';
 
@@ -20,6 +20,19 @@ export class RoomsService {
     if (!employer || !freelancer) {
       throw new Error('Employer or freelancer not found');
     }
+
+        // Check if a room already exists between these users
+        const existingRoom = await this.roomRepository.findOne({
+          where: [
+            { employer: Equal(employer.id), freelancer: Equal(freelancer.id) },
+            { employer: Equal(freelancer.id), freelancer: Equal(employer.id) },
+          ],
+        });
+    
+        if (existingRoom) {
+          // Return the existing room instead of creating a new one
+          return existingRoom;
+        }
 
     const room = this.roomRepository.create({
       roomName,
