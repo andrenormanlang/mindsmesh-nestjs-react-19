@@ -2,7 +2,9 @@
 
 ## 🚀 Overview
 
-Welcome to **MindsMesh** — an innovative online platform designed for creatives (slightly hipsters 🧑‍🎨), tech enthusiasts 💻, and developers 👩‍💻 to share their skills, offer lessons, and learn from others. The platform features user authentication, profile management, skill offerings, a booking system, and a review system. Additionally, it includes an admin dashboard for managing users, skills, and bookings, providing a seamless experience for both users and administrators.
+Welcome to **MindsMesh** — an innovative online platform designed for creatives (slightly hipsters 🧑‍🎨), tech enthusiasts 💻, and developers 👩‍💻 to offer their skills and get in touch with employers. The platform features user authentication, profile management, skill offerings and a live chat system for seamless communication between employers and freelancers.  
+
+<!-- a booking system, and a review system. Additionally, it includes an admin dashboard for managing users, skills, and bookings, providing a seamless experience for both users and administrators. -->
 
 ![MindsMesh logo](/apps/client/src/assets/logo.svg)
 
@@ -10,10 +12,12 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 
 ## 🌟 Features
 
-### 🔒 User Authentication
+### 🔒 User Authentication & JWT
 
 - **Registration & Login:** Secure user authentication using JWT.
-- **Role-Based Access Control:** Different access levels for users and admins.
+- **Email Verification:** Verify user email addresses for account activation.
+- **Password Reset:** Reset forgotten passwords via email.
+<!-- - **Role-Based Access Control:** Different access levels for users and admins. -->
 
 ### 👤 User Profiles
 
@@ -25,7 +29,27 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 - **Create Listings:** Users can offer skills by creating listings with title, description, price, and availability.
 - **Categories:** Skills are categorized (e.g., frontend developer, creative script writer, illustrator, etc..).
 
-### 📅 Booking System
+### 💬 Using the Chat System
+
+### As an Employer 👔
+
+- 💬 Click on the Chat button on a freelancer's profile to initiate a conversation
+- 🆕 A chat room will be created if it doesn't already exist
+- ⚡ Send and receive messages in real-time
+
+### As a Freelancer 👩‍💻
+
+- 🚪 Click on the Rooms button on your own profile to view all chat rooms with employers
+- 🤝 Join a chat room to communicate with the employer
+- 📱 Manage your chat rooms and conversations
+
+### Features ✨
+
+- **Real-Time Messaging** 📨: Messages are sent and received instantly
+- **Message Status Indicators** ✔️: See when your messages are sending, sent, or if there was an error
+- **Connection Status** 🔌: Visual indicators show if you are connected or reconnecting
+
+<!-- ### 📅 Booking System
 
 - **Book Lessons:** Users can book lessons from available skill offerings.
 - **Scheduling:** Integration with a calendar for lesson scheduling.
@@ -34,17 +58,17 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 ### ⭐ Review System
 
 - **Leave Reviews:** Users can leave reviews and ratings after lessons.
-- **Aggregate Ratings:** Each skill provider has an overall rating.
+- **Aggregate Ratings:** Each skill provider has an overall rating. -->
 
-### 🛠️ Admin Dashboard
+<!-- ### 🛠️ Admin Dashboard
 
 - **User & Skill Management:** Admins can manage users, skills, and bookings.
-- **Analytics:** Dashboard showing platform usage, popular skills, etc.
+- **Analytics:** Dashboard showing platform usage, popular skills, etc. -->
 
-### 🎁 Optional Features
+<!-- ### 🎁 Optional Features
 
 - **Messaging System:** In-app messaging for communication before/after booking.
-- **Payment Integration:** Integrate with Stripe for handling paid lessons.
+- **Payment Integration:** Integrate with Stripe for handling paid lessons. -->
 
 ## 🛠️ Tech Stack
 
@@ -58,30 +82,30 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 
 ### 🎨 Frontend (React 19 RC / OBS: React 18 for the moment)
 
-**🧙‍♂️👨‍💻 Upon it´s release I will be migrating this project to use React 19!** 
+**🧙‍♂️👨‍💻 Upon it´s release I will be migrating this project to use React 19!**  
 
 - **React 19 :** The latest upcoming version of the most popular front-end library, React, introducing several new features and improvements for building user interfaces. Some anticipated features include:
   - ***Server Components:*** Enhances server-side rendering by allowing you to build components that run exclusively on the server, reducing the need for client-side JavaScript.
   - ***Concurrent Rendering Improvements:*** Better handling of asynchronous tasks, making UIs more responsive by allowing React to interrupt rendering and continue later when needed.
   - ***Simplified State Management:*** Improvements in the way React handles state, making it more intuitive and reducing the complexity of managing state across components.
 - **ShadcnUI Components & Tailwind CSS:** A powerful combination for styling and building UI components. ShadcnUI provides a set of highly customizable and accessible UI components using Tailwind syntax.
-- **Axios:** Promise-based HTTP client for making API requests that simplifies the process of handling HTTP requests, supporting features like request and response interception, automatic JSON data transformation, and error handling. 
+- **Axios:** Promise-based HTTP client for making API requests that simplifies the process of handling HTTP requests, supporting features like request and response interception, automatic JSON data transformation, and error handling.  
 
 ### 🗄️ Database
 
 - **PostgreSQL:** Relational database management.
 - **Redis (Optional):** Caching and session management.
 
-### Main Features
+<!-- ### Main Features
 
-   **Messaging with Socket.IO**
-   **Stripe integration for payments**
+   **Messaging with Socket.IO** -->
+   <!-- **Stripe integration for payments** -->
 
-### 🚢 DevOps
+<!-- ### 🚢 DevOps
 
 - **Docker:** Containerization.
 - **Heroku/DigitalOcean:** Deployment.
-- **GitHub Actions:** CI/CD pipeline.
+- **GitHub Actions:** CI/CD pipeline. -->
 
 ## 🧑‍💻 Development Steps
 
@@ -96,37 +120,26 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 
 3. **User Profile Management:**
    - APIs for profile creation and updates.
-   - Implement file upload for profile pictures.
+   - Implement file upload and carousel for images.
 
 4. **Skill Offering:**
    - Design skill offerings schema.
    - CRUD operations for skill listings.
 
-5. **Booking System:**
-   - Implement booking APIs.
-   - Calendar integration for scheduling.
-
-6. **Review System:**
-   - Design and implement review and rating feature.
-
-7. **Admin Dashboard:**
-   - Build admin panel for managing users, skills, and bookings.
-
-8. **Frontend Development:**
+5. **Frontend Development:**
    - Build UI with React/Next.js.
    - Integrate with backend API.
    - Implement client-side authentication and state management.
 
-9. **Real-Time Features (Optional):**
+6. **Real-Time Features (Optional):**
    - Implement messaging with Socket.IO.
 
-10. **Payment Integration (Optional):**
-    - Integrate Stripe for payments.
-
-11. **Testing & Deployment:**
+7. **Testing & Deployment:**
     - Write unit and integration tests.
     - Set up CI/CD pipelines.
-    - Deploy to cloud provider.
+    <!-- - Deploy to cloud provider. -->
+<!-- 10. **Payment Integration (Optional):**
+    - Integrate Stripe for payments. -->
 
 ## 🎓 Learning Outcomes
 
@@ -151,21 +164,40 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
    npm install
    ```
 
-
 3. **Set Up Environment Variables:**
    - Create a `.env` file in mindsmesh-nestjs-react-19/apps/api/ and add your configuration for the following.
 
-   ```typescript 
-   DATABASE_HOST=localhost
-   DATABASE_PORT=5432
-   DATABASE_USER=postgres
-   DATABASE_PASSWORD=yourpassword
-   DATABASE_NAME=mindsmesh
-   JWT_SECRET=YourSuperSecretKey
-   CLOUDINARY_CLOUD_NAME=
-   CLOUDINARY_API_KEY=
-   CLOUDINARY_API_SECRET=
-   ```
+   ### Api
+
+      ```env
+
+      FRONTEND_URL=http://localhost:5173
+      DATABASE_TYPE=  
+      DATABASE_HOST=
+      DATABASE_PORT=5432
+      DATABASE_USERNAME=
+      DATABASE_PASSWORD=yourpassword
+      DATABASE_NAME=
+      DATABASE_URL=
+      JWT_SECRET=YourSuperSecretKey
+      JWT_EXPIRATION_TIME=
+      RESET_PASSWORD_SECRET=
+      RESET_PASSWORD_EXPIRES_IN=
+      CLOUDINARY_CLOUD_NAME=
+      CLOUDINARY_API_KEY=
+      CLOUDINARY_API_SECRET=
+      SENDGRID_API_KEY=
+
+      ```
+
+   ### Client
+
+      ```env
+
+      VITE_BASE_URL=http://localhost:3000/api
+      VITE_BASE_URL_CHAT_EMPLOYER==http://localhost:3000
+
+      ```
 
 4. **For Local Testing Create and Access a PostgreSQL Database by CLI:**
 
@@ -222,7 +254,3 @@ Welcome to **MindsMesh** — an innovative online platform designed for creative
 ## 🤝 Contributing
 
 Feel free to fork this repository, create a new branch, and submit a pull request with your changes.
-
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
