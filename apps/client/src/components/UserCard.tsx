@@ -1,4 +1,4 @@
-import React, { use } from "react";
+import React, { useContext } from "react";
 import { User } from "../types/types";
 import { UserContext } from "../contexts/UserContext";
 import { Card, CardHeader, CardContent, CardFooter } from "./shadcn/ui/card";
@@ -18,7 +18,7 @@ interface UserCardProps {
   onViewDetails: (user: User, event: React.MouseEvent) => void;
   onEdit?: (user: User) => void;
   onDelete?: (user: User) => void;
-  onChat?: (user: User, event: React.MouseEvent) => void; // Add correct type for onChat prop
+  onChat?: (user: User, event: React.MouseEvent) => void;
 }
 
 const UserCard: React.FC<UserCardProps> = ({
@@ -28,7 +28,9 @@ const UserCard: React.FC<UserCardProps> = ({
   onDelete,
   onChat,
 }) => {
-  const userContext = use(UserContext);
+  const userContext = useContext(UserContext);
+
+  const currentUser = userContext?.user;
 
   return (
     <Card className="flex flex-col bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
@@ -97,31 +99,30 @@ const UserCard: React.FC<UserCardProps> = ({
         >
           <IoInformationCircleOutline />
         </button>
-        {userContext?.user?.role === "freelancer" &&
-        userContext.user.id === user.id ? (
+        {currentUser && currentUser.role === "freelancer" && currentUser.id === user.id ? (
+          // Freelancer viewing their own card
           <button
             onClick={(e) => onChat && onChat(user, e)}
             className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
           >
             Rooms
           </button>
-        ) : (
-          user.role === "freelancer" && (
-            <button
-              onClick={(e) => onChat && onChat(user, e)}
-              className={`px-3 py-1 rounded-md text-sm ${
-                user.isOnline
-                  ? "bg-green-500 hover:bg-green-600 text-white"
-                  : "bg-gray-500 text-white cursor-not-allowed"
-              }`}
-              disabled={!user.isOnline}
-            >
-              {user.isOnline ? "Chat" : "Offline"}
-            </button>
-          )
-        )}
+        ) : currentUser && currentUser.role === "employer" && user.role === "freelancer" ? (
+          // Employer viewing a freelancer's card
+          <button
+            onClick={(e) => onChat && onChat(user, e)}
+            className={`px-3 py-1 rounded-md text-sm ${
+              user.isOnline
+                ? "bg-green-500 hover:bg-green-600 text-white"
+                : "bg-gray-500 text-white cursor-not-allowed"
+            }`}
+            disabled={!user.isOnline}
+          >
+            {user.isOnline ? "Chat" : "Offline"}
+          </button>
+        ) : null}
 
-        {(onEdit || onDelete) && (
+        {(onEdit || onDelete) && currentUser && currentUser.id === user.id && (
           <div className="flex space-x-2">
             {onEdit && (
               <button

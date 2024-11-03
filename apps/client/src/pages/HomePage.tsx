@@ -36,6 +36,7 @@ const HomePage = () => {
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+
   const navigate = useNavigate();
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -116,27 +117,9 @@ const HomePage = () => {
     setIsViewModalOpen(true);
   }, []);
 
-  // HomePage.tsx
 
-  const openChatModal = useCallback(
-    (user: User, event: React.MouseEvent) => {
-      event.stopPropagation();
 
-      if (
-        userContext?.user?.role === "freelancer" &&
-        userContext.user.id === user.id
-      ) {
-        // Freelancer clicked on their own card; set selectedUser to null
-        setSelectedUser(null);
-      } else {
-        // Employer clicked on a freelancer's card; set selectedUser to that freelancer
-        setSelectedUser(user);
-      }
 
-      setIsChatModalOpen(true);
-    },
-    [userContext?.user]
-  );
 
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,22 +128,25 @@ const HomePage = () => {
     []
   );
 
-  const openChatOrRoomsModal = (user: User, event: React.MouseEvent) => {
-    event.stopPropagation();
+  const openChatOrRoomsModal = useCallback(
+    (user: User, event: React.MouseEvent) => {
+      event.stopPropagation();
 
-    if (
-      userContext?.user?.role === "freelancer" &&
-      userContext.user.id === user.id
-    ) {
-      // Freelancer clicks on their own card to see rooms
-      setSelectedUser(user);
-      setIsRoomsModalOpen(true);
-    } else {
-      // Employer clicks to chat with a freelancer
-      setSelectedUser(user);
-      setIsChatModalOpen(true);
-    }
-  };
+      if (
+        userContext?.user?.role === "freelancer" &&
+        userContext.user.id === user.id
+      ) {
+        // Freelancer clicks on their own card to see rooms
+        setSelectedUser(user);
+        setIsRoomsModalOpen(true);
+      } else {
+        // Employer clicks to chat with a freelancer
+        setSelectedUser(user);
+        setIsChatModalOpen(true);
+      }
+    },
+    [userContext?.user]
+  );
 
   const memoizedUserCards = useMemo(
     () =>
@@ -266,7 +252,10 @@ const HomePage = () => {
       {/* Chat Modal */}
       <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
         <DialogContent className="w-full sm:max-w-[400px] p-0 m-0">
-          <Chat chatPartner={selectedUser} />
+          <Chat
+            chatPartner={selectedUser}
+            onClose={() => setIsChatModalOpen(false)}
+          />
         </DialogContent>
       </Dialog>
 

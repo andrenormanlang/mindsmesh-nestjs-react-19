@@ -35,10 +35,13 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
 
   useEffect(() => {
     if (senderId && chatPartner) {
-      // Ensure a room is created before starting to load messages or connect the socket
       const initializeChat = async () => {
         try {
-          await createRoom(chatPartner.id, `${senderId}-${chatPartner.id}`);
+          const currentUserRole = localStorage.getItem("userRole");
+          if (currentUserRole === "employer") {
+            // Only employers can create rooms
+            await createRoom(chatPartner.id, `${senderId}-${chatPartner.id}`);
+          }
           loadChatHistory();
         } catch (error) {
           console.error("Error initializing chat:", error);
@@ -91,19 +94,34 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
           (message.senderId === chatPartner?.id && message.receiverId === senderId) ||
           (message.senderId === senderId && message.receiverId === chatPartner?.id)
         ) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              ...message,
-              timestamp: new Date(message.timestamp),
-              status: "sent",
-            },
-          ]);
+          setMessages((prev) => {
+            const existingMessageIndex = prev.findIndex((msg) => msg.id === message.id);
+            if (existingMessageIndex !== -1) {
+              // Update the existing message
+              const updatedMessages = [...prev];
+              updatedMessages[existingMessageIndex] = {
+                ...message,
+                timestamp: new Date(message.timestamp),
+                status: "sent",
+              };
+              return updatedMessages;
+            } else {
+              // Add new message
+              return [
+                ...prev,
+                {
+                  ...message,
+                  timestamp: new Date(message.timestamp),
+                  status: "sent",
+                },
+              ];
+            }
+          });
         }
       });
 
       newSocket.on("disconnect", () => {
-        console.log("Socket disconnected. Attempting to reconnect...");
+        console.log("Socket disconnected.");
       });
 
       return () => {
