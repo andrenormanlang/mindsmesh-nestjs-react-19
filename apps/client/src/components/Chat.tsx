@@ -89,6 +89,16 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
         console.log("Connected to socket");
       });
 
+      newSocket.on("disconnect", () => {
+        setIsConnecting(true);
+        console.log("Socket disconnected.");
+      });
+
+      newSocket.on("reconnect_attempt", () => {
+        setIsConnecting(true);
+        console.log("Attempting to reconnect...");
+      });
+
       newSocket.on("receiveMessage", (message: Message) => {
         if (
           (message.senderId === chatPartner?.id && message.receiverId === senderId) ||
@@ -120,15 +130,17 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
         }
       });
 
-      newSocket.on("disconnect", () => {
-        console.log("Socket disconnected.");
-      });
-
       return () => {
         newSocket.disconnect();
       };
     }
   }, [senderId, chatPartner]);
+
+  useEffect(() => {
+    if (!isConnecting) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isConnecting]);
 
   const handleSendMessage = async () => {
     if (!senderId || !newMessage.trim() || !chatPartner) return;
@@ -183,6 +195,12 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
                     {chatPartner.username.charAt(0).toUpperCase()}
                   </span>
                 </div>
+                {/* Connection status indicator */}
+                <span
+                  className={`absolute bottom-0 right-0 block w-3 h-3 rounded-full ${
+                    isConnecting ? "bg-yellow-400" : "bg-green-500"
+                  }`}
+                />
               </div>
               <div>
                 <h3 className="font-semibold">{chatPartner.username}</h3>
@@ -208,41 +226,50 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
 
       <CardContent className="p-4">
         <div className="h-96 overflow-y-auto space-y-4">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${
-                msg.senderId === senderId ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div className="flex flex-col space-y-1 max-w-[75%]">
-                <div
-                  className={`rounded-2xl px-4 py-2 ${
-                    msg.senderId === senderId
-                      ? "bg-blue-600 text-white rounded-br-none"
-                      : "bg-gray-100 text-gray-900 rounded-bl-none"
-                  }`}
-                >
-                  {msg.text}
-                </div>
-                <div
-                  className={`flex items-center space-x-2 text-xs ${
-                    msg.senderId === senderId
-                      ? "justify-end"
-                      : "justify-start"
-                  }`}
-                >
-                  <span className="text-gray-500">
-                    {formatTime(msg.timestamp)}
-                  </span>
-                  {msg.senderId === senderId && msg.status === "sending" && (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  )}
-                </div>
-              </div>
+          {isConnecting ? (
+            <div className="flex justify-center items-center h-full">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+              <span className="ml-2 text-gray-500">Connecting...</span>
             </div>
-          ))}
-          <div ref={messagesEndRef} />
+          ) : (
+            <>
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${
+                    msg.senderId === senderId ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div className="flex flex-col space-y-1 max-w-[75%]">
+                    <div
+                      className={`rounded-2xl px-4 py-2 ${
+                        msg.senderId === senderId
+                          ? "bg-blue-600 text-white rounded-br-none"
+                          : "bg-gray-100 text-gray-900 rounded-bl-none"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                    <div
+                      className={`flex items-center space-x-2 text-xs ${
+                        msg.senderId === senderId
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
+                    >
+                      <span className="text-gray-500">
+                        {formatTime(msg.timestamp)}
+                      </span>
+                      {msg.senderId === senderId && msg.status === "sending" && (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </>
+          )}
         </div>
       </CardContent>
 
@@ -255,10 +282,11 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
               className="flex-1"
+              disabled={isConnecting}
             />
             <Button
               onClick={handleSendMessage}
-              disabled={!newMessage.trim()}
+              disabled={!newMessage.trim() || isConnecting}
               size="icon"
               className="rounded-full"
             >

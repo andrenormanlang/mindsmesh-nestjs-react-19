@@ -49,7 +49,7 @@ const HomePage = () => {
     );
   }
 
-  const { user, refreshUser, setUser } = userContext;
+  const { refreshUser, setUser } = userContext;
 
   useEffect(() => {
     const loadUsersAndProfile = async () => {
