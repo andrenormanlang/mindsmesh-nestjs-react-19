@@ -99,20 +99,16 @@ const UserCard: React.FC<UserCardProps> = ({
         </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center">
-        {/* View Details Button with Unread Count Badge */}
-        <div className="relative">
+        {/* View Details Button without Unread Count Badge */}
+        <div>
           <button
             onClick={(e) => onViewDetails(user, e)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center"
             aria-label={`View details for ${user.username}`}
           >
             <IoInformationCircleOutline />
           </button>
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </span>
-          )}
+          {/* Removed the badge from here */}
         </div>
 
         {/* Chat or Rooms Button with Unread Count Badge */}
@@ -121,7 +117,7 @@ const UserCard: React.FC<UserCardProps> = ({
           <div className="relative">
             <button
               onClick={(e) => onChat && onChat(user, e)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center"
               aria-label={`View chat rooms for ${user.username}`}
             >
               Rooms
@@ -137,7 +133,7 @@ const UserCard: React.FC<UserCardProps> = ({
           <div className="relative">
             <button
               onClick={(e) => onChat && onChat(user, e)}
-              className={`px-3 py-1 rounded-md text-sm relative ${
+              className={`px-3 py-1 rounded-md text-sm relative flex items-center ${
                 user.isOnline
                   ? "bg-green-500 hover:bg-green-600 text-white"
                   : "bg-gray-500 text-white cursor-not-allowed"
