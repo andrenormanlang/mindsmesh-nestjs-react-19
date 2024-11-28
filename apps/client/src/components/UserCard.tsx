@@ -1,3 +1,5 @@
+// src/components/UserCard.tsx
+
 import React, { useContext } from "react";
 import { User } from "../types/types";
 import { UserContext } from "../contexts/UserContext";
@@ -15,6 +17,7 @@ import DefaultImage from "../assets/default-image.webp";
 
 interface UserCardProps {
   user: User;
+  unreadCount?: number; // Add unreadCount prop
   onViewDetails: (user: User, event: React.MouseEvent) => void;
   onEdit?: (user: User) => void;
   onDelete?: (user: User) => void;
@@ -23,6 +26,7 @@ interface UserCardProps {
 
 const UserCard: React.FC<UserCardProps> = ({
   user,
+  unreadCount = 0,
   onViewDetails,
   onEdit,
   onDelete,
@@ -34,6 +38,8 @@ const UserCard: React.FC<UserCardProps> = ({
 
   return (
     <Card className="flex flex-col bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
+      {/* Removed the general Unread Count Badge */}
+
       <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
         {user.imageUrls && user.imageUrls.length > 0 ? (
           <Carousel className="w-full h-full">
@@ -93,41 +99,70 @@ const UserCard: React.FC<UserCardProps> = ({
         </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center">
-        <button
-          onClick={(e) => onViewDetails(user, e)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
-        >
-          <IoInformationCircleOutline />
-        </button>
+        {/* View Details Button with Unread Count Badge */}
+        <div className="relative">
+          <button
+            onClick={(e) => onViewDetails(user, e)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
+            aria-label={`View details for ${user.username}`}
+          >
+            <IoInformationCircleOutline />
+          </button>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </div>
+
+        {/* Chat or Rooms Button with Unread Count Badge */}
         {currentUser && currentUser.role === "freelancer" && currentUser.id === user.id ? (
           // Freelancer viewing their own card
-          <button
-            onClick={(e) => onChat && onChat(user, e)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
-          >
-            Rooms
-          </button>
+          <div className="relative">
+            <button
+              onClick={(e) => onChat && onChat(user, e)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
+              aria-label={`View chat rooms for ${user.username}`}
+            >
+              Rooms
+            </button>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </div>
         ) : currentUser && currentUser.role === "employer" && user.role === "freelancer" ? (
           // Employer viewing a freelancer's card
-          <button
-            onClick={(e) => onChat && onChat(user, e)}
-            className={`px-3 py-1 rounded-md text-sm ${
-              user.isOnline
-                ? "bg-green-500 hover:bg-green-600 text-white"
-                : "bg-gray-500 text-white cursor-not-allowed"
-            }`}
-            disabled={!user.isOnline}
-          >
-            {user.isOnline ? "Chat" : "Offline"}
-          </button>
+          <div className="relative">
+            <button
+              onClick={(e) => onChat && onChat(user, e)}
+              className={`px-3 py-1 rounded-md text-sm relative ${
+                user.isOnline
+                  ? "bg-green-500 hover:bg-green-600 text-white"
+                  : "bg-gray-500 text-white cursor-not-allowed"
+              }`}
+              disabled={!user.isOnline}
+              aria-label={`${user.isOnline ? "Chat with" : "Cannot chat with"} ${user.username}`}
+            >
+              {user.isOnline ? "Chat" : "Offline"}
+            </button>
+            {unreadCount > 0 && user.isOnline && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </div>
         ) : null}
 
+        {/* Edit/Delete Buttons */}
         {(onEdit || onDelete) && currentUser && currentUser.id === user.id && (
           <div className="flex space-x-2">
             {onEdit && (
               <button
                 onClick={() => onEdit(user)}
                 className="text-gray-700 hover:text-gray-900"
+                aria-label={`Edit ${user.username}`}
               >
                 <FaEdit />
               </button>
@@ -136,6 +171,7 @@ const UserCard: React.FC<UserCardProps> = ({
               <button
                 onClick={() => onDelete(user)}
                 className="text-red-500 hover:text-red-700"
+                aria-label={`Delete ${user.username}`}
               >
                 <FaTrash />
               </button>

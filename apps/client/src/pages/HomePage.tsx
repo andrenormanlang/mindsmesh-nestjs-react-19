@@ -1,7 +1,10 @@
-import { useEffect, useState, useCallback, useMemo, use } from "react";
+// src/pages/HomePage.tsx
+
+import React, { useEffect, useState, useCallback, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { GradientContext } from "../contexts/GradientContext";
 import { UserContext } from "../contexts/UserContext";
+import { SocketContext } from "../contexts/SocketContext"; // Import SocketContext
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.webp";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.webp";
 import { Input } from "../components/shadcn/ui/input";
@@ -11,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/shadcn/ui/dialog";
-import { deleteUser, fetchUsersWithSkills } from "../services/MindsMeshAPI";
+import { deleteUser, fetchUsersWithSkills, getUnreadCounts } from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import UserCard from "../components/UserCard";
 import EditProfileForm from "../components/EditProfileForm";
@@ -35,13 +38,14 @@ const HomePage = () => {
   const [isRoomsModalOpen, setIsRoomsModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
+  const [unreadCounts, setUnreadCounts] = useState<{ [key: string]: number }>({}); // Add unreadCounts state
 
   const navigate = useNavigate();
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  const userContext = use(UserContext);
-  const gradientContext = use(GradientContext);
+  const userContext = useContext(UserContext);
+  const gradientContext = useContext(GradientContext);
+  const { socket } = useContext(SocketContext); // Access socket from context
 
   if (!userContext || !gradientContext) {
     throw new Error(
@@ -51,6 +55,7 @@ const HomePage = () => {
 
   const { refreshUser, setUser } = userContext;
 
+  // Fetch Users and Profiles
   useEffect(() => {
     const loadUsersAndProfile = async () => {
       setIsLoading(true);
@@ -88,9 +93,54 @@ const HomePage = () => {
     loadUsersAndProfile();
   }, [debouncedSearchQuery, refreshUser, userContext?.user?.role]);
 
-  // useEffect(() => {
-  //   loadUsersAndProfile();
-  // }, [loadUsersAndProfile]);
+  // Fetch unread counts on component mount and periodically
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const counts = await getUnreadCounts();
+        console.log("Fetched unread counts:", counts);
+        setUnreadCounts(counts);
+      } catch (error) {
+        console.error("Failed to fetch unread counts", error);
+      }
+    };
+
+    fetchUnread();
+
+    const interval = setInterval(fetchUnread, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle WebSocket events for real-time updates
+  useEffect(() => {
+    if (socket) {
+      // When a new message is received
+      socket.on("receiveMessage", (message: any) => {
+        const currentUserId = userContext.user?.id;
+        console.log("Received message:", message);
+        if (message.receiverId === currentUserId) {
+          setUnreadCounts((prev) => ({
+            ...prev,
+            [message.senderId]: (prev[message.senderId] || 0) + 1,
+          }));
+        }
+      });
+
+      // When messages are read
+      socket.on("messagesRead", (data: { senderId: string; receiverId: string }) => {
+        console.log("Messages read:", data);
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [data.senderId]: 0,
+        }));
+      });
+
+      return () => {
+        socket.off("receiveMessage");
+        socket.off("messagesRead");
+      };
+    }
+  }, [socket, userContext.user?.id]);
 
   const handleDeleteAccount = useCallback(
     async (userId: string) => {
@@ -116,10 +166,6 @@ const HomePage = () => {
     setSelectedUser(user);
     setIsViewModalOpen(true);
   }, []);
-
-
-
-
 
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,6 +202,7 @@ const HomePage = () => {
           <UserCard
             key={user.id}
             user={user}
+            unreadCount={unreadCounts[user.id] || 0} // Pass unreadCount
             onViewDetails={openViewModal}
             onEdit={
               userContext?.user?.id === user.id ? openEditModal : undefined
@@ -173,6 +220,7 @@ const HomePage = () => {
       openDeleteModal,
       openChatOrRoomsModal,
       userContext?.user,
+      unreadCounts,
     ]
   );
 

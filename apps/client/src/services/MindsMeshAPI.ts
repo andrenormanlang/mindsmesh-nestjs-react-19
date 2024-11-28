@@ -373,6 +373,16 @@ export const createRoom = async (freelancerId: string, roomName: string) => {
   }
 };
 
+export const getUnreadCounts = async (): Promise<{ [key: string]: number }> => {
+  try {
+    const response = await api.get('/chat/unread-counts');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching unread counts:', error);
+    return {};
+  }
+};
+
 export const fetchRoomsForFreelancer = async (freelancerId: string): Promise<Room[]> => {
   try {
     const response = await api.get(`/rooms/freelancer/${freelancerId}`);
@@ -382,5 +392,6 @@ export const fetchRoomsForFreelancer = async (freelancerId: string): Promise<Roo
     console.error("Error fetching rooms for freelancer:", error);
     throw error;
   }
+  
 };
 

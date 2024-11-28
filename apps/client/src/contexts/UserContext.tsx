@@ -3,7 +3,8 @@ import { User } from "../types/types";
 import { getProfile } from "../services/MindsMeshAPI";
 import { AxiosError } from "axios";
 
-interface UserContextProps {
+
+export interface UserContextProps {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   refreshUser: () => void;
@@ -13,6 +14,7 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
+// Define and export the context with the correct type
 export const UserContext = createContext<UserContextProps | undefined>(undefined);
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
@@ -32,7 +34,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       if (!token) {
         return;
       }
-  
+
       // Attempt to fetch the user's profile
       const userProfile = await getProfile();
       setUser(userProfile);
@@ -49,8 +51,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       }
     }
   };
-  
-  
 
   return (
     <UserContext.Provider value={{ user, setUser, refreshUser }}>
