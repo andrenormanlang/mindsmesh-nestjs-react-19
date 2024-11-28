@@ -1,11 +1,6 @@
-import {
-  WebSocketGateway,
-  WebSocketServer,
-  SubscribeMessage,
-  ConnectedSocket,
-  OnGatewayConnection,
-  MessageBody,
-} from '@nestjs/websockets';
+// src/chat/chat.gateway.ts
+
+import { WebSocketGateway, WebSocketServer, SubscribeMessage, ConnectedSocket, OnGatewayConnection, MessageBody } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException, Inject, Logger } from '@nestjs/common';
@@ -23,7 +18,7 @@ export class ChatGateway implements OnGatewayConnection {
   constructor(
     private readonly chatService: ChatService,
     private readonly roomsService: RoomsService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -40,7 +35,7 @@ export class ChatGateway implements OnGatewayConnection {
         throw new Error('JWT_SECRET is not defined in environment variables');
       }
 
-      const payload = this.jwtService.verify(token, { secret });
+      const payload = this.jwtService.verify<JwtPayload>(token, { secret });
       client.data.userId = payload.sub;
 
       // Disconnect any existing connection for the user
@@ -65,13 +60,13 @@ export class ChatGateway implements OnGatewayConnection {
   async handleSendMessage(
     @MessageBody()
     message: { id: string; senderId: string; receiverId: string; text: string },
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     console.log(
       'Received message from:',
       message.senderId,
       'to:',
-      message.receiverId
+      message.receiverId,
     );
 
     try {
@@ -90,17 +85,14 @@ export class ChatGateway implements OnGatewayConnection {
         (sender.role === 'employer' && receiver.role === 'freelancer')
       ) {
         // Check if a room already exists between the sender and receiver
-        let room = await this.chatService.findRoomBetweenUsers(
-          sender,
-          receiver
-        );
+        let room = await this.chatService.findRoomBetweenUsers(sender, receiver);
 
         if (!room) {
           // Create a new room if one doesn't exist
           room = await this.roomsService.createRoom(
             sender.id,
             receiver.id,
-            `${sender.username}-${receiver.username}`
+            `${sender.username}-${receiver.username}`,
           );
         }
 
@@ -109,7 +101,7 @@ export class ChatGateway implements OnGatewayConnection {
           sender,
           receiver,
           message.text,
-          message.id
+          message.id,
         );
         console.log('Emitting saved message:', savedMessage);
 
@@ -122,10 +114,11 @@ export class ChatGateway implements OnGatewayConnection {
             receiverId: savedMessage.receiver.id,
             text: savedMessage.message,
             timestamp: savedMessage.createdAt,
+            isRead: savedMessage.isRead,
           });
       } else {
         console.error(
-          'Invalid chat roles: Chats can only occur between an employer and a freelancer'
+          'Invalid chat roles: Chats can only occur between an employer and a freelancer',
         );
       }
     } catch (error) {
@@ -133,18 +126,37 @@ export class ChatGateway implements OnGatewayConnection {
     }
   }
 
+  // Handle joining rooms
   @SubscribeMessage('joinRoom')
-async handleJoinRoom(
-  @MessageBody() data: { roomId: string },
-  @ConnectedSocket() client: Socket
-) {
-  try {
-    // Join the client to the specified room
-    client.join(data.roomId);
-    this.logger.log(`Received joinRoom event for room ID: ${data.roomId} from user ID: ${client.data.userId}`);
-  } catch (error) {
-    this.logger.error('Error joining room:', error.message);
+  async handleJoinRoom(
+    @MessageBody() data: { roomId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      // Join the client to the specified room
+      client.join(data.roomId);
+      this.logger.log(`Received joinRoom event for room ID: ${data.roomId} from user ID: ${client.data.userId}`);
+    } catch (error) {
+      this.logger.error('Error joining room:', error.message);
+    }
+  }
+
+  // Handle marking messages as read
+  @SubscribeMessage('markAsRead')
+  async handleMarkAsRead(
+    @MessageBody() data: { senderId: string; receiverId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { senderId, receiverId } = data;
+    try {
+      await this.chatService.markMessagesAsRead(senderId, receiverId);
+
+      // Notify the sender that their messages have been read
+      this.server.to(senderId).emit('messagesRead', { senderId, receiverId });
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+    }
   }
 }
-}
+
 

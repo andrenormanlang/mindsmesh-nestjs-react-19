@@ -97,6 +97,14 @@ export class ChatController {
     }
   }
 
+  // Endpoint to get unread counts
+  @UseGuards(JwtAuthGuard)
+  @Get('unread-counts')
+  async getUnreadCounts(@Request() req) {
+    const userId = req.user.id;
+    return await this.chatService.getUnreadCounts(userId);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('active-chats')
   async getActiveChats(@Request() req) {

@@ -109,5 +109,30 @@ export class ChatService {
     });
     return room || null;
   }
+
+   // Mark messages as read
+   async markMessagesAsRead(senderId: string, receiverId: string): Promise<void> {
+    await this.chatRepository.update(
+      { sender: { id: senderId }, receiver: { id: receiverId }, isRead: false },
+      { isRead: true },
+    );
+  }
+
+  // Get unread message counts per sender
+  async getUnreadCounts(userId: string): Promise<{ [key: string]: number }> {
+    const messages = await this.chatRepository.createQueryBuilder('message')
+      .select('message.senderId', 'senderId')
+      .addSelect('COUNT(message.id)', 'count')
+      .where('message.receiverId = :userId', { userId })
+      .andWhere('message.isRead = false')
+      .groupBy('message.senderId')
+      .getRawMany();
+
+    const counts: { [key: string]: number } = {};
+    messages.forEach(m => {
+      counts[m.senderId] = parseInt(m.count, 10);
+    });
+    return counts;
+  }
   
 }

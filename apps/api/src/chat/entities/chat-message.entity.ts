@@ -1,3 +1,5 @@
+// src/chat/entities/chat-message.entity.ts
+
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -42,4 +44,11 @@ export class ChatMessage {
   })
   @CreateDateColumn()
   createdAt!: Date;
+
+  @ApiProperty({
+    example: false,
+    description: 'Indicates whether the message has been read by the receiver',
+  })
+  @Column({ default: false })
+  isRead!: boolean;
 }
