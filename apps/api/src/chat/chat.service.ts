@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Equal, FindOptionsWhere, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
@@ -15,7 +19,7 @@ export class ChatService {
     private userRepository: Repository<User>,
 
     @InjectRepository(Room)
-    private roomRepository: Repository<Room>,
+    private roomRepository: Repository<Room>
   ) {}
 
   async getUserById(id: string): Promise<User> {
@@ -26,14 +30,18 @@ export class ChatService {
     return user;
   }
 
-  async sendMessage(sender: User, receiver: User, message: string): Promise<ChatMessage> {
+  async sendMessage(
+    sender: User,
+    receiver: User,
+    message: string
+  ): Promise<ChatMessage> {
     const chatMessage = this.chatRepository.create({
       sender,
       receiver,
       message,
     });
     const savedMessage = await this.chatRepository.save(chatMessage);
-    console.log("Saved message with createdAt:", savedMessage.createdAt);
+    console.log('Saved message with createdAt:', savedMessage.createdAt);
     return savedMessage;
   }
 
@@ -42,23 +50,30 @@ export class ChatService {
     return message || null;
   }
 
-  async sendMessageWithId(sender: User, receiver: User, message: string, id: string): Promise<ChatMessage> {
+  async sendMessageWithId(
+    sender: User,
+    receiver: User,
+    message: string,
+    id: string
+  ): Promise<ChatMessage> {
     const chatMessage = this.chatRepository.create({
-      id,  // Set the unique ID for the message
+      id, // Set the unique ID for the message
       sender,
       receiver,
       message,
     });
     const savedMessage = await this.chatRepository.save(chatMessage);
-    console.log("Saved message with createdAt:", savedMessage.createdAt);
+    console.log('Saved message with createdAt:', savedMessage.createdAt);
     return savedMessage;
   }
 
   async getMessages(userId1: string, userId2: string): Promise<ChatMessage[]> {
     if (userId1 === userId2) {
-      throw new BadRequestException('User cannot retrieve messages with themselves');
+      throw new BadRequestException(
+        'User cannot retrieve messages with themselves'
+      );
     }
-  
+
     return this.chatRepository.find({
       where: [
         { sender: { id: userId1 }, receiver: { id: userId2 } },
@@ -72,15 +87,12 @@ export class ChatService {
 
   async getActiveChats(userId: string): Promise<User[]> {
     const messages = await this.chatRepository.find({
-      where: [
-        { sender: { id: userId } },
-        { receiver: { id: userId } },
-      ],
+      where: [{ sender: { id: userId } }, { receiver: { id: userId } }],
       relations: ['sender', 'receiver'],
     });
-  
+
     const chatPartnersMap = new Map<string, User>();
-  
+
     messages.forEach((message) => {
       const otherUser =
         message.sender.id === userId ? message.receiver : message.sender;
@@ -88,7 +100,7 @@ export class ChatService {
         chatPartnersMap.set(otherUser.id, otherUser);
       }
     });
-  
+
     return Array.from(chatPartnersMap.values());
   }
 
@@ -99,7 +111,7 @@ export class ChatService {
     });
     return this.chatRepository.save(chatMessage);
   }
-  
+
   async findRoomBetweenUsers(user1: User, user2: User): Promise<Room | null> {
     const room = await this.roomRepository.findOne({
       where: [
@@ -110,28 +122,42 @@ export class ChatService {
     return room || null;
   }
 
-   // Mark messages as read
-   async markMessagesAsRead(senderId: string, receiverId: string): Promise<void> {
+  // Mark messages as read
+  async markMessagesAsRead(
+    senderId: string,
+    receiverId: string
+  ): Promise<void> {
     await this.chatRepository.update(
       { sender: { id: senderId }, receiver: { id: receiverId }, isRead: false },
-      { isRead: true },
+      { isRead: true }
     );
   }
 
   // Get unread message counts per sender
   async getUnreadCounts(userId: string): Promise<{ [key: string]: number }> {
-    const messages = await this.chatRepository.createQueryBuilder('message')
+    console.log(`Fetching unread counts for userId: ${userId}`);
+  
+    const messages = await this.chatRepository
+      .createQueryBuilder('message')
       .select('message.senderId', 'senderId')
       .addSelect('COUNT(message.id)', 'count')
       .where('message.receiverId = :userId', { userId })
       .andWhere('message.isRead = false')
       .groupBy('message.senderId')
       .getRawMany();
-
+  
+    console.log('Unread messages raw data:', messages);
+  
     const counts: { [key: string]: number } = {};
-    messages.forEach(m => {
-      counts[m.senderId] = parseInt(m.count, 10);
+    messages.forEach((m) => {
+      const senderId = m.senderId || m['message_senderId'];
+      const count = parseInt(m.count, 10);
+  
+      if (senderId) {
+        counts[senderId] = count;
+      }
     });
+    console.log(`Unread counts for user ${userId}:`, counts);
     return counts;
   }
   

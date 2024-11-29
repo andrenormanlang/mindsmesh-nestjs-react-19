@@ -350,15 +350,7 @@ export const getChatMessages = async (userId1: string, userId2: string) => {
 };
 
 
-export const getActiveChats = async (): Promise<User[]> => {
-  try {
-    const response = await api.get('/chat/active-chats');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching active chats:', error);
-    throw error;
-  }
-};
+
 
 export const createRoom = async (freelancerId: string, roomName: string) => {
   try {
@@ -378,10 +370,19 @@ export const getUnreadCounts = async (): Promise<{ [key: string]: number }> => {
     const response = await api.get('/chat/unread-counts');
     return response.data;
   } catch (error) {
-    console.error('Error fetching unread counts:', error);
+    if (error.response && error.response.status === 401) {
+      // Token might be expired or invalid
+      console.error('Authentication error. Redirecting to login...');
+      // Optionally clear the token and redirect to the login page
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    } else {
+      console.error('Error fetching unread counts:', error);
+    }
     return {};
   }
 };
+
 
 export const fetchRoomsForFreelancer = async (freelancerId: string): Promise<Room[]> => {
   try {

@@ -17,7 +17,8 @@ import DefaultImage from "../assets/default-image.webp";
 
 interface UserCardProps {
   user: User;
-  unreadCount?: number; // Add unreadCount prop
+  unreadCount?: number; // Existing unreadCount prop
+  unreadCounts?: { [key: string]: number }; // New prop for freelancers
   onViewDetails: (user: User, event: React.MouseEvent) => void;
   onEdit?: (user: User) => void;
   onDelete?: (user: User) => void;
@@ -27,27 +28,32 @@ interface UserCardProps {
 const UserCard: React.FC<UserCardProps> = ({
   user,
   unreadCount = 0,
+  unreadCounts,
   onViewDetails,
   onEdit,
   onDelete,
   onChat,
 }) => {
   const userContext = useContext(UserContext);
-
   const currentUser = userContext?.user;
 
-  const UnreadBadge = ({ count }: { count: number }) => (
-    count > 0 && (
+  const UnreadBadge = ({ count }: { count: number }) =>
+    count > 0 ? (
       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
         {count > 99 ? "99+" : count}
       </span>
-    )
-  );
+    ) : null;
+
+  // Determine if the current card is for the logged-in user
+  const isOwnCard = currentUser?.id === user.id;
+
+  // Calculate total unread count for freelancers viewing their own card
+  const totalUnreadCount = isOwnCard
+    ? Object.values(unreadCounts || {}).reduce((sum, count) => sum + count, 0)
+    : unreadCount;
 
   return (
     <Card className="flex flex-col bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
-      {/* Removed the general Unread Count Badge */}
-
       <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
         {user.imageUrls && user.imageUrls.length > 0 ? (
           <Carousel className="w-full h-full">
@@ -119,17 +125,18 @@ const UserCard: React.FC<UserCardProps> = ({
 
         {currentUser && (
           <div className="relative">
-            {currentUser.role === "freelancer" && currentUser.id === user.id ? (
-              // Freelancer viewing their own card - show Rooms button with unread count
+            {currentUser.role === "freelancer" && isOwnCard ? (
+              // Freelancer viewing their own card - show Rooms button with total unread count
               <button
                 onClick={(e) => onChat && onChat(user, e)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center relative"
                 aria-label="View chat rooms"
               >
                 Rooms
-                <UnreadBadge count={unreadCount} />
+                <UnreadBadge count={totalUnreadCount} />
               </button>
-            ) : currentUser.role === "employer" && user.role === "freelancer" ? (
+            ) : currentUser.role === "employer" &&
+              user.role === "freelancer" ? (
               // Employer viewing a freelancer's card - show Chat button with unread count
               <button
                 onClick={(e) => onChat && onChat(user, e)}
@@ -139,7 +146,9 @@ const UserCard: React.FC<UserCardProps> = ({
                     : "bg-gray-500 text-white cursor-not-allowed"
                 }`}
                 disabled={!user.isOnline}
-                aria-label={`${user.isOnline ? "Chat with" : "Cannot chat with"} ${user.username}`}
+                aria-label={`${
+                  user.isOnline ? "Chat with" : "Cannot chat with"
+                } ${user.username}`}
               >
                 {user.isOnline ? "Chat" : "Offline"}
                 {user.isOnline && <UnreadBadge count={unreadCount} />}
@@ -149,7 +158,7 @@ const UserCard: React.FC<UserCardProps> = ({
         )}
 
         {/* Edit/Delete Buttons */}
-        {(onEdit || onDelete) && currentUser && currentUser.id === user.id && (
+        {(onEdit || onDelete) && isOwnCard && (
           <div className="flex space-x-2">
             {onEdit && (
               <button
@@ -177,3 +186,4 @@ const UserCard: React.FC<UserCardProps> = ({
 };
 
 export default UserCard;
+

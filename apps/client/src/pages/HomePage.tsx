@@ -1,10 +1,16 @@
 // src/pages/HomePage.tsx
 
-import React, { useEffect, useState, useCallback, useMemo, useContext } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useContext,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { GradientContext } from "../contexts/GradientContext";
 import { UserContext } from "../contexts/UserContext";
-import { SocketContext } from "../contexts/SocketContext"; // Import SocketContext
+import { SocketContext } from "../contexts/SocketContext";
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.webp";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.webp";
 import { Input } from "../components/shadcn/ui/input";
@@ -14,7 +20,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/shadcn/ui/dialog";
-import { deleteUser, fetchUsersWithSkills, getUnreadCounts } from "../services/MindsMeshAPI";
+import {
+  deleteUser,
+  fetchUsersWithSkills,
+  getUnreadCounts,
+} from "../services/MindsMeshAPI";
 import { User } from "../types/types";
 import UserCard from "../components/UserCard";
 import EditProfileForm from "../components/EditProfileForm";
@@ -38,14 +48,16 @@ const HomePage = () => {
   const [isRoomsModalOpen, setIsRoomsModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [unreadCounts, setUnreadCounts] = useState<{ [key: string]: number }>({}); // Add unreadCounts state
+  const [unreadCounts, setUnreadCounts] = useState<{ [key: string]: number }>(
+    {}
+  );
 
   const navigate = useNavigate();
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const userContext = useContext(UserContext);
   const gradientContext = useContext(GradientContext);
-  const { socket } = useContext(SocketContext); // Access socket from context
+  const { socket } = useContext(SocketContext);
 
   if (!userContext || !gradientContext) {
     throw new Error(
@@ -55,13 +67,16 @@ const HomePage = () => {
 
   const { refreshUser, setUser } = userContext;
 
+  // Memoize refreshUser to prevent it from changing on every render
+  const memoizedRefreshUser = useCallback(refreshUser, []);
+
   // Fetch Users and Profiles
   useEffect(() => {
     const loadUsersAndProfile = async () => {
       setIsLoading(true);
       setSearchResultPhrase(null);
       try {
-        await refreshUser();
+        await memoizedRefreshUser();
 
         let users: User[] = [];
         if (userContext?.user?.role === "employer") {
@@ -91,7 +106,7 @@ const HomePage = () => {
     };
 
     loadUsersAndProfile();
-  }, [debouncedSearchQuery, refreshUser, userContext?.user?.role]);
+  }, [debouncedSearchQuery, memoizedRefreshUser, userContext?.user?.role]);
 
   // Fetch unread counts on component mount and periodically
   useEffect(() => {
@@ -109,14 +124,14 @@ const HomePage = () => {
 
     const interval = setInterval(fetchUnread, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, []); // Empty dependency array ensures this runs once on mount
 
   // Handle WebSocket events for real-time updates
   useEffect(() => {
-    if (socket) {
-      // When a new message is received
-      socket.on("receiveMessage", (message: any) => {
-        const currentUserId = userContext.user?.id;
+    if (socket && userContext.user?.id) {
+      const currentUserId = userContext.user.id;
+
+      const handleReceiveMessage = (message: any) => {
         console.log("Received message:", message);
         if (message.receiverId === currentUserId) {
           setUnreadCounts((prev) => ({
@@ -124,20 +139,22 @@ const HomePage = () => {
             [message.senderId]: (prev[message.senderId] || 0) + 1,
           }));
         }
-      });
+      };
 
-      // When messages are read
-      socket.on("messagesRead", (data: { senderId: string; receiverId: string }) => {
+      const handleMessagesRead = (data: { senderId: string; receiverId: string }) => {
         console.log("Messages read:", data);
         setUnreadCounts((prev) => ({
           ...prev,
           [data.senderId]: 0,
         }));
-      });
+      };
+
+      socket.on("receiveMessage", handleReceiveMessage);
+      socket.on("messagesRead", handleMessagesRead);
 
       return () => {
-        socket.off("receiveMessage");
-        socket.off("messagesRead");
+        socket.off("receiveMessage", handleReceiveMessage);
+        socket.off("messagesRead", handleMessagesRead);
       };
     }
   }, [socket, userContext.user?.id]);
@@ -161,11 +178,14 @@ const HomePage = () => {
     setIsDeleteModalOpen(true);
   }, []);
 
-  const openViewModal = useCallback((user: User, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setSelectedUser(user);
-    setIsViewModalOpen(true);
-  }, []);
+  const openViewModal = useCallback(
+    (user: User, event: React.MouseEvent) => {
+      event.stopPropagation();
+      setSelectedUser(user);
+      setIsViewModalOpen(true);
+    },
+    []
+  );
 
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,7 +222,8 @@ const HomePage = () => {
           <UserCard
             key={user.id}
             user={user}
-            unreadCount={unreadCounts[user.id] || 0} // Pass unreadCount
+            unreadCount={unreadCounts[user.id] || 0} // Pass unreadCount for individual users
+            unreadCounts={unreadCounts} // Pass the entire unreadCounts object
             onViewDetails={openViewModal}
             onEdit={
               userContext?.user?.id === user.id ? openEditModal : undefined
@@ -300,10 +321,12 @@ const HomePage = () => {
       {/* Chat Modal */}
       <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
         <DialogContent className="w-full sm:max-w-[400px] p-0 m-0">
-          <Chat
-            chatPartner={selectedUser}
-            onClose={() => setIsChatModalOpen(false)}
-          />
+          {isChatModalOpen && selectedUser && (
+            <Chat
+              chatPartner={selectedUser}
+              onClose={() => setIsChatModalOpen(false)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
