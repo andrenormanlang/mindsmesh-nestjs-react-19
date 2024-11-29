@@ -36,6 +36,14 @@ const UserCard: React.FC<UserCardProps> = ({
 
   const currentUser = userContext?.user;
 
+  const UnreadBadge = ({ count }: { count: number }) => (
+    count > 0 && (
+      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
+        {count > 99 ? "99+" : count}
+      </span>
+    )
+  );
+
   return (
     <Card className="flex flex-col bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
       {/* Removed the general Unread Count Badge */}
@@ -99,7 +107,6 @@ const UserCard: React.FC<UserCardProps> = ({
         </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center">
-        {/* View Details Button without Unread Count Badge */}
         <div>
           <button
             onClick={(e) => onViewDetails(user, e)}
@@ -108,48 +115,38 @@ const UserCard: React.FC<UserCardProps> = ({
           >
             <IoInformationCircleOutline />
           </button>
-          {/* Removed the badge from here */}
         </div>
 
-        {/* Chat or Rooms Button with Unread Count Badge */}
-        {currentUser && currentUser.role === "freelancer" && currentUser.id === user.id ? (
-          // Freelancer viewing their own card
+        {currentUser && (
           <div className="relative">
-            <button
-              onClick={(e) => onChat && onChat(user, e)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center"
-              aria-label={`View chat rooms for ${user.username}`}
-            >
-              Rooms
-            </button>
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
-            )}
+            {currentUser.role === "freelancer" && currentUser.id === user.id ? (
+              // Freelancer viewing their own card - show Rooms button with unread count
+              <button
+                onClick={(e) => onChat && onChat(user, e)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center"
+                aria-label="View chat rooms"
+              >
+                Rooms
+                <UnreadBadge count={unreadCount} />
+              </button>
+            ) : currentUser.role === "employer" && user.role === "freelancer" ? (
+              // Employer viewing a freelancer's card - show Chat button with unread count
+              <button
+                onClick={(e) => onChat && onChat(user, e)}
+                className={`px-3 py-1 rounded-md text-sm relative flex items-center ${
+                  user.isOnline
+                    ? "bg-green-500 hover:bg-green-600 text-white"
+                    : "bg-gray-500 text-white cursor-not-allowed"
+                }`}
+                disabled={!user.isOnline}
+                aria-label={`${user.isOnline ? "Chat with" : "Cannot chat with"} ${user.username}`}
+              >
+                {user.isOnline ? "Chat" : "Offline"}
+                {user.isOnline && <UnreadBadge count={unreadCount} />}
+              </button>
+            ) : null}
           </div>
-        ) : currentUser && currentUser.role === "employer" && user.role === "freelancer" ? (
-          // Employer viewing a freelancer's card
-          <div className="relative">
-            <button
-              onClick={(e) => onChat && onChat(user, e)}
-              className={`px-3 py-1 rounded-md text-sm relative flex items-center ${
-                user.isOnline
-                  ? "bg-green-500 hover:bg-green-600 text-white"
-                  : "bg-gray-500 text-white cursor-not-allowed"
-              }`}
-              disabled={!user.isOnline}
-              aria-label={`${user.isOnline ? "Chat with" : "Cannot chat with"} ${user.username}`}
-            >
-              {user.isOnline ? "Chat" : "Offline"}
-            </button>
-            {unreadCount > 0 && user.isOnline && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
-            )}
-          </div>
-        ) : null}
+        )}
 
         {/* Edit/Delete Buttons */}
         {(onEdit || onDelete) && currentUser && currentUser.id === user.id && (

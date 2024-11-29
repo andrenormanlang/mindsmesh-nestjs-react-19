@@ -36,7 +36,6 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const backendUrl_Employer = import.meta.env.VITE_BASE_URL_CHAT_EMPLOYER;
   const senderId = localStorage.getItem("userId");
 
   useEffect(() => {
