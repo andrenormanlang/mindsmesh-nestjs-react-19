@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { User, Skill, UserAuth, Room } from "../types/types";
 
 const api = axios.create({
@@ -370,14 +370,16 @@ export const getUnreadCounts = async (): Promise<{ [key: string]: number }> => {
     const response = await api.get('/chat/unread-counts');
     return response.data;
   } catch (error) {
-    if (error.response && error.response.status === 401) {
+    const axiosError = error as AxiosError;
+
+    if (axiosError.response && axiosError.response.status === 401) {
       // Token might be expired or invalid
       console.error('Authentication error. Redirecting to login...');
       // Optionally clear the token and redirect to the login page
       localStorage.removeItem('token');
       window.location.href = '/login';
     } else {
-      console.error('Error fetching unread counts:', error);
+      console.error('Error fetching unread counts:', axiosError);
     }
     return {};
   }
