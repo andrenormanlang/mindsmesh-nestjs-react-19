@@ -55,7 +55,8 @@ export type Room = {
   id: string;
   roomName: string;
   employer: User; 
-  employerName?: string; 
+  employerName?: string;
+  unreadCount: number;
 }
 
 

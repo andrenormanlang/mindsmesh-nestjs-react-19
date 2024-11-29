@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./shadcn/ui/dialog";
-import { fetchRoomsForFreelancer } from "../services/MindsMeshAPI";
+import { fetchRoomsForFreelancer, getUnreadCounts } from "../services/MindsMeshAPI";
 import { Room, User } from "../types/types";
 import { io } from "socket.io-client";
 import Chat from "./Chat";
@@ -30,19 +30,30 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch rooms and unread counts
   useEffect(() => {
     const loadRooms = async () => {
       if (isOpen && freelancerId) {
         setIsLoading(true);
         try {
-          const roomsData = await fetchRoomsForFreelancer(freelancerId);
-          const processedRooms = roomsData.map((room) => ({
-            ...room,
-            employerName: room.employer?.username || "Unknown Employer",
-          }));
+          const [roomsData, unreadCounts] = await Promise.all([
+            fetchRoomsForFreelancer(freelancerId),
+            getUnreadCounts(),
+          ]);
+
+          const processedRooms = roomsData.map((room) => {
+            const employerId = room.employer?.id;
+            const unreadCount = unreadCounts[employerId] || 0;
+
+            return {
+              ...room,
+              employerName: room.employer?.username || "Unknown Employer",
+              unreadCount,
+            };
+          });
           setRooms(processedRooms);
         } catch (error) {
-          console.error("Error fetching rooms:", error);
+          console.error("Error fetching rooms or unread counts:", error);
         } finally {
           setIsLoading(false);
         }
@@ -51,11 +62,75 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
     loadRooms();
   }, [isOpen, freelancerId]);
 
+  // Handle real-time updates
+  useEffect(() => {
+    if (socket && freelancerId) {
+      const handleReceiveMessage = (message: any) => {
+        if (message.receiverId === freelancerId) {
+          setRooms((prevRooms) =>
+            prevRooms.map((room) => {
+              if (room.employer?.id === message.senderId) {
+                return {
+                  ...room,
+                  unreadCount: room.unreadCount + 1,
+                };
+              }
+              return room;
+            })
+          );
+        }
+      };
+
+      const handleMessagesRead = (data: { senderId: string; receiverId: string }) => {
+        if (data.receiverId === freelancerId) {
+          setRooms((prevRooms) =>
+            prevRooms.map((room) => {
+              if (room.employer?.id === data.senderId) {
+                return {
+                  ...room,
+                  unreadCount: 0,
+                };
+              }
+              return room;
+            })
+          );
+        }
+      };
+
+      socket.on("receiveMessage", handleReceiveMessage);
+      socket.on("messagesRead", handleMessagesRead);
+
+      return () => {
+        socket.off("receiveMessage", handleReceiveMessage);
+        socket.off("messagesRead", handleMessagesRead);
+      };
+    }
+  }, [socket, freelancerId]);
+
   const handleJoinRoom = (room: Room) => {
     if (socket && room.id) {
       socket.emit("joinRoom", { roomId: room.id });
       setActiveChatPartner(room.employer);
       setIsChatOpen(true);
+
+      // Reset unread count for this room
+      setRooms((prevRooms) =>
+        prevRooms.map((r) => {
+          if (r.id === room.id) {
+            return {
+              ...r,
+              unreadCount: 0,
+            };
+          }
+          return r;
+        })
+      );
+
+      // Notify server to mark messages as read
+      socket.emit("markMessagesAsRead", {
+        senderId: room.employer?.id,
+        receiverId: freelancerId,
+      });
     }
   };
 
@@ -130,8 +205,13 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center text-blue-600">
+                          <div className="flex items-center text-blue-600 relative">
                             <MessageSquare className="h-5 w-5" />
+                            {room.unreadCount > 0 && (
+                              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
+                                {room.unreadCount > 99 ? "99+" : room.unreadCount}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </button>
