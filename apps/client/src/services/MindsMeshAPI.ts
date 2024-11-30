@@ -349,7 +349,15 @@ export const getChatMessages = async (userId1: string, userId2: string) => {
   }
 };
 
-
+export const getActiveChats = async (): Promise<User[]> => {
+  try {
+    const response = await api.get('/chat/active-chats');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching active chats:', error);
+    throw error;
+  }
+};
 
 
 export const createRoom = async (freelancerId: string, roomName: string) => {

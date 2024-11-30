@@ -255,7 +255,7 @@ const Navbar: React.FC = () => {
                   className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
                 >
                   <Pencil1Icon className="h-5 w-5 mr-2" />
-                  Register
+                  
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">

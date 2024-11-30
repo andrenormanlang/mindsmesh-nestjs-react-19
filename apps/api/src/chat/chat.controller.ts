@@ -109,8 +109,8 @@ async getUnreadCounts(@Request() req) {
   @UseGuards(JwtAuthGuard)
   @Get('active-chats')
   async getActiveChats(@Request() req) {
-    const userId = req.user.id;
-    console.log(`API called by userId: ${userId}`);
+    const userId = req.user.sub;
+    console.log(`API called by userId active chat: ${userId}`);
     return await this.chatService.getActiveChats(userId);
   }
 }

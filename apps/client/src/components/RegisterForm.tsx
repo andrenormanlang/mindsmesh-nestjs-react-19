@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm, Controller, FieldError } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "./shadcn/ui/button";
@@ -7,29 +7,38 @@ import { Input } from "./shadcn/ui/input";
 import { Label } from "./shadcn/ui/label";
 import { useToast } from "./shadcn/ui/use-toast";
 import { register } from "../services/MindsMeshAPI";
-import { AxiosError } from "axios";
+import { Card } from "./shadcn/ui/card";
+import { Eye, EyeOff, Loader2, Upload, X } from "lucide-react";
+import { cn } from "./lib/utils";
 
-export type RegisterFormData = {
+// Define the form data type with proper type annotations
+interface RegisterFormData {
   username: string;
   email: string;
   password: string;
   role: "freelancer" | "employer";
-  imageUrls?: File[];
-};
+  imageUrls?: FileList;
+}
 
 const registerSchema = z.object({
   username: z.string().min(1, "Username is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["freelancer", "employer"]),
+  role: z.enum(["freelancer", "employer"] as const),
   imageUrls: z.any().optional(),
 });
 
-const RegisterForm = ({ onClose }: { onClose: () => void }) => {
+type RegisterFormProps = {
+  onClose: () => void;
+};
+
+const RegisterForm = ({ onClose }: RegisterFormProps) => {
   const { toast } = useToast();
   const [error, setError] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
@@ -42,7 +51,6 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
       email: "",
       password: "",
       role: "freelancer",
-      imageUrls: undefined,
     },
   });
 
@@ -51,209 +59,274 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
     if (!files) return;
 
     if (files.length + selectedFiles.length > 4) {
-      alert("You can only upload up to 4 images.");
+      toast({
+        title: "Too many images",
+        description: "You can only upload up to 4 images",
+        variant: "destructive",
+      });
       return;
     }
 
-    const newFiles = [...selectedFiles, ...Array.from(files)];
-    setSelectedFiles(newFiles);
+    const newFiles = Array.from(files).filter((file) => {
+      const validTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not a supported image format`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: `${file.name} exceeds 5MB limit`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      return true;
+    });
 
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
     const filePreviews = newFiles.map((file) => URL.createObjectURL(file));
-    setImagePreviews(filePreviews);
+    setImagePreviews((prev) => [...prev, ...filePreviews]);
   };
 
   const handleRemoveImage = (index: number) => {
-    const updatedFiles = selectedFiles.filter((_, i) => i !== index);
-    const updatedPreviews = imagePreviews.filter((_, i) => i !== index);
-
-    setSelectedFiles(updatedFiles);
-    setImagePreviews(updatedPreviews);
+    URL.revokeObjectURL(imagePreviews[index]);
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const onSubmit = async (data: RegisterFormData) => {
-    const formData = new FormData();
-    formData.append("username", data.username);
-    formData.append("email", data.email);
-    formData.append("password", data.password);
-    formData.append("role", data.role);
-
-    if (selectedFiles.length > 0) {
-      selectedFiles.forEach((file) => {
-        formData.append("imageUrls", file);
-      });
-    }
+    setIsLoading(true);
+    setError("");
 
     try {
+      // Type assertion for role since we know it's valid from the schema
+      const role = data.role as "freelancer" | "employer";
+
       await register(
-        formData.get("username") as string,
-        formData.get("role") as "freelancer" | "employer",
-        formData.get("password") as string,
-        formData.get("email") as string,
-        selectedFiles,
+        data.username,
+        role,
+        data.password,
+        data.email,
+        selectedFiles
       );
-    
-      onClose();
+
       toast({
-        title: "Registration Successful",
+        title: "Welcome aboard! 🎉",
         description: "Please check your email to verify your account.",
         variant: "success",
         duration: 5000,
       });
+      onClose();
     } catch (err: unknown) {
-      console.error("Registration error:", err);
-      const error = err as AxiosError;
-      if (error.response?.status === 400) {
-        toast({
-          title: "Email Already Registered",
-          description:
-            "An account with this email already exists. Please use a different email or login.",
-          variant: "destructive",
-          duration: 5000,
-        });
-      } else {
-        setError("Registration failed. Please try again.");
-
-        // Show general error toast
+      if (err instanceof Error) {
+        setError(err.message);
         toast({
           title: "Registration Failed",
-          description: "Please try again.",
+          description: err.message,
           variant: "destructive",
           duration: 5000,
         });
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <>
-      <div className="overflow-y-auto">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <Label htmlFor="username">Username</Label>
-            <Controller
-              name="username"
-              control={control}
-              render={({ field }) => (
-                <Input {...field} placeholder="Username" className="w-full" />
-              )}
-            />
-            {errors.username && (
-              <p className="text-red-500">{errors.username.message}</p>
+    <Card className="p-6 w-full">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Username field */}
+        <div>
+          <Label htmlFor="username" className="text-sm font-medium">
+            Username
+          </Label>
+          <Controller
+            name="username"
+            control={control}
+            render={({ field }) => (
+              <Input
+                {...field}
+                id="username"
+                placeholder="Enter your username"
+                className="mt-1"
+                autoComplete="username"
+                disabled={isLoading}
+              />
             )}
-          </div>
+          />
+          {errors.username && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.username.message}
+            </p>
+          )}
+        </div>
 
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Controller
-              name="email"
-              control={control}
-              render={({ field }) => (
-                <Input {...field} placeholder="Email" className="w-full" />
-              )}
-            />
-            {errors.email && (
-              <p className="text-red-500">{errors.email.message}</p>
+        {/* Email field */}
+        <div>
+          <Label htmlFor="email" className="text-sm font-medium">
+            Email
+          </Label>
+          <Controller
+            name="email"
+            control={control}
+            render={({ field }) => (
+              <Input
+                {...field}
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                className="mt-1"
+                autoComplete="email"
+                disabled={isLoading}
+              />
             )}
-          </div>
+          />
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+          )}
+        </div>
 
-          <div>
-            <Label htmlFor="password">Password</Label>
+        {/* Password field */}
+        <div>
+          <Label htmlFor="password" className="text-sm font-medium">
+            Password
+          </Label>
+          <div className="relative">
             <Controller
               name="password"
               control={control}
               render={({ field }) => (
                 <Input
                   {...field}
-                  type="password"
-                  placeholder="Password"
-                  className="w-full"
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  className={cn(
+                    "pr-10", // Space for the toggle button
+                    errors.password &&
+                      "border-red-500 focus-visible:ring-red-500"
+                  )}
                 />
               )}
             />
-            {errors.password && (
-              <p className="text-red-500">{errors.password.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="role">Role</Label>
-            <Controller
-              name="role"
-              control={control}
-              render={({ field }) => (
-                <div className="flex space-x-4">
-                  <label>
-                    <input
-                      {...field}
-                      type="radio"
-                      value="freelancer"
-                      checked={field.value === "freelancer"}
-                      onChange={() => field.onChange("freelancer")}
-                    />
-                    Freelancer
-                  </label>
-                  <label>
-                    <input
-                      {...field}
-                      type="radio"
-                      value="employer"
-                      checked={field.value === "employer"}
-                      onChange={() => field.onChange("employer")}
-                    />
-                    Employer
-                  </label>
-                </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4 text-gray-500" />
+              ) : (
+                <Eye className="h-4 w-4 text-gray-500" />
               )}
-            />
-            {errors.role && (
-              <p className="text-red-500">{errors.role.message}</p>
+            </Button>
+          </div>
+          {errors.password && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
+
+        {/* Role selection */}
+        <div>
+          <Label className="text-sm font-medium">I am a...</Label>
+          <Controller
+            name="role"
+            control={control}
+            render={({ field }) => (
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <Button
+                  type="button"
+                  variant={field.value === "freelancer" ? "default" : "outline"}
+                  className="w-full"
+                  onClick={() => field.onChange("freelancer")}
+                  disabled={isLoading}
+                >
+                  Freelancer
+                </Button>
+                <Button
+                  type="button"
+                  variant={field.value === "employer" ? "default" : "outline"}
+                  className="w-full"
+                  onClick={() => field.onChange("employer")}
+                  disabled={isLoading}
+                >
+                  Employer
+                </Button>
+              </div>
             )}
+          />
+        </div>
+
+        {/* Image upload */}
+        <div>
+          <Label className="text-sm font-medium">Profile Images</Label>
+          <div className="mt-2">
+            <div className="flex items-center justify-center w-full">
+              <label className="w-full flex flex-col items-center px-4 py-6 bg-white text-blue rounded-lg shadow-lg tracking-wide uppercase border border-blue cursor-pointer hover:bg-blue hover:text-white">
+                <Upload className="w-8 h-8" />
+                <span className="mt-2 text-base leading-normal">
+                  Select images
+                </span>
+                <Input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  disabled={isLoading || selectedFiles.length >= 4}
+                />
+              </label>
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="avatars">Images (Max 4)</Label>
-            <Input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleFileChange}
-              className="w-full"
-            />
-            {errors.imageUrls && (
-              <p className="text-red-500">
-                {(errors.imageUrls as FieldError)?.message}
-              </p>
-            )}
-          </div>
-
-          {/* Image Previews */}
+          {/* Image previews */}
           {imagePreviews.length > 0 && (
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-4">
               {imagePreviews.map((src, index) => (
-                <div key={index} className="relative">
+                <div key={index} className="relative group">
                   <img
                     src={src}
                     alt={`Preview ${index + 1}`}
-                    className="w-full h-32 object-cover rounded-lg shadow"
+                    className="w-full h-32 object-cover rounded-lg"
                   />
                   <Button
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                    size="sm"
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => handleRemoveImage(index)}
+                    disabled={isLoading}
                   >
-                    X
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
             </div>
           )}
-          {error && <p className="text-red-500">{error}</p>}
-          <div className="flex space-x-4">
-            <Button type="submit">Submit</Button>
-          </div>
-        </form>
-      </div>
-    </>
+        </div>
+
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            "Create Account"
+          )}
+        </Button>
+      </form>
+    </Card>
   );
 };
 
