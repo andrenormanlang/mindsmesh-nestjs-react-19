@@ -75,9 +75,7 @@ const Navbar: React.FC = () => {
   }, [menuOpen]);
 
   return (
-    <nav
-      className={`navbar p-2 h-16 top-0 z-50 transition-colors duration-500`}
-    >
+    <nav className={`navbar p-2 h-16 top-0 z-50 transition-colors duration-500`}>
       <div className="navbarContent container mx-auto flex justify-between items-center">
         {/* Logo and Brand Name */}
         <Link
@@ -106,17 +104,15 @@ const Navbar: React.FC = () => {
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 </div>
-                {/* Show Profile button only if user is NOT an employer */}
-                {user.role !== "employer" && (
-                  <Button
-                    variant="ghost"
-                    className="text-white flex items-center"
-                    onClick={() => setIsProfileOpen(true)}
-                  >
-                    <PersonIcon className="h-5 w-5 mr-1" />
-                    Profile
-                  </Button>
-                )}
+                {/* Show Profile button for all users */}
+                <Button
+                  variant="ghost"
+                  className="text-white flex items-center"
+                  onClick={() => setIsProfileOpen(true)}
+                >
+                  <PersonIcon className="h-5 w-5 mr-1" />
+                  Profile
+                </Button>
                 <Button
                   variant="ghost"
                   className="text-white flex items-center"
@@ -212,20 +208,18 @@ const Navbar: React.FC = () => {
                 className="w-16 h-16 rounded-full object-cover"
               />
             </div>
-            {/* Show Profile button only if user is NOT an employer */}
-            {user.role !== "employer" && (
-              <Button
-                variant="ghost"
-                className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
-                onClick={() => {
-                  setMenuOpen(false);
-                  setIsProfileOpen(true);
-                }}
-              >
-                <PersonIcon className="h-5 w-5 mr-2" />
-                Profile
-              </Button>
-            )}
+            {/* Profile Button for All Users */}
+            <Button
+              variant="ghost"
+              className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
+              onClick={() => {
+                setMenuOpen(false);
+                setIsProfileOpen(true);
+              }}
+            >
+              <PersonIcon className="h-5 w-5 mr-2" />
+              Profile
+            </Button>
             <Button
               variant="ghost"
               className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
@@ -279,6 +273,7 @@ const Navbar: React.FC = () => {
                   className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
                 >
                   <Pencil1Icon className="h-5 w-5 mr-2" />
+                  Register
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">

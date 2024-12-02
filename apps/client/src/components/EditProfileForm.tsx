@@ -35,9 +35,9 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
     useState(false);
-  const [existingskillImageUrls, setExistingskillImageUrls] = useState<
-    string[]
-  >(user.skillImageUrls || []);
+  const [existingskillImageUrls, setExistingskillImageUrls] = useState<string[]>(
+    user.skillImageUrls || []
+  );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [targetDeleteIndex, setTargetDeleteIndex] = useState<number | null>(
     null
@@ -178,43 +178,48 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
           )}
         </div>
 
-        <div>
-          <Label htmlFor="skillImages">Skill Images</Label>
-          <Input type="file" multiple onChange={handleSkillImagesUpload} />
-          <div>
-            <div className="grid grid-cols-2 gap-4 mt-2">
-              {[
-                ...existingskillImageUrls,
-                ...getValues("avatarFiles").map((file) =>
-                  URL.createObjectURL(file)
-                ),
-              ].map((url, index) => (
-                <div key={index} className="relative">
-                  <img
-                    src={url}
-                    alt={`Avatar ${index + 1}`}
-                    className="h-20 w-full object-cover rounded-md"
-                  />
-                  <Button
-                    type="button"
-                    onClick={() => handleDeleteImageRequest(index)}
-                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 m-1"
-                  >
-                    &times;
-                  </Button>
+        {/* Skills Section Only Available for Non-Employers */}
+        {user.role !== "employer" && (
+          <>
+            <div>
+              <Label htmlFor="skillImages">Skill Images</Label>
+              <Input type="file" multiple onChange={handleSkillImagesUpload} />
+              <div>
+                <div className="grid grid-cols-2 gap-4 mt-2">
+                  {[
+                    ...existingskillImageUrls,
+                    ...getValues("avatarFiles").map((file) =>
+                      URL.createObjectURL(file)
+                    ),
+                  ].map((url, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={url}
+                        alt={`Avatar ${index + 1}`}
+                        className="h-20 w-full object-cover rounded-md"
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => handleDeleteImageRequest(index)}
+                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 m-1"
+                      >
+                        &times;
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
-        </div>
 
-        <Button
-          type="button"
-          onClick={() => setIsSkillsModalOpen(true)}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-        >
-          Edit Skills
-        </Button>
+            <Button
+              type="button"
+              onClick={() => setIsSkillsModalOpen(true)}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              Edit Skills
+            </Button>
+          </>
+        )}
 
         <Button
           type="button"
