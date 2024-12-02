@@ -10,10 +10,10 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
-
 } from '@nestjs/common';
 
 import { UsersService } from './users.service';
@@ -23,7 +23,11 @@ import { CreateUsersDto } from './dto/create-users.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { DeleteUsersDto } from './dto/delete.dto';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+  FilesInterceptor,
+} from '@nestjs/platform-express';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { plainToClass } from 'class-transformer';
 import {
@@ -57,7 +61,7 @@ export class UsersController {
 
   // TODO Implement bulk create with multiform data
   @Post('bulk-create')
-  @UseInterceptors(FilesInterceptor('imageUrls', 4)) // Assume up to 4 files
+  @UseInterceptors(FilesInterceptor('skillImageUrls', 4)) // Assume up to 4 files
   @ApiOperation({ summary: 'Bulk create users' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -84,14 +88,14 @@ export class UsersController {
               username: body.username[index],
               email: body.email[index],
               password: body.password[index],
-              imageUrls: [], // This will be populated with Cloudinary URLs
+              skillImageUrls: [], // This will be populated with Cloudinary URLs
             }))
           : [
               {
                 username: body.username,
                 email: body.email,
                 password: body.password,
-                imageUrls: [],
+                skillImageUrls: [],
               },
             ],
       };
@@ -106,7 +110,9 @@ export class UsersController {
         console.log('Uploaded avatars:', uploadResults);
 
         createUsersDto.users.forEach((userDto, index) => {
-          userDto.imageUrls = uploadResults.map((result) => result.secure_url);
+          userDto.skillImageUrls = uploadResults.map(
+            (result) => result.secure_url
+          );
         });
       }
 
@@ -125,7 +131,12 @@ export class UsersController {
   }
 
   @Post('register')
-  @UseInterceptors(FilesInterceptor('imageUrls', 4))
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'avatar', maxCount: 1 },
+      { name: 'skillImageUrls', maxCount: 10 },
+    ])
+  )
   @ApiOperation({ summary: 'Register a new user' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -141,19 +152,36 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   async register(
     @Body() createUserControllerDto: CreateUserControllerDto,
-    @UploadedFiles() avatars: Express.Multer.File[]
+    @UploadedFiles()
+    files: {
+      avatar?: Express.Multer.File[];
+      skillImageUrls?: Express.Multer.File[];
+    }
   ): Promise<UserResponseDto> {
-
     try {
       // Process avatars if any
-      if (avatars && avatars.length > 0) {
-        const uploadResults = await Promise.all(
-          avatars.map((file) => this.cloudinaryService.uploadImage(file))
+      if (files.avatar && files.avatar.length > 0) {
+        const uploadResult = await this.cloudinaryService.uploadImage(
+          files.avatar[0]
         );
-        createUserControllerDto.imageUrls = uploadResults.map(
+        createUserControllerDto.avatarUrl = uploadResult.secure_url;
+        console.log('Uploaded avatar:', createUserControllerDto.avatarUrl);
+      }
+
+      // Process skill images if any
+      if (files.skillImageUrls && files.skillImageUrls.length > 0) {
+        const uploadResults = await Promise.all(
+          files.skillImageUrls.map((file) =>
+            this.cloudinaryService.uploadImage(file)
+          )
+        );
+        createUserControllerDto.skillImageUrls = uploadResults.map(
           (result) => result.secure_url
         );
-        console.log('Uploaded avatars:', createUserControllerDto.imageUrls);
+        console.log(
+          'Uploaded skill images:',
+          createUserControllerDto.skillImageUrls
+        );
       }
 
       // Log before creating the user
@@ -170,11 +198,13 @@ export class UsersController {
   }
   @Get('verify-email')
   @ApiOperation({ summary: 'Verify user email' })
-  async verifyEmail(@Query('userId') userId: string): Promise<{ message: string }> {
+  async verifyEmail(
+    @Query('userId') userId: string
+  ): Promise<{ message: string }> {
     await this.usersService.verifyEmail(userId);
     return { message: 'Email successfully verified' };
   }
-  
+
   @Post('resend-verification-email')
   async resendVerificationEmail(
     @Body('email') email: string
@@ -202,7 +232,12 @@ export class UsersController {
   }
 
   @Put(':id')
-  @UseInterceptors(FilesInterceptor('avatarFiles', 4)) // Handles files
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'avatar', maxCount: 1 },
+      { name: 'skillFiles', maxCount: 10 },
+    ])
+  )
   @ApiOperation({ summary: 'Update a user by ID' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -218,24 +253,42 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   async update(
     @Param('id') id: string,
-    @Body() userDto: UpdateUserDto, // Expects DTO with URLs and files
-    @UploadedFiles() avatarFiles: Express.Multer.File[]
+    @Body() userDto: UpdateUserDto,
+    @UploadedFiles()
+    files: {
+      avatar?: Express.Multer.File[];
+      skillFiles?: Express.Multer.File[];
+    }
   ): Promise<UserResponseDto> {
     if (!this.isValidUUID(id)) {
       throw new BadRequestException('Invalid UUID');
     }
 
-    if (avatarFiles && avatarFiles.length > 0) {
+    if (files.avatar && files.avatar.length > 0) {
       try {
-        console.log('Attempting to upload avatars:', avatarFiles);
+        console.log('Attempting to upload avatar:', files.avatar[0]);
+        const uploadResult = await this.cloudinaryService.uploadImage(files.avatar[0]);
+        userDto.avatarUrl = uploadResult.secure_url;
+      } catch (error) {
+        console.error('Error uploading avatar:', error);
+        throw new InternalServerErrorException('Error uploading avatar.');
+      }
+    }
+
+    if (files.skillFiles && files.skillFiles.length > 0) {
+      try {
+        console.log('Attempting to upload skill images:', files.skillFiles);
         const uploadResults = await Promise.all(
-          avatarFiles.map((file) => this.cloudinaryService.uploadImage(file))
+          files.skillFiles.map((file) => this.cloudinaryService.uploadImage(file))
         );
         const uploadedUrls = uploadResults.map((result) => result.secure_url);
-        userDto.imageUrls = [...(userDto.imageUrls || []), ...uploadedUrls];
+        userDto.skillImageUrls = [
+          ...(userDto.skillImageUrls || []),
+          ...uploadedUrls,
+        ];
       } catch (error) {
-        console.error('Error uploading avatars:', error);
-        throw new InternalServerErrorException('Error uploading avatars.');
+        console.error('Error uploading skill images:', error);
+        throw new InternalServerErrorException('Error uploading skill images.');
       }
     }
     const updatedUser = await this.usersService.update(id, userDto);

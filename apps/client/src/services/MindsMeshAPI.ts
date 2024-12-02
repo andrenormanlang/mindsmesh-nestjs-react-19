@@ -22,25 +22,28 @@ api.interceptors.request.use((config) => {
 // Registration and Email existence Verification
 export const register = async (
   username: string,
-  role: "freelancer" | "employer", 
+  role: "freelancer" | "employer",
   password: string,
   email: string,
-  imageUrls: File[] | null,
-
+  avatarFile: File | null,
+  skillImageUrls: File[] | null
 ): Promise<User> => {
   const formData = new FormData();
 
   formData.append("username", username);
-  formData.append("role", role); 
+  formData.append("role", role);
   formData.append("password", password);
   formData.append("email", email);
 
-  if (imageUrls) {
-    imageUrls.forEach((file) => {
-      formData.append("imageUrls", file);
-    });
+  if (avatarFile) {
+    formData.append("avatar", avatarFile);
   }
 
+  if (skillImageUrls) {
+    skillImageUrls.forEach((file) => {
+      formData.append("skillImageUrls", file);
+    });
+  }
 
   try {
     const response = await api.post("/users/register", formData, {
@@ -59,8 +62,10 @@ export const register = async (
 
 export const verifyEmail = async (userId: string): Promise<void> => {
   try {
-    const response = await api.get(`/users/verify-email`, { params: { userId } });
-    console.log(response.data.message); 
+    const response = await api.get(`/users/verify-email`, {
+      params: { userId },
+    });
+    console.log(response.data.message);
   } catch (error) {
     console.error("Error verifying email:", error);
     throw error;
@@ -69,7 +74,7 @@ export const verifyEmail = async (userId: string): Promise<void> => {
 
 export const resendVerificationEmail = async (email: string): Promise<void> => {
   try {
-    await api.post('/users/resend-verification-email', { email });
+    await api.post("/users/resend-verification-email", { email });
   } catch (error) {
     console.error("Error resending verification email:", error);
     throw error;
@@ -88,13 +93,12 @@ export const logout = async (): Promise<void> => {
   const userId = localStorage.getItem("userId");
 
   if (userId) {
-    await api.post(`/auth/logout`); 
+    await api.post(`/auth/logout`);
   }
-  
+
   localStorage.removeItem("token");
   localStorage.removeItem("userId");
 };
-
 
 // Password Management
 export const requestPasswordReset = async (email: string): Promise<void> => {
@@ -112,16 +116,20 @@ export const resetPassword = async (
   await api.post(`/auth/reset-password`, { token, newPassword });
 };
 
-export const updatePassword = async (userId: string, newPassword: string, currentPassword: string) => {
+export const updatePassword = async (
+  userId: string,
+  newPassword: string,
+  currentPassword: string
+) => {
   const response = await fetch(`/api/users/${userId}/update-password`, {
-    method: 'PUT',
+    method: "PUT",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ newPassword, currentPassword }),
   });
   if (!response.ok) {
-    throw new Error('Failed to update password');
+    throw new Error("Failed to update password");
   }
   return response.json();
 };
@@ -150,24 +158,22 @@ export const updateUser = async (data: {
   id: string;
   username?: string;
   password?: string;
-  imageUrls?: string[];
-  avatarFiles?: File[];
+  skillImageUrls?: string[];
+  avatarFile?: File;
   skills?: Skill[];
 }): Promise<User> => {
   const formData = new FormData();
 
   if (data.username) formData.append("username", data.username);
 
-  if (data.imageUrls) {
-    data.imageUrls.forEach((url) => {
-      formData.append("imageUrls[]", url);
+  if (data.skillImageUrls) {
+    data.skillImageUrls.forEach((url) => {
+      formData.append("skillImageUrls[]", url);
     });
   }
 
-  if (data.avatarFiles) {
-    data.avatarFiles.forEach((file) => {
-      formData.append("avatarFiles", file);
-    });
+  if (data.avatarFile) {
+    formData.append("avatar", data.avatarFile);
   }
 
   const response = await api.put(`/users/${data.id}`, formData, {
@@ -212,9 +218,7 @@ export const fetchUsersWithSkills = async (
 ): Promise<User[]> => {
   try {
     const endpoint = query.trim() ? "/skills/search" : "/users";
-    const params: any = query.trim()
-      ? { q: query, t: Date.now() }
-      : {};
+    const params: any = query.trim() ? { q: query, t: Date.now() } : {};
     if (role) {
       params.role = role;
     }
@@ -225,7 +229,6 @@ export const fetchUsersWithSkills = async (
     throw error;
   }
 };
-
 
 export const getAllSkillTitles = async (): Promise<{ title: string }[]> => {
   try {
@@ -273,7 +276,10 @@ export const updateUserSkill = async (
   skillId: string,
   skillData: Partial<Skill>
 ): Promise<Skill> => {
-  const response = await api.put(`/users/${userId}/skills/${skillId}`, skillData);
+  const response = await api.put(
+    `/users/${userId}/skills/${skillId}`,
+    skillData
+  );
   return response.data;
 };
 
@@ -285,7 +291,9 @@ export const deleteUserSkill = async (
 };
 
 // Skill Management
-export const createSkill = async (skillData: Partial<Skill>): Promise<Skill> => {
+export const createSkill = async (
+  skillData: Partial<Skill>
+): Promise<Skill> => {
   const response = await api.post("/skills", skillData);
   return response.data;
 };
@@ -316,7 +324,7 @@ export const deleteSkill = async (skillId: string): Promise<void> => {
 // In MindsMeshAPI.ts
 export const fetchUsersByRole = async (role: string): Promise<User[]> => {
   try {
-    const response = await api.get('/users', {
+    const response = await api.get("/users", {
       params: { role },
     });
     return response.data;
@@ -326,7 +334,11 @@ export const fetchUsersByRole = async (role: string): Promise<User[]> => {
   }
 };
 
-export const sendMessage = async (receiverId: string, text: string, messageId?: string) => {
+export const sendMessage = async (
+  receiverId: string,
+  text: string,
+  messageId?: string
+) => {
   try {
     const response = await api.post(`/chat/${receiverId}/send`, {
       receiverId,
@@ -335,7 +347,7 @@ export const sendMessage = async (receiverId: string, text: string, messageId?: 
     });
     return response.data;
   } catch (error) {
-    console.error('Error sending message:', error);
+    console.error("Error sending message:", error);
     throw error;
   }
 };
@@ -351,50 +363,50 @@ export const getChatMessages = async (userId1: string, userId2: string) => {
 
 export const getActiveChats = async (): Promise<User[]> => {
   try {
-    const response = await api.get('/chat/active-chats');
+    const response = await api.get("/chat/active-chats");
     return response.data;
   } catch (error) {
-    console.error('Error fetching active chats:', error);
+    console.error("Error fetching active chats:", error);
     throw error;
   }
 };
 
-
 export const createRoom = async (freelancerId: string, roomName: string) => {
   try {
-    const response = await api.post('/rooms/create', {
+    const response = await api.post("/rooms/create", {
       freelancerId,
       roomName,
     });
     return response.data;
   } catch (error) {
-    console.error('Error creating room:', error);
+    console.error("Error creating room:", error);
     throw error;
   }
 };
 
 export const getUnreadCounts = async (): Promise<{ [key: string]: number }> => {
   try {
-    const response = await api.get('/chat/unread-counts');
+    const response = await api.get("/chat/unread-counts");
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError;
 
     if (axiosError.response && axiosError.response.status === 401) {
       // Token might be expired or invalid
-      console.error('Authentication error. Redirecting to login...');
+      console.error("Authentication error. Redirecting to login...");
       // Optionally clear the token and redirect to the login page
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem("token");
+      window.location.href = "/login";
     } else {
-      console.error('Error fetching unread counts:', axiosError);
+      console.error("Error fetching unread counts:", axiosError);
     }
     return {};
   }
 };
 
-
-export const fetchRoomsForFreelancer = async (freelancerId: string): Promise<Room[]> => {
+export const fetchRoomsForFreelancer = async (
+  freelancerId: string
+): Promise<Room[]> => {
   try {
     const response = await api.get(`/rooms/freelancer/${freelancerId}`);
     console.log("Rooms fetched for freelancer:", response.data); // Add logging to confirm response data
@@ -403,6 +415,4 @@ export const fetchRoomsForFreelancer = async (freelancerId: string): Promise<Roo
     console.error("Error fetching rooms for freelancer:", error);
     throw error;
   }
-  
 };
-

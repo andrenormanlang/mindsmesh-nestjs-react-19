@@ -21,11 +21,10 @@ const UserDetailCard: React.FC<UserDetailCardProps> = ({ user }) => {
     <div className="flex items-center justify-center m-0 p-0">
       <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-900 shadow-lg rounded-lg overflow-hidden max-h-[90vh] flex flex-col relative">
         <CardHeader className="p-0 m-0 flex-shrink-0 relative">
-         
           <Carousel className="w-full relative m-0 h-80">
             <CarouselContent>
-              {user.imageUrls && user.imageUrls.length > 0 ? (
-                user.imageUrls.map((url, index) => (
+              {user.skillImageUrls && user.skillImageUrls.length > 0 ? (
+                user.skillImageUrls.map((url, index) => (
                   <CarouselItem key={index}>
                     <img
                       src={url}

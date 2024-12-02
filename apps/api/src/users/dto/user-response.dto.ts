@@ -17,6 +17,13 @@ export class UserResponseDto {
   email: string;
 
   @ApiProperty({
+    example: 'https://example.com/avatar.png',
+    description: "URL to the user's avatar image",
+    required: false,
+  })
+  avatarUrl?: string;
+
+  @ApiProperty({
     example: 'JohnDoe',
     description: 'The username of the user',
   })
@@ -35,7 +42,7 @@ export class UserResponseDto {
     required: false,
     type: [String],
   })
-  imageUrls?: string[];
+  skillImageUrls?: string[];
 
   @ApiProperty({
     example: true,

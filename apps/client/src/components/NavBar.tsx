@@ -51,11 +51,11 @@ const Navbar: React.FC = () => {
         variant: "success",
         duration: 5000,
       });
-  
+
       navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
-  
+
       toast({
         title: "Logout Failed",
         description: "There was an error while logging out. Please try again.",
@@ -64,7 +64,6 @@ const Navbar: React.FC = () => {
       });
     }
   };
-  
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -95,6 +94,18 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
+                <div className="flex items-center space-x-2">
+                  <img
+                    src={
+                      user.avatarUrl ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        user.username
+                      )}&background=random`
+                    }
+                    alt={`${user.username}'s avatar`}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                </div>
                 {/* Show Profile button only if user is NOT an employer */}
                 {user.role !== "employer" && (
                   <Button
@@ -188,6 +199,19 @@ const Navbar: React.FC = () => {
       <div className={`mobileMenu md:hidden ${menuOpen ? "active" : ""}`}>
         {user ? (
           <>
+            {/* User Avatar - Displayed at the top of the mobile menu */}
+            <div className="flex items-center justify-center my-4">
+              <img
+                src={
+                  user.avatarUrl ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    user.username
+                  )}&background=random`
+                }
+                alt={`${user.username}'s avatar`}
+                className="w-16 h-16 rounded-full object-cover"
+              />
+            </div>
             {/* Show Profile button only if user is NOT an employer */}
             {user.role !== "employer" && (
               <Button
@@ -255,7 +279,6 @@ const Navbar: React.FC = () => {
                   className="text-white w-full flex items-center justify-center hover:bg-gray-700 rounded-md py-3 transition-colors duration-200"
                 >
                   <Pencil1Icon className="h-5 w-5 mr-2" />
-                  
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">

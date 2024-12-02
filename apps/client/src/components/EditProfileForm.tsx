@@ -12,11 +12,14 @@ import { updateUser } from "../services/MindsMeshAPI";
 import DeleteImage from "./DeleteImageConfirm";
 import { useToast } from "./shadcn/ui/use-toast";
 import ChangePasswordForm from "./ChangePasswordForm";
+import { X } from "lucide-react";
 
 type ProfileFormData = {
   username: string;
   avatarFiles: File[];
   skills: Skill[];
+  avatarFile?: File;
+  skillImageFiles: File[];
 };
 
 type EditProfileFormProps = {
@@ -26,11 +29,19 @@ type EditProfileFormProps = {
 
 const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
   const { toast } = useToast();
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(
+    user.avatarUrl || null
+  );
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
-  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
-  const [existingimageUrls, setExistingimageUrls] = useState<string[]>(user.imageUrls || []);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
+    useState(false);
+  const [existingskillImageUrls, setExistingskillImageUrls] = useState<
+    string[]
+  >(user.skillImageUrls || []);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [targetDeleteIndex, setTargetDeleteIndex] = useState<number | null>(null);
+  const [targetDeleteIndex, setTargetDeleteIndex] = useState<number | null>(
+    null
+  );
 
   const {
     control,
@@ -46,13 +57,26 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
     },
   });
 
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setValue("avatarFile", file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarPreview(null);
+    setValue("avatarFile", undefined);
+  };
+
   const handleFormSubmit = async (data: ProfileFormData) => {
     try {
       const updatedUser = await updateUser({
         id: user.id,
         username: data.username,
-        imageUrls: existingimageUrls,
-        avatarFiles: data.avatarFiles,
+        skillImageUrls: existingskillImageUrls,
+        avatarFile: data.avatarFile,
       });
 
       setUser(updatedUser);
@@ -72,17 +96,18 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
 
       toast({
         title: "Update Failed",
-        description: "There was an issue updating your profile. Please try again.",
+        description:
+          "There was an issue updating your profile. Please try again.",
         variant: "destructive",
         duration: 5000,
       });
     }
   };
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSkillImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      setValue("avatarFiles", [...getValues("avatarFiles"), ...files]);
+      setValue("skillImageFiles", [...getValues("skillImageFiles"), ...files]);
     }
   };
 
@@ -93,12 +118,16 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
 
   const confirmDeleteImage = () => {
     if (targetDeleteIndex !== null) {
-      if (targetDeleteIndex < existingimageUrls.length) {
-        const updatedUrls = existingimageUrls.filter((_, i) => i !== targetDeleteIndex);
-        setExistingimageUrls(updatedUrls);
+      if (targetDeleteIndex < existingskillImageUrls.length) {
+        const updatedUrls = existingskillImageUrls.filter(
+          (_, i) => i !== targetDeleteIndex
+        );
+        setExistingskillImageUrls(updatedUrls);
       } else {
-        const newIndex = targetDeleteIndex - existingimageUrls.length;
-        const updatedFiles = getValues("avatarFiles").filter((_, i) => i !== newIndex);
+        const newIndex = targetDeleteIndex - existingskillImageUrls.length;
+        const updatedFiles = getValues("avatarFiles").filter(
+          (_, i) => i !== newIndex
+        );
         setValue("avatarFiles", updatedFiles);
       }
       setIsDeleteModalOpen(false);
@@ -110,6 +139,29 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
     <>
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         <div>
+          <Label htmlFor="avatar">Avatar Image</Label>
+          <Input type="file" onChange={handleAvatarUpload} />
+          {avatarPreview && (
+            <div className="mt-4 relative">
+              <img
+                src={avatarPreview}
+                alt="Avatar Preview"
+                className="w-32 h-32 object-cover rounded-full"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={handleRemoveAvatar}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div>
           <Label htmlFor="username">Username</Label>
           <Controller
             name="username"
@@ -120,18 +172,22 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
             )}
           />
           {errors.username && (
-            <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
+            <p className="text-red-500 text-sm mt-1">
+              {errors.username.message}
+            </p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="avatar">Avatar Images</Label>
-          <Input type="file" multiple onChange={handleAvatarUpload} />
+          <Label htmlFor="skillImages">Skill Images</Label>
+          <Input type="file" multiple onChange={handleSkillImagesUpload} />
           <div>
             <div className="grid grid-cols-2 gap-4 mt-2">
               {[
-                ...existingimageUrls,
-                ...getValues("avatarFiles").map((file) => URL.createObjectURL(file)),
+                ...existingskillImageUrls,
+                ...getValues("avatarFiles").map((file) =>
+                  URL.createObjectURL(file)
+                ),
               ].map((url, index) => (
                 <div key={index} className="relative">
                   <img
@@ -168,7 +224,10 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
           Change Password
         </Button>
 
-        <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white">
+        <Button
+          type="submit"
+          className="w-full bg-green-500 hover:bg-green-600 text-white"
+        >
           Update Profile
         </Button>
       </form>

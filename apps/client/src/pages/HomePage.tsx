@@ -168,12 +168,23 @@ const HomePage = () => {
     [navigate]
   );
 
+  // Function to close all modals
+  const closeAllModals = () => {
+    setIsEditModalOpen(false);
+    setIsDeleteModalOpen(false);
+    setIsViewModalOpen(false);
+    setIsChatModalOpen(false);
+    setIsRoomsModalOpen(false);
+  };
+
   const openEditModal = useCallback((user: User) => {
+    closeAllModals();
     setSelectedUser(user);
     setIsEditModalOpen(true);
   }, []);
 
   const openDeleteModal = useCallback((user: User) => {
+    closeAllModals();
     setSelectedUser(user);
     setIsDeleteModalOpen(true);
   }, []);
@@ -181,6 +192,7 @@ const HomePage = () => {
   const openViewModal = useCallback(
     (user: User, event: React.MouseEvent) => {
       event.stopPropagation();
+      closeAllModals();
       setSelectedUser(user);
       setIsViewModalOpen(true);
     },
@@ -197,6 +209,7 @@ const HomePage = () => {
   const openChatOrRoomsModal = useCallback(
     (user: User, event: React.MouseEvent) => {
       event.stopPropagation();
+      closeAllModals();
 
       if (
         userContext?.user?.role === "freelancer" &&

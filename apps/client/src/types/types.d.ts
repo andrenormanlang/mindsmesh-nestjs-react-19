@@ -6,8 +6,9 @@ export type User = {
   role: string;
   profile: UserProfile;
   skills: Skill[];
-  imageUrls?: string[];
-  isOnline?: boolean; 
+  avatarUrl?: string;
+  skillImageUrls?: string[];
+  isOnline?: boolean;
 };
 
 export type UserAuth = {
@@ -31,7 +32,7 @@ export type RegisterFormData = {
   username: string;
   email: string;
   password: string;
-  avatar?: FileList;
+  avatarFile?: FileList;
 };
 
 export type SkillData = {
@@ -54,15 +55,13 @@ interface Message {
 export type Room = {
   id: string;
   roomName: string;
-  employer: User; 
+  employer: User;
   employerName?: string;
   unreadCount: number;
-}
-
+};
 
 // export type Message = {
 //   senderId: string;
 //   receiverId: string;
 //   text: string;
 // };
-

@@ -11,11 +11,14 @@ import { Type } from 'class-transformer';
 import { Skill } from '../../skills/entities/skill.entity';
 import { UserRole } from '../enums/user-role.enum';
 
-
 export class UpdateUserDto {
   @IsEmail()
   @IsOptional()
   email?: string;
+
+  @IsString()
+  @IsOptional()
+  avatarUrl?: string;
 
   @IsString()
   @MinLength(6)
@@ -36,7 +39,7 @@ export class UpdateUserDto {
 
   @IsString({ each: true })
   @IsOptional()
-  imageUrls?: string[];
+  skillImageUrls?: string[];
 
   @IsBoolean()
   @IsOptional()

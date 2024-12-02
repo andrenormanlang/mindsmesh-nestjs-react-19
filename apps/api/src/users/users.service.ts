@@ -26,11 +26,14 @@ export class UsersService {
     private readonly skillsRepository: Repository<Skill>,
 
     private readonly configService: ConfigService,
-    private readonly sendGridService: SendGridService,
+    private readonly sendGridService: SendGridService
   ) {}
 
   async findByEmail(email: string): Promise<User | undefined> {
-    return this.usersRepository.findOne({ where: { email }, relations: ['skills'] });
+    return this.usersRepository.findOne({
+      where: { email },
+      relations: ['skills'],
+    });
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -39,13 +42,13 @@ export class UsersService {
     if (existingUser) {
       throw new ConflictException('A user with this email already exists.');
     }
-  
+
     // Hash the password
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
     console.log('Generated email verification token:', emailVerificationToken);
-  
+
     // Create a new user instance
     const newUser = this.usersRepository.create({
       email: createUserDto.email,
@@ -53,17 +56,18 @@ export class UsersService {
       role: createUserDto.role,
       password: hashedPassword,
       isAdmin: createUserDto.isAdmin,
-      imageUrls: createUserDto.imageUrls,
+      avatarUrl: createUserDto.avatarUrl,
+      skillImageUrls: createUserDto.skillImageUrls,
       isEmailVerified: false,
     });
-  
+
     // Save the user first
     const savedUser = await this.usersRepository.save(newUser);
     console.log('Saved user:', savedUser);
 
     // Now create and associate skills if provided
     if (createUserDto.skills && createUserDto.skills.length > 0) {
-      const skills = createUserDto.skills.map(skillDto => 
+      const skills = createUserDto.skills.map((skillDto) =>
         this.skillsRepository.create({
           ...skillDto,
           user: savedUser,
@@ -74,8 +78,11 @@ export class UsersService {
 
     // Send verification email
     const verificationLink = `${this.configService.get<string>('FRONTEND_URL')}/verify-email?userId=${newUser.id}`;
-    await this.sendGridService.sendVerificationEmail(newUser.email, verificationLink);
-  
+    await this.sendGridService.sendVerificationEmail(
+      newUser.email,
+      verificationLink
+    );
+
     // Return the user with associated skills
     return this.usersRepository.findOne({
       where: { id: savedUser.id },
@@ -85,34 +92,34 @@ export class UsersService {
 
   async verifyEmail(userId: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
-  
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
-  
+
     user.isEmailVerified = true;
-  
+
     await this.usersRepository.save(user);
-    console.log('User updated:', user); 
+    console.log('User updated:', user);
   }
-  
-  
+
   // users.service.ts
   async resendVerificationEmail(email: string): Promise<void> {
     const user = await this.findByEmail(email);
     if (!user) {
       throw new NotFoundException('User not found');
     }
-  
+
     if (user.isEmailVerified) {
       throw new BadRequestException('Email is already verified');
     }
-  
-    const verificationLink = `${this.configService.get<string>('FRONTEND_URL')}/verify-email?userId=${user.id}`;
-    await this.sendGridService.sendVerificationEmail(user.email, verificationLink);
-  }
-  
 
+    const verificationLink = `${this.configService.get<string>('FRONTEND_URL')}/verify-email?userId=${user.id}`;
+    await this.sendGridService.sendVerificationEmail(
+      user.email,
+      verificationLink
+    );
+  }
 
   async createBulk(usersData: CreateUserDto[]): Promise<User[]> {
     console.log('Received usersData:', usersData);
@@ -127,7 +134,9 @@ export class UsersService {
         // Check for existing email
         const existingUser = await this.findByEmail(userDto.email);
         if (existingUser) {
-          throw new ConflictException(`A user with email ${userDto.email} already exists.`);
+          throw new ConflictException(
+            `A user with email ${userDto.email} already exists.`
+          );
         }
 
         // Hash the password
@@ -139,12 +148,12 @@ export class UsersService {
           username: userDto.username,
           password: hashedPassword,
           isAdmin: userDto.isAdmin,
-          imageUrls: userDto.imageUrls,
+          skillImageUrls: userDto.skillImageUrls,
         });
 
         // Associate skills
         if (userDto.skills && userDto.skills.length > 0) {
-          const skills = userDto.skills.map(skillDto => {
+          const skills = userDto.skills.map((skillDto) => {
             return this.skillsRepository.create({
               ...skillDto,
               user: user,
@@ -165,8 +174,8 @@ export class UsersService {
       where: { id },
       relations: ['skills'],
     });
-  
-    if (!user) throw new NotFoundException('User not found'); 
+
+    if (!user) throw new NotFoundException('User not found');
     // Update fields if provided
     if (updateUserDto.email) {
       user.email = updateUserDto.email;
@@ -177,42 +186,48 @@ export class UsersService {
     if (updateUserDto.isEmailVerified !== undefined) {
       user.isEmailVerified = updateUserDto.isEmailVerified;
     }
-  
+
     if (updateUserDto.role) {
       user.role = updateUserDto.role;
     }
     if (updateUserDto.isAdmin !== undefined) {
       user.isAdmin = updateUserDto.isAdmin;
     }
-    if (updateUserDto.imageUrls) {
-      user.imageUrls = updateUserDto.imageUrls;
+    if (updateUserDto.avatarUrl) {
+      user.avatarUrl = updateUserDto.avatarUrl;
+    }
+    if (updateUserDto.skillImageUrls) {
+      user.skillImageUrls = updateUserDto.skillImageUrls;
     }
     if (updateUserDto.password) {
       user.password = await bcrypt.hash(updateUserDto.password, 10);
     }
 
-    
-  if (updateUserDto.isOnline !== undefined) {
-    user.isOnline = updateUserDto.isOnline;
-  }
+    if (updateUserDto.isOnline !== undefined) {
+      user.isOnline = updateUserDto.isOnline;
+    }
 
-  
     // Add new skills if provided
     if (updateUserDto.skills && updateUserDto.skills.length > 0) {
-      const skills = updateUserDto.skills.map(skillDto => {
+      const skills = updateUserDto.skills.map((skillDto) => {
         return this.skillsRepository.create({
           ...skillDto,
           user: user,
         });
       });
-      user.skills = [...user.skills, ...(await this.skillsRepository.save(skills))];
+      user.skills = [
+        ...user.skills,
+        ...(await this.skillsRepository.save(skills)),
+      ];
     }
-  
+
     try {
       return await this.usersRepository.save(user);
     } catch (error) {
       console.error('Error updating user:', error);
-      throw new InternalServerErrorException('An error occurred while updating the user.');
+      throw new InternalServerErrorException(
+        'An error occurred while updating the user.'
+      );
     }
   }
 
@@ -229,7 +244,7 @@ export class UsersService {
       throw new InternalServerErrorException('Failed to update password.');
     }
   }
-  
+
   async delete(id: string): Promise<void> {
     const result = await this.usersRepository.delete(id);
     if (result.affected === 0) {
@@ -261,7 +276,10 @@ export class UsersService {
 
   // Used for chat service
   async findById(id: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id }, relations: ['skills'] });
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations: ['skills'],
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }

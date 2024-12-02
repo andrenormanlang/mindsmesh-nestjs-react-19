@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Skill } from './entities/skill.entity';
@@ -12,7 +16,7 @@ export class SkillsService {
   constructor(
     @InjectRepository(Skill)
     private readonly skillsRepository: Repository<Skill>,
-    private readonly usersService: UsersService, // Inject UsersService
+    private readonly usersService: UsersService // Inject UsersService
   ) {}
 
   /*  Get all skill titles */
@@ -33,7 +37,7 @@ export class SkillsService {
     if (user.role !== 'freelancer') {
       throw new BadRequestException('Only freelancers can add skills');
     }
-  
+
     const skill = this.skillsRepository.create({
       ...createSkillDto,
       user: user,
@@ -52,12 +56,18 @@ export class SkillsService {
       where: { id, user: { id: userId } },
     });
     if (!skill) {
-      throw new NotFoundException(`Skill with ID ${id} not found for user ${userId}`);
+      throw new NotFoundException(
+        `Skill with ID ${id} not found for user ${userId}`
+      );
     }
     return skill;
   }
 
-  async update(userId: string, id: string, updateSkillDto: UpdateSkillDto): Promise<Skill> {
+  async update(
+    userId: string,
+    id: string,
+    updateSkillDto: UpdateSkillDto
+  ): Promise<Skill> {
     const skill = await this.findOne(userId, id);
     Object.assign(skill, updateSkillDto);
     return this.skillsRepository.save(skill);
@@ -71,36 +81,34 @@ export class SkillsService {
   /* Search users by skill */
   async searchUsersBySkill(query: string): Promise<User[]> {
     const skills = await this.skillsRepository
-        .createQueryBuilder('skill') // This line creates a query builder for the skill entity
-        .leftJoinAndSelect('skill.user', 'user') // This line joins the user of each skill
-        .leftJoinAndSelect('user.skills', 'userSkills')  // This line joins the skills of each user
-        .where('skill.title ILIKE :query', { query: `%${query}%` }) // This line filters skills by title
-        .orWhere('skill.description ILIKE :query', { query: `%${query}%` }) // This line filters skills by description
-        .select([
-            'skill.id', 
-            'skill.title', 
-            'skill.description', 
-            'user.id', 
-            'user.username',
-            'user.imageUrls', 
-            'user.email',
-            'userSkills.id',       
-            'userSkills.title',    
-            'userSkills.description' 
-        ]) // This line selects the columns to return
-        .getMany(); // This line executes the query and returns the results
-  
+      .createQueryBuilder('skill') // This line creates a query builder for the skill entity
+      .leftJoinAndSelect('skill.user', 'user') // This line joins the user of each skill
+      .leftJoinAndSelect('user.skills', 'userSkills') // This line joins the skills of each user
+      .where('skill.title ILIKE :query', { query: `%${query}%` }) // This line filters skills by title
+      .orWhere('skill.description ILIKE :query', { query: `%${query}%` }) // This line filters skills by description
+      .select([
+        'skill.id',
+        'skill.title',
+        'skill.description',
+        'user.id',
+        'user.username',
+        'user.skillImageUrls',
+        'user.email',
+        'userSkills.id',
+        'userSkills.title',
+        'userSkills.description',
+      ]) // This line selects the columns to return
+      .getMany(); // This line executes the query and returns the results
+
     console.log('Generated Query:', skills);
-  
+
     const uniqueUsers = new Map<string, User>();
-    skills.forEach(skill => {
-        if (skill.user) {
-            uniqueUsers.set(skill.user.id, skill.user);
-        }
+    skills.forEach((skill) => {
+      if (skill.user) {
+        uniqueUsers.set(skill.user.id, skill.user);
+      }
     });
-  
+
     return Array.from(uniqueUsers.values());
   }
-
-  
 }

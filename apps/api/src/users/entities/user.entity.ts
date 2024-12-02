@@ -16,13 +16,21 @@ export class User {
   id!: string;
 
   @ApiProperty({
+    example: 'https://example.com/avatar.png',
+    description: "URL to the user's avatar image",
+    required: false,
+  })
+  @Column({ nullable: true })
+  avatarUrl?: string;
+
+  @ApiProperty({
     example: 'user@example.com',
     description: 'The email address of the user',
   })
   @Column({ unique: true })
   email!: string;
 
-  @ApiHideProperty() 
+  @ApiHideProperty()
   @Column({ type: 'varchar', length: 255, nullable: false })
   password: string;
 
@@ -51,7 +59,7 @@ export class User {
     type: [String],
   })
   @Column('simple-array', { nullable: true })
-  imageUrls?: string[];
+  skillImageUrls?: string[];
 
   @ApiProperty({
     example: false,
@@ -76,7 +84,6 @@ export class User {
   })
   @Column({ default: false })
   isOnline: boolean = false;
-  
 
   // @ApiHideProperty()
   // @Column({ nullable: true })
@@ -91,16 +98,16 @@ export class User {
   @IsOptional()
   skills!: Skill[];
 
-   // Relationships for Chat Messages
-   @OneToMany(() => ChatMessage, (chat) => chat.sender)
-   sentMessages!: ChatMessage[];
- 
-   @OneToMany(() => ChatMessage, (chat) => chat.receiver)
-   receivedMessages!: ChatMessage[];
+  // Relationships for Chat Messages
+  @OneToMany(() => ChatMessage, (chat) => chat.sender)
+  sentMessages!: ChatMessage[];
 
-   @OneToMany(() => Room, (room) => room.employer)
-   createdRooms!: Room[];
- 
-   @OneToMany(() => Room, (room) => room.freelancer)
-   assignedRooms!: Room[];
+  @OneToMany(() => ChatMessage, (chat) => chat.receiver)
+  receivedMessages!: ChatMessage[];
+
+  @OneToMany(() => Room, (room) => room.employer)
+  createdRooms!: Room[];
+
+  @OneToMany(() => Room, (room) => room.freelancer)
+  assignedRooms!: Room[];
 }

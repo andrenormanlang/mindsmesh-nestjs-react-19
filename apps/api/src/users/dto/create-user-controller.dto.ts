@@ -31,15 +31,27 @@ export class CreateUserControllerDto {
   @IsEnum(UserRole, { message: 'Role must be either freelancer or employer' })
   role: UserRole;
 
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Avatar image file',
+  })
+  @IsOptional()
+  avatarUrl?: string;
+
   @ApiProperty({
     example: 'StrongPassword123!',
     description: 'The password for the user account',
   })
   @IsString({ message: 'Password must be a string' })
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  @Matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+[\]{};':"\\|,.<>/?`~])[A-Za-z\d!@#$%^&*()_+[\]{};':"\\|,.<>/?`~]{8,}$/, {
-    message: 'Password must be at least 8 characters long and contain at least one letter, one number, and one special character',
-  })
+  @Matches(
+    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+[\]{};':"\\|,.<>/?`~])[A-Za-z\d!@#$%^&*()_+[\]{};':"\\|,.<>/?`~]{8,}$/,
+    {
+      message:
+        'Password must be at least 8 characters long and contain at least one letter, one number, and one special character',
+    }
+  )
   password: string;
 
   @ApiPropertyOptional({
@@ -49,7 +61,7 @@ export class CreateUserControllerDto {
   })
   @IsOptional()
   @IsArray()
-  imageUrls?: string[];
+  skillImageUrls?: string[];
 
   @ApiProperty({
     example: 'JohnDoe',

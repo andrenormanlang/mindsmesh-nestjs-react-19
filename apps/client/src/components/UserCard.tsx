@@ -55,10 +55,10 @@ const UserCard: React.FC<UserCardProps> = ({
   return (
     <Card className="flex flex-col bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
       <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
-        {user.imageUrls && user.imageUrls.length > 0 ? (
+        {user.skillImageUrls && user.skillImageUrls.length > 0 ? (
           <Carousel className="w-full h-full">
             <CarouselContent>
-              {user.imageUrls.map((url, index) => (
+              {user.skillImageUrls.map((url, index) => (
                 <CarouselItem key={index} className="w-full h-full">
                   <img
                     src={url}
@@ -186,4 +186,3 @@ const UserCard: React.FC<UserCardProps> = ({
 };
 
 export default UserCard;
-
