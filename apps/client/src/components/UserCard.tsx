@@ -1,5 +1,3 @@
-// src/components/UserCard.tsx
-
 import React, { useContext } from "react";
 import { User } from "../types/types";
 import { UserContext } from "../contexts/UserContext";
@@ -55,6 +53,30 @@ const UserCard: React.FC<UserCardProps> = ({
   return (
     <Card className="flex flex-col bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
       <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
+        {/* Online Status Indicator */}
+
+        {currentUser?.role === "employer" && user.role === "freelancer" && (
+          <div className="absolute top-2 right-2 z-10">
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-block h-3 w-3 rounded-full ${
+                  user.isOnline
+                    ? "bg-green-500 ring-2 ring-green-300"
+                    : "bg-gray-500 ring-2 ring-gray-300"
+                }`}
+              />
+              {user.isOnline ? (
+                <span className="text-white bg-green-600 px-2 py-1 rounded-md font-semibold text-sm">
+                  Online
+                </span>
+              ) : (
+                <span className="text-white bg-gray-600 px-2 py-1 rounded-md font-semibold text-sm">
+                  Offline
+                </span>
+              )}
+            </div>
+          </div>
+        )}
         {user.skillImageUrls && user.skillImageUrls.length > 0 ? (
           <Carousel className="w-full h-full">
             <CarouselContent>
@@ -137,21 +159,14 @@ const UserCard: React.FC<UserCardProps> = ({
               </button>
             ) : currentUser.role === "employer" &&
               user.role === "freelancer" ? (
-              // Employer viewing a freelancer's card - show Chat button with unread count
+              // Employer viewing a freelancer's card - show Chat button (always enabled)
               <button
                 onClick={(e) => onChat && onChat(user, e)}
-                className={`px-3 py-1 rounded-md text-sm relative flex items-center ${
-                  user.isOnline
-                    ? "bg-green-500 hover:bg-green-600 text-white"
-                    : "bg-gray-500 text-white cursor-not-allowed"
-                }`}
-                disabled={!user.isOnline}
-                aria-label={`${
-                  user.isOnline ? "Chat with" : "Cannot chat with"
-                } ${user.username}`}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm relative flex items-center"
+                aria-label={`Chat with ${user.username}`}
               >
-                {user.isOnline ? "Chat" : "Offline"}
-                {user.isOnline && <UnreadBadge count={unreadCount} />}
+                Chat
+                <UnreadBadge count={unreadCount} />
               </button>
             ) : null}
           </div>
