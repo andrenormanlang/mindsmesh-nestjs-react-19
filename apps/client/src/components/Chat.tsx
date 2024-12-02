@@ -7,9 +7,8 @@ import { Send, Loader2, MoreVertical } from "lucide-react";
 import { format } from "date-fns";
 import { getChatMessages, createRoom } from "../services/MindsMeshAPI";
 import { v4 as uuidv4 } from "uuid";
-// import { PaperClipIcon } from "@heroicons/react/20/solid";
-import { SocketContext } from "../contexts/SocketContext";
-import { UserContext } from "../contexts/UserContext"; // Import UserContext
+import { PaperClipIcon } from "@heroicons/react/20/solid";
+import { SocketContext } from "../contexts/SocketContext"; // Import SocketContext
 
 interface Message {
   id: string;
@@ -32,27 +31,17 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
   const [newMessage, setNewMessage] = useState("");
   const [isConnecting, setIsConnecting] = useState(true);
   const { socket } = useContext(SocketContext); // Access socket from context
-
-  // Use the UserContext
-  const userContext = useContext(UserContext);
-  if (!userContext) {
-    throw new Error("UserContext must be used within a UserProvider");
-  }
-  const { user } = userContext; // Access current user from UserContext
-
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const senderId = user?.id; // Get current user ID
-  const senderAvatar = user?.avatarUrl; // Get current user's avatar URL
+  const senderId = localStorage.getItem("userId");
 
   useEffect(() => {
     if (senderId && chatPartner) {
       const initializeChat = async () => {
         setIsConnecting(true); // Start loading
         try {
-          const currentUserRole = user?.role;
+          const currentUserRole = localStorage.getItem("userRole");
           if (currentUserRole === "employer") {
             // Only employers can create rooms
             await createRoom(chatPartner.id, `${senderId}-${chatPartner.id}`);
@@ -118,29 +107,25 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
     }
   };
 
+  // Emit markAsRead when chat is opened
   useEffect(() => {
     if (socket && senderId && chatPartner) {
-      socket.emit("markAsRead", {
-        senderId: chatPartner.id,
-        receiverId: senderId,
-      });
+      socket.emit('markAsRead', { senderId: chatPartner.id, receiverId: senderId });
     }
   }, [socket, senderId, chatPartner]);
 
   useEffect(() => {
     if (socket && senderId && chatPartner) {
+      // Listen for new messages
       const handleReceiveMessage = (message: Message) => {
         if (
-          (message.senderId === chatPartner.id &&
-            message.receiverId === senderId) ||
-          (message.senderId === senderId &&
-            message.receiverId === chatPartner.id)
+          (message.senderId === chatPartner.id && message.receiverId === senderId) ||
+          (message.senderId === senderId && message.receiverId === chatPartner.id)
         ) {
           setMessages((prev) => {
-            const existingMessageIndex = prev.findIndex(
-              (msg) => msg.id === message.id
-            );
+            const existingMessageIndex = prev.findIndex((msg) => msg.id === message.id);
             if (existingMessageIndex !== -1) {
+              // Update the existing message
               const updatedMessages = [...prev];
               updatedMessages[existingMessageIndex] = {
                 ...message,
@@ -149,6 +134,7 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
               };
               return updatedMessages;
             } else {
+              // Add new message
               return [
                 ...prev,
                 {
@@ -162,10 +148,8 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
         }
       };
 
-      const handleMessagesRead = (data: {
-        senderId: string;
-        receiverId: string;
-      }) => {
+      // Listen for read receipts
+      const handleMessagesRead = (data: { senderId: string; receiverId: string }) => {
         setMessages((prev) =>
           prev.map((msg) =>
             msg.senderId === senderId && msg.receiverId === data.receiverId
@@ -226,6 +210,7 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
   };
 
   const renderMessageContent = (text: string) => {
+    // Convert URLs to clickable links
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.split(urlRegex).map((part, index) => {
       if (part.match(urlRegex)) {
@@ -260,7 +245,7 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
 
   const groupMessagesByDate = (messages: Message[]) => {
     return messages.reduce((groups: { [key: string]: Message[] }, message) => {
-      const date = format(new Date(message.timestamp), "MMM dd, yyyy");
+      const date = format(new Date(message.timestamp), 'MMM dd, yyyy');
       if (!groups[date]) {
         groups[date] = [];
       }
@@ -275,21 +260,21 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
         {chatPartner ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <img
-                src={
-                  chatPartner.avatarUrl ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    chatPartner.username || ""
-                  )}&background=random`
-                }
-                alt={`${chatPartner.username || "User"}'s avatar`}
-                className="w-10 h-10 rounded-full object-cover"
-              />
+              <div className="relative">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  {chatPartner.username.charAt(0).toUpperCase()}
+                </div>
+                <span
+                  className={`absolute bottom-0 right-0 block w-3 h-3 rounded-full border-2 border-white ${
+                    isConnecting ? "bg-yellow-400" : "bg-green-500"
+                  }`}
+                />
+              </div>
               <div>
-                <h3 className="font-semibold text-gray-900">
-                  {chatPartner.username}
-                </h3>
-                {isTyping && <p className="text-sm text-gray-500">typing...</p>}
+                <h3 className="font-semibold text-gray-900">{chatPartner.username}</h3>
+                {isTyping && (
+                  <p className="text-sm text-gray-500">typing...</p>
+                )}
               </div>
             </div>
             <Button
@@ -303,9 +288,7 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
           </div>
         ) : (
           <div className="flex-1 text-center">
-            <h3 className="font-semibold text-gray-900">
-              Select a Conversation
-            </h3>
+            <h3 className="font-semibold text-gray-900">Select a Conversation</h3>
           </div>
         )}
       </CardHeader>
@@ -319,71 +302,45 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
             </div>
           ) : (
             <div className="p-4 space-y-6">
-              {Object.entries(groupMessagesByDate(messages)).map(
-                ([date, dateMessages]) => (
-                  <div key={date} className="space-y-4">
-                    <div className="flex justify-center">
-                      <span className="px-3 py-1 text-xs text-gray-500 bg-white rounded-full shadow-sm">
-                        {date}
-                      </span>
-                    </div>
-                    {dateMessages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex items-start ${
-                          msg.senderId === senderId
-                            ? "justify-end"
-                            : "justify-start"
-                        }`}
-                      >
-                        {msg.senderId !== senderId && chatPartner && (
-                          <img
-                            src={
-                              chatPartner.avatarUrl ||
-                              `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                                chatPartner.username || ""
-                              )}&background=random`
-                            }
-                            alt={`${chatPartner.username || "User"}'s avatar`}
-                            className="w-8 h-8 rounded-full mr-2"
-                          />
-                        )}
-                        <div className="flex flex-col space-y-1 max-w-[75%]">
-                          <div
-                            className={`rounded-2xl px-4 py-2 shadow-sm ${
-                              msg.senderId === senderId
-                                ? "bg-blue-600 text-white rounded-br-none"
-                                : "bg-white text-gray-900 rounded-bl-none"
-                            }`}
-                          >
-                            {renderMessageContent(msg.text)}
-                          </div>
-                          <div
-                            className={`flex items-center space-x-2 ${
-                              msg.senderId === senderId
-                                ? "justify-end"
-                                : "justify-start"
-                            }`}
-                          >
-                            <span className="text-xs text-gray-500">
-                              {formatTime(msg.timestamp)}
-                            </span>
-                            {msg.senderId === senderId &&
-                              renderMessageStatus(msg)}
-                          </div>
-                        </div>
-                        {msg.senderId === senderId && senderAvatar && (
-                          <img
-                            src={senderAvatar}
-                            alt="Your avatar"
-                            className="w-8 h-8 rounded-full ml-2"
-                          />
-                        )}
-                      </div>
-                    ))}
+              {Object.entries(groupMessagesByDate(messages)).map(([date, dateMessages]) => (
+                <div key={date} className="space-y-4">
+                  <div className="flex justify-center">
+                    <span className="px-3 py-1 text-xs text-gray-500 bg-white rounded-full shadow-sm">
+                      {date}
+                    </span>
                   </div>
-                )
-              )}
+                  {dateMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex ${
+                        msg.senderId === senderId ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      <div className="flex flex-col space-y-1 max-w-[75%]">
+                        <div
+                          className={`rounded-2xl px-4 py-2 shadow-sm ${
+                            msg.senderId === senderId
+                              ? "bg-blue-600 text-white rounded-br-none"
+                              : "bg-white text-gray-900 rounded-bl-none"
+                          }`}
+                        >
+                          {renderMessageContent(msg.text)}
+                        </div>
+                        <div
+                          className={`flex items-center space-x-2 ${
+                            msg.senderId === senderId ? "justify-end" : "justify-start"
+                          }`}
+                        >
+                          <span className="text-xs text-gray-500">
+                            {formatTime(msg.timestamp)}
+                          </span>
+                          {msg.senderId === senderId && renderMessageStatus(msg)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
               <div ref={messagesEndRef} />
             </div>
           )}
@@ -392,30 +349,32 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
 
       {chatPartner && (
         <CardFooter className="p-4 bg-white border-t">
-          <div className="relative flex w-full items-center space-x-2">
-            {senderAvatar && (
-              <img
-                src={senderAvatar}
-                alt="Your avatar"
-                className="w-10 h-10 rounded-full object-cover"
+          <div className="flex w-full items-end space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full text-gray-500 hover:text-gray-600"
+            >
+              <PaperClipIcon className="h-5 w-5" />
+            </Button>
+            <div className="flex-1">
+              <Input
+                value={newMessage}
+                onChange={(e) => {
+                  setNewMessage(e.target.value);
+                  handleTyping();
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="Type a message..."
+                className="rounded-full bg-gray-100 border-0 focus:ring-2 focus:ring-blue-500"
+                disabled={isConnecting}
               />
-            )}
-            <Input
-              value={newMessage}
-              onChange={(e) => {
-                setNewMessage(e.target.value);
-                handleTyping();
-              }}
-              onKeyPress={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              placeholder="Type a message..."
-              className="rounded-full bg-gray-100 border-0 flex-1 focus:ring-2 focus:ring-blue-500"
-              disabled={isConnecting}
-            />
+            </div>
             <Button
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || isConnecting}
@@ -432,4 +391,3 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
 };
 
 export default Chat;
-

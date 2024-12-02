@@ -334,16 +334,12 @@ export const fetchUsersByRole = async (role: string): Promise<User[]> => {
   }
 };
 
-export const sendMessage = async (
-  receiverId: string,
-  text: string,
-  messageId?: string
-) => {
+export const sendMessage = async (receiverId: string, formData: FormData) => {
   try {
-    const response = await api.post(`/chat/${receiverId}/send`, {
-      receiverId,
-      text,
-      messageId, // Include the messageId if provided
+    const response = await api.post(`/chat/${receiverId}/send`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return response.data;
   } catch (error) {
