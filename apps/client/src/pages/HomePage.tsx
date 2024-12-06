@@ -51,6 +51,7 @@ const HomePage = () => {
   const [unreadCounts, setUnreadCounts] = useState<{ [key: string]: number }>(
     {}
   );
+  const [onlineFreelancers, setOnlineFreelancers] = useState<Set<string>>(new Set());
 
   const navigate = useNavigate();
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -159,6 +160,34 @@ const HomePage = () => {
     }
   }, [socket, userContext.user?.id]);
 
+  // Listen for freelancer online/offline events if user is employer
+  useEffect(() => {
+    if (socket && userContext.user?.role === 'employer') {
+      const handleUserOnline = (data: { userId: string }) => {
+        setOnlineFreelancers(prev => new Set(prev).add(data.userId));
+      };
+
+      const handleUserOffline = (data: { userId: string }) => {
+        setOnlineFreelancers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(data.userId);
+          return newSet;
+        });
+      };
+
+      socket.on('userOnline', handleUserOnline);
+      socket.on('userOffline', handleUserOffline);
+
+      // Optionally, initialize onlineFreelancers by fetching current online freelancers
+      // This requires backend support to provide current online users
+
+      return () => {
+        socket.off('userOnline', handleUserOnline);
+        socket.off('userOffline', handleUserOffline);
+      };
+    }
+  }, [socket, userContext.user?.role]);
+
   const handleDeleteAccount = useCallback(
     async (userId: string) => {
       await deleteUser(userId);
@@ -235,6 +264,7 @@ const HomePage = () => {
           <UserCard
             key={user.id}
             user={user}
+            isOnline={onlineFreelancers.has(user.id)} // Pass isOnline prop
             unreadCount={unreadCounts[user.id] || 0} // Pass unreadCount for individual users
             unreadCounts={unreadCounts} // Pass the entire unreadCounts object
             onViewDetails={openViewModal}
@@ -255,6 +285,7 @@ const HomePage = () => {
       openChatOrRoomsModal,
       userContext?.user,
       unreadCounts,
+      onlineFreelancers,
     ]
   );
 

@@ -1,15 +1,23 @@
 // src/chat/chat.gateway.ts
 
-import { WebSocketGateway, WebSocketServer, SubscribeMessage, ConnectedSocket, OnGatewayConnection, MessageBody } from '@nestjs/websockets';
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  SubscribeMessage,
+  ConnectedSocket,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  MessageBody,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException, Inject, Logger } from '@nestjs/common';
+import { UnauthorizedException, Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtPayload } from '@/auth/interfaces/jwt-payload.interface';
 import { RoomsService } from './rooms.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
-export class ChatGateway implements OnGatewayConnection {
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -37,6 +45,7 @@ export class ChatGateway implements OnGatewayConnection {
 
       const payload = this.jwtService.verify<JwtPayload>(token, { secret });
       client.data.userId = payload.sub;
+      client.data.userRole = payload.role; // Store role in client data
 
       // Disconnect any existing connection for the user
       const existingSockets = await this.server.fetchSockets();
@@ -49,11 +58,37 @@ export class ChatGateway implements OnGatewayConnection {
       // User joins their own room
       client.join(client.data.userId);
 
-      this.logger.log(`User joined room: ${client.data.userId}`);
+      // If user is employer, join 'employers' room
+      if (client.data.userRole === 'employer') {
+        client.join('employers');
+        this.logger.log(`Employer ${client.data.userId} joined 'employers' room.`);
+      }
+
+      // If user is freelancer, notify employers
+      if (client.data.userRole === 'freelancer') {
+        // Notify employers that this freelancer is online
+        this.server.to('employers').emit('userOnline', { userId: payload.sub });
+        this.logger.log(`Freelancer ${payload.sub} connected and is now online.`);
+      }
+
+      this.logger.log(`User ${payload.sub} connected with role ${payload.role}`);
     } catch (err) {
       this.logger.error('Token verification failed:', err.message);
       client.disconnect();
     }
+  }
+
+  async handleDisconnect(client: Socket) {
+    const userId = client.data.userId;
+    const userRole = client.data.userRole;
+
+    if (userRole === 'freelancer') {
+      // Notify employers that this freelancer is offline
+      this.server.to('employers').emit('userOffline', { userId });
+      this.logger.log(`Freelancer ${userId} disconnected and is now offline.`);
+    }
+
+    this.logger.log(`User ${userId} disconnected.`);
   }
 
   @SubscribeMessage('sendMessage')
@@ -158,5 +193,6 @@ export class ChatGateway implements OnGatewayConnection {
     }
   }
 }
+
 
 

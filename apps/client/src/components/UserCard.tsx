@@ -1,3 +1,5 @@
+// src/components/UserCard.tsx
+
 import React, { useContext } from "react";
 import { User } from "../types/types";
 import { UserContext } from "../contexts/UserContext";
@@ -15,6 +17,7 @@ import DefaultImage from "../assets/default-image.webp";
 
 interface UserCardProps {
   user: User;
+  isOnline?: boolean; // Added
   unreadCount?: number; // Existing unreadCount prop
   unreadCounts?: { [key: string]: number }; // New prop for freelancers
   onViewDetails: (user: User, event: React.MouseEvent) => void;
@@ -25,6 +28,7 @@ interface UserCardProps {
 
 const UserCard: React.FC<UserCardProps> = ({
   user,
+  isOnline = false, // Added with default value
   unreadCount = 0,
   unreadCounts,
   onViewDetails,
@@ -60,12 +64,12 @@ const UserCard: React.FC<UserCardProps> = ({
             <div className="flex items-center gap-2">
               <span
                 className={`inline-block h-3 w-3 rounded-full ${
-                  user.isOnline
+                  isOnline
                     ? "bg-green-500 ring-2 ring-green-300"
                     : "bg-gray-500 ring-2 ring-gray-300"
                 }`}
               />
-              {user.isOnline ? (
+              {isOnline ? (
                 <span className="text-white bg-green-600 px-2 py-1 rounded-md font-semibold text-sm">
                   Online
                 </span>
