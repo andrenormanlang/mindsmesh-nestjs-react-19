@@ -1,6 +1,4 @@
-// src/components/UserCard.tsx
-
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { User } from "../types/types";
 import { UserContext } from "../contexts/UserContext";
 import { Card, CardHeader, CardContent, CardFooter } from "./shadcn/ui/card";
@@ -14,12 +12,13 @@ import {
   CarouselPrevious,
 } from "./shadcn/ui/carousel";
 import DefaultImage from "../assets/default-image.webp";
+import { SocketContext } from "../contexts/SocketContext"; // Import SocketContext for real-time updates
 
 interface UserCardProps {
   user: User;
-  isOnline?: boolean; // Added
-  unreadCount?: number; // Existing unreadCount prop
-  unreadCounts?: { [key: string]: number }; // New prop for freelancers
+  isOnline?: boolean;
+  unreadCount?: number;
+  unreadCounts?: { [key: string]: number };
   onViewDetails: (user: User, event: React.MouseEvent) => void;
   onEdit?: (user: User) => void;
   onDelete?: (user: User) => void;
@@ -28,7 +27,7 @@ interface UserCardProps {
 
 const UserCard: React.FC<UserCardProps> = ({
   user,
-  isOnline = false, // Added with default value
+  isOnline = false,
   unreadCount = 0,
   unreadCounts,
   onViewDetails,
@@ -38,6 +37,33 @@ const UserCard: React.FC<UserCardProps> = ({
 }) => {
   const userContext = useContext(UserContext);
   const currentUser = userContext?.user;
+  const { socket } = useContext(SocketContext);
+
+  const [dynamicUnreadCount, setDynamicUnreadCount] = useState<number>(unreadCount);
+
+  useEffect(() => {
+    if (socket && currentUser?.role === "employer" && user.role === "freelancer") {
+      const handleReceiveMessage = (message: any) => {
+        if (message.senderId === user.id) {
+          setDynamicUnreadCount((prevCount) => prevCount + 1);
+        }
+      };
+
+      const handleMessagesRead = (data: { senderId: string; receiverId: string }) => {
+        if (data.senderId === user.id && data.receiverId === currentUser.id) {
+          setDynamicUnreadCount(0);
+        }
+      };
+
+      socket.on("receiveMessage", handleReceiveMessage);
+      socket.on("messagesRead", handleMessagesRead);
+
+      return () => {
+        socket.off("receiveMessage", handleReceiveMessage);
+        socket.off("messagesRead", handleMessagesRead);
+      };
+    }
+  }, [socket, currentUser, user]);
 
   const UnreadBadge = ({ count }: { count: number }) =>
     count > 0 ? (
@@ -52,13 +78,12 @@ const UserCard: React.FC<UserCardProps> = ({
   // Calculate total unread count for freelancers viewing their own card
   const totalUnreadCount = isOwnCard
     ? Object.values(unreadCounts || {}).reduce((sum, count) => sum + count, 0)
-    : unreadCount;
+    : dynamicUnreadCount;
 
   return (
     <Card className="flex flex-col bg-white text-gray-900 p-4 shadow-lg rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
       <CardHeader className="p-0 relative overflow-hidden h-56 flex items-center justify-center">
         {/* Online Status Indicator */}
-
         {currentUser?.role === "employer" && user.role === "freelancer" && (
           <div className="absolute top-2 right-2 z-10">
             <div className="flex items-center gap-2">
@@ -152,7 +177,6 @@ const UserCard: React.FC<UserCardProps> = ({
         {currentUser && (
           <div className="relative">
             {currentUser.role === "freelancer" && isOwnCard ? (
-              // Freelancer viewing their own card - show Rooms button with total unread count
               <button
                 onClick={(e) => onChat && onChat(user, e)}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm flex items-center relative"
@@ -163,20 +187,18 @@ const UserCard: React.FC<UserCardProps> = ({
               </button>
             ) : currentUser.role === "employer" &&
               user.role === "freelancer" ? (
-              // Employer viewing a freelancer's card - show Chat button (always enabled)
               <button
                 onClick={(e) => onChat && onChat(user, e)}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm relative flex items-center"
                 aria-label={`Chat with ${user.username}`}
               >
                 Chat
-                <UnreadBadge count={unreadCount} />
+                <UnreadBadge count={dynamicUnreadCount} />
               </button>
             ) : null}
           </div>
         )}
 
-        {/* Edit/Delete Buttons */}
         {(onEdit || onDelete) && isOwnCard && (
           <div className="flex space-x-2">
             {onEdit && (
@@ -205,3 +227,4 @@ const UserCard: React.FC<UserCardProps> = ({
 };
 
 export default UserCard;
+

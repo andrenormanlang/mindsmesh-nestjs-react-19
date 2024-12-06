@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,17 +7,10 @@ import {
 } from "./shadcn/ui/dialog";
 import { fetchRoomsForFreelancer, getUnreadCounts } from "../services/MindsMeshAPI";
 import { Room, User } from "../types/types";
-import { io } from "socket.io-client";
 import Chat from "./Chat";
 import { Button } from "./shadcn/ui/button";
 import { Loader2, Users, MessageSquare, ArrowLeft, X } from "lucide-react";
-
-// Socket initialization
-const socket = io(import.meta.env.VITE_BASE_URL, {
-  auth: {
-    token: localStorage.getItem("token"),
-  },
-});
+import { SocketContext } from "../contexts/SocketContext"; // Import SocketContext for real-time updates
 
 interface RoomsProps {
   isOpen: boolean;
@@ -30,8 +23,8 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
   const [activeChatPartner, setActiveChatPartner] = useState<User | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { socket } = useContext(SocketContext);
 
-  // Fetch rooms and unread counts
   useEffect(() => {
     const loadRooms = async () => {
       if (isOpen && freelancerId) {
@@ -64,7 +57,6 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
     loadRooms();
   }, [isOpen, freelancerId]);
 
-  // Handle real-time updates
   useEffect(() => {
     if (socket && freelancerId) {
       const handleReceiveMessage = (message: any) => {

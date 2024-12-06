@@ -1,12 +1,4 @@
-// src/pages/HomePage.tsx
-
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-  useContext,
-} from "react";
+import React, { useEffect, useState, useCallback, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { GradientContext } from "../contexts/GradientContext";
 import { UserContext } from "../contexts/UserContext";
@@ -39,18 +31,14 @@ const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResultPhrase, setSearchResultPhrase] = useState<string | null>(
-    null
-  );
+  const [searchResultPhrase, setSearchResultPhrase] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isRoomsModalOpen, setIsRoomsModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [unreadCounts, setUnreadCounts] = useState<{ [key: string]: number }>(
-    {}
-  );
+  const [unreadCounts, setUnreadCounts] = useState<{ [key: string]: number }>({});
   const [onlineFreelancers, setOnlineFreelancers] = useState<Set<string>>(new Set());
 
   const navigate = useNavigate();
@@ -81,16 +69,13 @@ const HomePage = () => {
 
         let users: User[] = [];
         if (userContext?.user?.role === "employer") {
-          // Employers fetch freelancers with skills
           users = await fetchUsersWithSkills(
             debouncedSearchQuery.toLowerCase(),
             "freelancer"
           );
         } else if (userContext?.user?.role === "freelancer") {
-          // Freelancers see only their own profile
           users = [userContext.user];
         } else {
-          // Unauthenticated users fetch freelancers with skills
           users = await fetchUsersWithSkills(
             debouncedSearchQuery.toLowerCase(),
             "freelancer"
@@ -122,9 +107,6 @@ const HomePage = () => {
     };
 
     fetchUnread();
-
-    const interval = setInterval(fetchUnread, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
   }, []); // Empty dependency array ensures this runs once on mount
 
   // Handle WebSocket events for real-time updates
@@ -164,11 +146,11 @@ const HomePage = () => {
   useEffect(() => {
     if (socket && userContext.user?.role === 'employer') {
       const handleUserOnline = (data: { userId: string }) => {
-        setOnlineFreelancers(prev => new Set(prev).add(data.userId));
+        setOnlineFreelancers((prev) => new Set(prev).add(data.userId));
       };
 
       const handleUserOffline = (data: { userId: string }) => {
-        setOnlineFreelancers(prev => {
+        setOnlineFreelancers((prev) => {
           const newSet = new Set(prev);
           newSet.delete(data.userId);
           return newSet;
@@ -177,9 +159,6 @@ const HomePage = () => {
 
       socket.on('userOnline', handleUserOnline);
       socket.on('userOffline', handleUserOffline);
-
-      // Optionally, initialize onlineFreelancers by fetching current online freelancers
-      // This requires backend support to provide current online users
 
       return () => {
         socket.off('userOnline', handleUserOnline);
