@@ -129,4 +129,42 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired token');
     }
   }  
+
+  async generateTokens(userId: string, email: string) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(
+        { sub: userId, email },
+        {
+          secret: this.configService.get<string>('JWT_SECRET'),
+          expiresIn: this.configService.get<string>('JWT_EXPIRES_IN'),
+        },
+      ),
+      this.jwtService.signAsync(
+        { sub: userId, email },
+        {
+          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+          expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
+        },
+      ),
+    ]);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async refreshTokens(userId: string, refreshToken: string) {
+    // Here you would typically verify the refresh token against a stored hash
+    // and check if it's been revoked
+    try {
+      await this.jwtService.verifyAsync(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
+      
+      return this.generateTokens(userId, refreshToken);
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
 }

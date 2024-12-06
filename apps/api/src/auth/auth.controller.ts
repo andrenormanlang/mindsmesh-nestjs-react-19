@@ -5,6 +5,7 @@ import {
   UseGuards,
   Request,
   Get,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Request as ExpressRequest } from 'express';
@@ -22,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { MessageResponseDto } from './dto/message-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface'; // Import JwtPayload
+import { RefreshTokenGuard } from './refresh-token.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -94,5 +96,13 @@ export class AuthController {
   getProfile(@Request() req: ExpressRequest) {
     const user = req.user as JwtPayload; // Cast to JwtPayload
     return user;
+  }
+
+  @Post('refresh')
+  @UseGuards(RefreshTokenGuard)
+  async refreshTokens(@Req() req: any) {
+    const userId = req.user.sub;
+    const refreshToken = req.user.refreshToken;
+    return this.authService.refreshTokens(userId, refreshToken);
   }
 }
