@@ -57,6 +57,7 @@ export type Room = {
   roomName: string;
   employer: User;
   employerName?: string;
+  employerAvatarUrl?: string | null;
   unreadCount: number;
 };
 

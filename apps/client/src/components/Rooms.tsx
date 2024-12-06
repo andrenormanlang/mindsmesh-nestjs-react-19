@@ -12,6 +12,7 @@ import Chat from "./Chat";
 import { Button } from "./shadcn/ui/button";
 import { Loader2, Users, MessageSquare, ArrowLeft, X } from "lucide-react";
 
+// Socket initialization
 const socket = io(import.meta.env.VITE_BASE_URL, {
   auth: {
     token: localStorage.getItem("token"),
@@ -48,6 +49,7 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
             return {
               ...room,
               employerName: room.employer?.username || "Unknown Employer",
+              employerAvatarUrl: room.employer?.avatarUrl || null,
               unreadCount,
             };
           });
@@ -193,9 +195,17 @@ const Rooms: React.FC<RoomsProps> = ({ isOpen, onClose, freelancerId }) => {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white">
-                              {room.employerName?.charAt(0).toUpperCase()}
-                            </div>
+                            {room.employerAvatarUrl ? (
+                              <img
+                                src={room.employerAvatarUrl}
+                                alt={`${room.employerName}'s avatar`}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white">
+                                {room.employerName?.charAt(0).toUpperCase()}
+                              </div>
+                            )}
                             <div>
                               <h3 className="font-medium text-gray-900">
                                 {room.employerName}

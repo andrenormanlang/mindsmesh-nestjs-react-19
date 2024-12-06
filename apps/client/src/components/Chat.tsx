@@ -1,6 +1,4 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
-import { useAtom } from "jotai";
-import { userAtom } from "../atoms/userAtoms"; // Import user atom from Jotai
 import { User } from "../types/types";
 import { Button } from "./shadcn/ui/button";
 import { Card, CardHeader, CardContent, CardFooter } from "./shadcn/ui/card";
@@ -40,7 +38,7 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
   const senderId = localStorage.getItem("userId");
 
   // Accessing the user's data from Jotai atom
-  const [user] = useAtom(userAtom);
+
 
   useEffect(() => {
     if (senderId && chatPartner) {
