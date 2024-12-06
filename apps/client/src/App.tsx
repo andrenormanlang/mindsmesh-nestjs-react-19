@@ -10,6 +10,7 @@ import { Toaster } from "./components/shadcn/ui/toaster";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
 import { SocketProvider } from "./contexts/SocketContext";
+import { Provider as JotaiProvider } from "jotai";
 
 const HomePage = React.lazy(() => import("./pages/HomePage")); // Lazy load the HomePage
 
@@ -17,23 +18,31 @@ function App() {
   return (
     <>
       <Toaster />
-      <Router>
-        <UserProvider>
-          <GradientProvider>
-            <SocketProvider>
-              <Navbar />
-              <Suspense fallback={<LoadingSpinner />}>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/verify-email" element={<EmailVerificationPage />} />
-                  <Route path="/reset-password" element={<ResetPasswordPage />} />
-                </Routes>
-              </Suspense>
-              <Footer />
-            </SocketProvider>
-          </GradientProvider>
-        </UserProvider>
-      </Router>
+      <JotaiProvider>
+        <Router>
+          <UserProvider>
+            <GradientProvider>
+              <SocketProvider>
+                <Navbar />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route
+                      path="/verify-email"
+                      element={<EmailVerificationPage />}
+                    />
+                    <Route
+                      path="/reset-password"
+                      element={<ResetPasswordPage />}
+                    />
+                  </Routes>
+                </Suspense>
+                <Footer />
+              </SocketProvider>
+            </GradientProvider>
+          </UserProvider>
+        </Router>
+      </JotaiProvider>
     </>
   );
 }

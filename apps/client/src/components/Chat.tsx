@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
+import { useAtom } from "jotai";
+import { userAtom } from "../atoms/userAtoms"; // Import user atom from Jotai
 import { User } from "../types/types";
 import { Button } from "./shadcn/ui/button";
 import { Card, CardHeader, CardContent, CardFooter } from "./shadcn/ui/card";
@@ -30,11 +32,15 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isConnecting, setIsConnecting] = useState(true);
-  const { socket } = useContext(SocketContext); // Access socket from context
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { socket } = useContext(SocketContext); // Access socket from context
   const senderId = localStorage.getItem("userId");
+
+  // Accessing the user's data from Jotai atom
+  const [user] = useAtom(userAtom);
 
   useEffect(() => {
     if (senderId && chatPartner) {
@@ -53,7 +59,6 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
           setIsConnecting(false); // Stop loading
         }
       };
-
       initializeChat();
     } else {
       setIsConnecting(false); // If no chat partner, stop loading
@@ -110,13 +115,12 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
   // Emit markAsRead when chat is opened
   useEffect(() => {
     if (socket && senderId && chatPartner) {
-      socket.emit('markAsRead', { senderId: chatPartner.id, receiverId: senderId });
+      socket.emit("markAsRead", { senderId: chatPartner.id, receiverId: senderId });
     }
   }, [socket, senderId, chatPartner]);
 
   useEffect(() => {
     if (socket && senderId && chatPartner) {
-      // Listen for new messages
       const handleReceiveMessage = (message: Message) => {
         if (
           (message.senderId === chatPartner.id && message.receiverId === senderId) ||
@@ -125,7 +129,6 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
           setMessages((prev) => {
             const existingMessageIndex = prev.findIndex((msg) => msg.id === message.id);
             if (existingMessageIndex !== -1) {
-              // Update the existing message
               const updatedMessages = [...prev];
               updatedMessages[existingMessageIndex] = {
                 ...message,
@@ -134,7 +137,6 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
               };
               return updatedMessages;
             } else {
-              // Add new message
               return [
                 ...prev,
                 {
@@ -148,23 +150,10 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
         }
       };
 
-      // Listen for read receipts
-      const handleMessagesRead = (data: { senderId: string; receiverId: string }) => {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.senderId === senderId && msg.receiverId === data.receiverId
-              ? { ...msg, status: "sent" }
-              : msg
-          )
-        );
-      };
-
       socket.on("receiveMessage", handleReceiveMessage);
-      socket.on("messagesRead", handleMessagesRead);
 
       return () => {
         socket.off("receiveMessage", handleReceiveMessage);
-        socket.off("messagesRead", handleMessagesRead);
       };
     }
   }, [socket, senderId, chatPartner]);
@@ -210,7 +199,6 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
   };
 
   const renderMessageContent = (text: string) => {
-    // Convert URLs to clickable links
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.split(urlRegex).map((part, index) => {
       if (part.match(urlRegex)) {
@@ -220,7 +208,7 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
             href={part}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-200 hover:underline"
+            className="text-blue-500 hover:underline"
           >
             {part}
           </a>
@@ -245,7 +233,7 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
 
   const groupMessagesByDate = (messages: Message[]) => {
     return messages.reduce((groups: { [key: string]: Message[] }, message) => {
-      const date = format(new Date(message.timestamp), 'MMM dd, yyyy');
+      const date = format(new Date(message.timestamp), "MMM dd, yyyy");
       if (!groups[date]) {
         groups[date] = [];
       }
@@ -261,9 +249,17 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                  {chatPartner.username.charAt(0).toUpperCase()}
-                </div>
+                {chatPartner?.avatarUrl ? (
+                  <img
+                    src={chatPartner.avatarUrl}
+                    alt={`${chatPartner.username}'s avatar`}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                    {chatPartner.username.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <span
                   className={`absolute bottom-0 right-0 block w-3 h-3 rounded-full border-2 border-white ${
                     isConnecting ? "bg-yellow-400" : "bg-green-500"
@@ -294,14 +290,14 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
       </CardHeader>
 
       <CardContent className="p-0">
-        <div className="h-[calc(100vh-16rem)] overflow-y-auto bg-gray-50">
+        <div className="h-[calc(100vh-16rem)] overflow-y-auto bg-gray-50 p-4">
           {isConnecting ? (
             <div className="flex flex-col items-center justify-center h-full space-y-3">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
               <p className="text-sm text-gray-500">Connecting to chat...</p>
             </div>
           ) : (
-            <div className="p-4 space-y-6">
+            <div className="space-y-6">
               {Object.entries(groupMessagesByDate(messages)).map(([date, dateMessages]) => (
                 <div key={date} className="space-y-4">
                   <div className="flex justify-center">
@@ -314,8 +310,15 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
                       key={msg.id}
                       className={`flex ${
                         msg.senderId === senderId ? "justify-end" : "justify-start"
-                      }`}
+                      } items-end`}
                     >
+                      {msg.senderId !== senderId && chatPartner?.avatarUrl && (
+                        <img
+                          src={chatPartner.avatarUrl}
+                          alt={`${chatPartner.username}'s avatar`}
+                          className="w-8 h-8 rounded-full object-cover mr-2"
+                        />
+                      )}
                       <div className="flex flex-col space-y-1 max-w-[75%]">
                         <div
                           className={`rounded-2xl px-4 py-2 shadow-sm ${

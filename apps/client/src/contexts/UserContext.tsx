@@ -1,8 +1,9 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
+import { useAtom } from 'jotai';
 import { User } from "../types/types";
 import { getProfile } from "../services/MindsMeshAPI";
 import { AxiosError } from "axios";
-
+import { userAtom } from "../atoms/userAtoms";
 
 export interface UserContextProps {
   user: User | null;
@@ -19,14 +20,21 @@ export const UserContext = createContext<UserContextProps | undefined>(undefined
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [, setUserAtom] = useAtom(userAtom);
 
   useEffect(() => {
     // Load the user from localStorage on initial mount.
     const savedUser = JSON.parse(localStorage.getItem("user") || "null");
     if (savedUser) {
       setUser(savedUser);
+      setUserAtom(savedUser);  // Update Jotai atom
     }
   }, []);
+
+  useEffect(() => {
+    // Synchronize userAtom with user state
+    setUserAtom(user);
+  }, [user, setUserAtom]);
 
   const refreshUser = async () => {
     try {

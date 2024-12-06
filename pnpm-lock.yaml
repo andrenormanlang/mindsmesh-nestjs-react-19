@@ -337,6 +337,9 @@ importers:
       input-otp:
         specifier: ^1.2.4
         version: 1.2.4(react-dom@19.0.0-rc-1460d67c-20241003(react@19.0.0-rc-1460d67c-20241003))(react@19.0.0-rc-1460d67c-20241003)
+      jotai:
+        specifier: ^2.10.3
+        version: 2.10.3(react@19.0.0-rc-1460d67c-20241003)(types-react@19.0.0-rc.1)
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
@@ -5300,6 +5303,18 @@ packages:
   jiti@1.21.6:
     resolution: {integrity: sha512-2yTgeWTWzMWkHu6Jp9NKgePDaYHbntiwvYuuJLbbN9vl7DC9DvXKOB2BC3ZZ92D3cvV/aflH0osDfwpHepQ53w==}
     hasBin: true
+
+  jotai@2.10.3:
+    resolution: {integrity: sha512-Nnf4IwrLhNfuz2JOQLI0V/AgwcpxvVy8Ec8PidIIDeRi4KCFpwTFIpHAAcU+yCgnw/oASYElq9UY0YdUUegsSA==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=17.0.0'
+      react: '>=17.0.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      react:
+        optional: true
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -13436,6 +13451,11 @@ snapshots:
       - ts-node
 
   jiti@1.21.6: {}
+
+  jotai@2.10.3(react@19.0.0-rc-1460d67c-20241003)(types-react@19.0.0-rc.1):
+    optionalDependencies:
+      '@types/react': types-react@19.0.0-rc.1
+      react: 19.0.0-rc-1460d67c-20241003
 
   js-tokens@4.0.0: {}
 
