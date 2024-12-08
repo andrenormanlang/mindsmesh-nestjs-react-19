@@ -1,146 +1,41 @@
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "./shadcn/ui/button";
-import { Input } from "./shadcn/ui/input";
-import { Label } from "./shadcn/ui/label";
+import { useState,useActionState } from "react"; 
 import { useToast } from "./shadcn/ui/use-toast";
 import { register } from "../services/MindsMeshAPI";
 import { Card } from "./shadcn/ui/card";
-import { Eye, EyeOff, Loader2, Upload, X } from "lucide-react";
-import { cn } from "./lib/utils";
-
-interface RegisterFormData {
-  username: string;
-  email: string;
-  password: string;
-  role: "freelancer" | "employer";
-  avatarFile?: FileList;
-  skillImageUrls?: FileList;
-}
-
-const registerSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["freelancer", "employer"] as const),
-  skillImageUrls: z.any().optional(),
-  avatarFile: z.any().optional(),
-});
+import { Button } from "./shadcn/ui/button";
+import { Label } from "./shadcn/ui/label";
+import { Loader2, AlertCircle, X } from "lucide-react";
 
 type RegisterFormProps = {
   onClose: () => void;
 };
 
-const RegisterForm = ({ onClose }: RegisterFormProps) => {
+function RegisterForm({ onClose }: RegisterFormProps) {
   const { toast } = useToast();
-  const [error, setError] = useState("");
+  const [selectedRole, setSelectedRole] = useState<"freelancer" | "employer">("freelancer");
+  const [skillImagePreviews, setSkillImagePreviews] = useState<string[]>([]);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    watch,
-    setValue,
-  } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      username: "",
-      email: "",
-      password: "",
-      role: "freelancer",
-    },
-  });
-
-  const role = watch("role");
-
-  // Handle role selection without triggering modal stacking
-  const handleRoleSelection = (selectedRole: "freelancer" | "employer") => {
-    setValue("role", selectedRole, { shouldValidate: true });
-    // Clear files only when switching to employer
-    if (selectedRole === "employer") {
-      setSelectedFiles([]);
-      setImagePreviews([]);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    if (files.length + selectedFiles.length > 10) {
-      toast({
-        title: "Too many images",
-        description: "You can only upload up to 4 images",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newFiles = Array.from(files).filter((file) => {
-      const validTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/jpg",
-        "image/svg+xml", 
-        "image/webp",
-        "image/tiff",
-        "image/bmp",
-        "image/avif",
-      ];
-      if (!validTypes.includes(file.type)) {
-        toast({
-          title: "Invalid file type",
-          description: `${file.name} is not a supported image format`,
-          variant: "destructive",
-        });
-        return false;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: `${file.name} exceeds 5MB limit`,
-          variant: "destructive",
-        });
-        return false;
-      }
-      return true;
-    });
-
-    setSelectedFiles((prev) => [...prev, ...newFiles]);
-    const filePreviews = newFiles.map((file) => URL.createObjectURL(file));
-    setImagePreviews((prev) => [...prev, ...filePreviews]);
-  };
-
-  const handleRemoveImage = (index: number) => {
-    URL.revokeObjectURL(imagePreviews[index]);
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const onSubmit = async (data: RegisterFormData) => {
-    setIsLoading(true);
-    setError("");
-
+  const submitHandler = async (_: unknown, formData: FormData) => {
     try {
-      const role = data.role as "freelancer" | "employer";
-      const filesToUpload = role === "freelancer" ? selectedFiles : [];
-      const avatarFile = data.avatarFile ? data.avatarFile[0] : null;
+      const username = formData.get("username") as string | null;
+      const email = formData.get("email") as string | null;
+      const password = formData.get("password") as string | null;
+      const role = formData.get("role") as "freelancer" | "employer" | null;
+      const avatarFile = formData.get("avatarFile") as File | null;
+      const skillFiles = formData.getAll("skillImageUrls") as File[];
+
+      if (!username || !email || !password || !role) {
+        return "Please fill out all required fields.";
+      }
 
       await register(
-        data.username,
+        username,
         role,
-        data.password,
-        data.email,
-        avatarFile,
-        filesToUpload
+        password,
+        email,
+        avatarFile ?? null,
+        role === "freelancer" ? skillFiles : []
       );
 
       toast({
@@ -152,267 +47,235 @@ const RegisterForm = ({ onClose }: RegisterFormProps) => {
       onClose();
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
-        toast({
-          title: "Registration Failed",
-          description: err.message,
-          variant: "destructive",
-          duration: 5000,
-        });
+        return err.message;
       }
-    } finally {
-      setIsLoading(false);
+      return "An unexpected error occurred.";
     }
   };
 
-  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files[0]) {
-      const file = files[0];
-      // Validate file type and size if needed
-      const validTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/jpg",
-        "image/svg+xml",
-        "image/webp",
-        "image/tiff",
-        "image/bmp",
-        "image/avif",
-      ];
-      if (!validTypes.includes(file.type)) {
-        toast({
-          title: "Invalid file type",
-          description: `${file.name} is not a supported image format`,
-          variant: "destructive",
-        });
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: `${file.name} exceeds 5MB limit`,
-          variant: "destructive",
-        });
-        return;
-      }
-      setAvatarPreview(URL.createObjectURL(file));
+  const [error, submitAction, isPending] = useActionState(submitHandler, null);
+
+  // Handle role change
+  const handleRoleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newRole = event.target.value as "freelancer" | "employer";
+    setSelectedRole(newRole);
+
+    // If changing to employer, clear image previews
+    if (newRole === "employer") {
+      skillImagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      setSkillImagePreviews([]);
     }
   };
 
-  const handleRemoveAvatar = () => {
+  // Handle skill images change (Freelancer only)
+  const handleSkillImagesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    // Revoke previous previews
+    skillImagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+
+    const previewUrls = Array.from(files).map((file) => URL.createObjectURL(file));
+    setSkillImagePreviews(previewUrls);
+  };
+
+  // Remove a single preview image
+  const removeImagePreview = (index: number) => {
+    URL.revokeObjectURL(skillImagePreviews[index]);
+    const newPreviews = [...skillImagePreviews];
+    newPreviews.splice(index, 1);
+    setSkillImagePreviews(newPreviews);
+  };
+
+  // Handle avatar change
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+      setAvatarPreview(null);
+      return;
+    }
+
+    // Revoke previous avatar preview if any
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
+  };
+
+  // Remove avatar preview
+  const removeAvatarPreview = () => {
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
     setAvatarPreview(null);
-    setValue("avatarFile", undefined);
   };
 
   return (
     <div className="relative max-h-[80vh] overflow-y-auto scrollbar-thin px-1">
-      <Card className="p-6 w-full">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Avatar image upload */}
+      <Card className="p-8 w-full max-w-lg mx-auto rounded-md shadow-md bg-white">
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-semibold">Create Your Account</h1>
+          <p className="text-sm text-gray-600 mt-2">
+            Join our community to showcase your skills or find the best talent.
+          </p>
+        </div>
+        <form
+          action={submitAction}
+          encType="multipart/form-data"
+          method="post"
+          className="space-y-6"
+        >
           <div>
-            <Label className="text-sm font-medium">Avatar Image</Label>
-            <Controller
+            <Label htmlFor="avatarFile" className="text-sm font-medium block mb-2">
+              Avatar Image
+            </Label>
+            <p className="text-xs text-gray-500 mb-2">
+              Optional. Helps personalize your profile.
+            </p>
+            <input
               name="avatarFile"
-              control={control}
-              render={({ field }) => (
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    field.onChange(e.target.files);
-                    handleAvatarFileChange(e);
-                  }}
-                  disabled={isLoading}
-                />
-              )}
+              id="avatarFile"
+              type="file"
+              accept="image/*"
+              disabled={isPending}
+              onChange={handleAvatarChange}
+              className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded file:text-sm file:font-semibold hover:file:bg-gray-50"
             />
             {avatarPreview && (
-              <div className="mt-4 relative">
+              <div className="relative mt-4 inline-block">
                 <img
                   src={avatarPreview}
                   alt="Avatar Preview"
-                  className="w-32 h-32 object-cover rounded-full"
+                  className="w-24 h-24 object-cover rounded-full border border-gray-300"
                 />
                 <Button
                   type="button"
                   variant="destructive"
                   size="icon"
-                  className="absolute top-2 right-2"
-                  onClick={handleRemoveAvatar}
-                  disabled={isLoading}
+                  className="absolute top-1 right-1"
+                  onClick={removeAvatarPreview}
+                  disabled={isPending}
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             )}
           </div>
-          {/* Username field */}
+
           <div>
-            <Label htmlFor="username" className="text-sm font-medium">
-              Username
+            <Label htmlFor="username" className="text-sm font-medium block mb-2">
+              Username <span className="text-red-500">*</span>
             </Label>
-            <Controller
+            <input
               name="username"
-              control={control}
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  id="username"
-                  placeholder="Enter your username"
-                  className="mt-1"
-                  autoComplete="username"
-                  disabled={isLoading}
-                />
-              )}
+              id="username"
+              placeholder="e.g. johndoe123"
+              autoComplete="username"
+              disabled={isPending}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {errors.username && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.username.message}
-              </p>
-            )}
           </div>
 
-          {/* Email field */}
           <div>
-            <Label htmlFor="email" className="text-sm font-medium">
-              Email
+            <Label htmlFor="email" className="text-sm font-medium block mb-2">
+              Email <span className="text-red-500">*</span>
             </Label>
-            <Controller
+            <input
               name="email"
-              control={control}
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  className="mt-1"
-                  autoComplete="email"
-                  disabled={isLoading}
-                />
-              )}
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+              disabled={isPending}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.email.message}
-              </p>
-            )}
           </div>
 
-          {/* Password field */}
           <div>
-            <Label htmlFor="password" className="text-sm font-medium">
-              Password
+            <Label htmlFor="password" className="text-sm font-medium block mb-2">
+              Password <span className="text-red-500">*</span>
             </Label>
-            <div className="relative">
-              <Controller
-                name="password"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    className={cn(
-                      "pr-10",
-                      errors.password &&
-                        "border-red-500 focus-visible:ring-red-500"
-                    )}
-                  />
-                )}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-gray-500" />
-                ) : (
-                  <Eye className="h-4 w-4 text-gray-500" />
-                )}
-              </Button>
-            </div>
-            {errors.password && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.password.message}
-              </p>
-            )}
+            <p className="text-xs text-gray-500 mb-2">
+              At least 8 characters. Stronger passwords keep your account secure.
+            </p>
+            <input
+              name="password"
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              disabled={isPending}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
 
-          {/* Role selection */}
           <div>
-            <Label className="text-sm font-medium">I am a...</Label>
-            <div className="grid grid-cols-2 gap-4 mt-2">
-              <Button
-                type="button"
-                variant={role === "freelancer" ? "default" : "outline"}
-                className="w-full"
-                onClick={() => handleRoleSelection("freelancer")}
-                disabled={isLoading}
-              >
-                Freelancer
-              </Button>
-              <Button
-                type="button"
-                variant={role === "employer" ? "default" : "outline"}
-                className="w-full"
-                onClick={() => handleRoleSelection("employer")}
-                disabled={isLoading}
-              >
-                Employer
-              </Button>
+            <Label className="text-sm font-medium block mb-2">
+              I am a... <span className="text-red-500">*</span>
+            </Label>
+            <div className="grid grid-cols-2 gap-4">
+              <label className="flex items-center space-x-2 border border-gray-300 rounded p-2 hover:bg-gray-50 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="freelancer"
+                  defaultChecked
+                  disabled={isPending}
+                  onChange={handleRoleChange}
+                />
+                <span className="text-sm">Freelancer</span>
+              </label>
+              <label className="flex items-center space-x-2 border border-gray-300 rounded p-2 hover:bg-gray-50 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="employer"
+                  disabled={isPending}
+                  onChange={handleRoleChange}
+                />
+                <span className="text-sm">Employer</span>
+              </label>
             </div>
           </div>
 
-          {/* Skill Images upload for freelancers */}
-          {/* Skill Images upload for freelancers */}
-          {role === "freelancer" && (
+          {selectedRole === "freelancer" && (
             <div>
-              <Label className="text-sm font-medium">Skill Images</Label>
-              <p className="text-sm text-gray-600 mt-1">
-                Upload images to showcase your skills and previous work!
+              <Label className="text-sm font-medium block mb-2">
+                Skill Images (Freelancers only)
+              </Label>
+              <p className="text-xs text-gray-500 mb-2">
+                Showcase your work by uploading images (up to 4).
               </p>
-              <div className="mt-2">
-                <div className="flex items-center justify-center w-full">
-                  <label className="w-full flex flex-col items-center px-4 py-6 bg-white text-blue rounded-lg shadow-lg tracking-wide uppercase border border-blue cursor-pointer hover:bg-blue hover:text-white">
-                    <Upload className="w-8 h-8" />
-                    <span className="mt-2 text-base leading-normal">
-                      Select images
-                    </span>
-                    <Input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      multiple
-                      onChange={handleFileChange}
-                      disabled={isLoading || selectedFiles.length >= 4}
-                    />
-                  </label>
-                </div>
-              </div>
-
-              {/* Image previews */}
-              {imagePreviews.length > 0 && (
+              <input
+                name="skillImageUrls"
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={isPending}
+                onChange={handleSkillImagesChange}
+                className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded file:text-sm file:font-semibold hover:file:bg-gray-50"
+              />
+              {/* Preview of selected images */}
+              {skillImagePreviews.length > 0 && (
                 <div className="mt-4 grid grid-cols-2 gap-4">
-                  {imagePreviews.map((src, index) => (
+                  {skillImagePreviews.map((preview, index) => (
                     <div key={index} className="relative group">
                       <img
-                        src={src}
+                        src={preview}
                         alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
+                        className="w-full h-32 object-cover rounded"
                       />
                       <Button
                         type="button"
                         variant="destructive"
                         size="icon"
                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleRemoveImage(index)}
-                        disabled={isLoading}
+                        onClick={() => removeImagePreview(index)}
+                        disabled={isPending}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -423,14 +286,23 @@ const RegisterForm = ({ onClose }: RegisterFormProps) => {
             </div>
           )}
 
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          {error && (
+            <div className="bg-red-50 border border-red-300 text-red-800 text-sm rounded p-3 flex items-start space-x-2">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account...
-              </>
+          <Button
+            type="submit"
+            className="w-full text-sm font-medium bg-blue-600 text-white py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600"
+            disabled={isPending}
+          >
+            {isPending ? (
+              <div className="flex items-center justify-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Creating account...</span>
+              </div>
             ) : (
               "Create Account"
             )}
@@ -439,6 +311,6 @@ const RegisterForm = ({ onClose }: RegisterFormProps) => {
       </Card>
     </div>
   );
-};
+}
 
 export default RegisterForm;
