@@ -11,7 +11,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtPayload } from '@/auth/interfaces/jwt-payload.interface';
 import { RoomsService } from './rooms.service';
@@ -22,6 +22,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private logger: Logger = new Logger('ChatGateway');
+
+  // Keep track of which freelancers are online
+  private onlineFreelancers: Set<string> = new Set();
 
   constructor(
     private readonly chatService: ChatService,
@@ -47,7 +50,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.data.userId = payload.sub;
       client.data.userRole = payload.role; // Store role in client data
 
-      // Disconnect any existing connection for the user
+      // Disconnect any existing connection for the same user
       const existingSockets = await this.server.fetchSockets();
       existingSockets.forEach((socket) => {
         if (socket.data.userId === payload.sub && socket.id !== client.id) {
@@ -58,15 +61,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // User joins their own room
       client.join(client.data.userId);
 
-      // If user is employer, join 'employers' room
       if (client.data.userRole === 'employer') {
+        // Employers join a shared 'employers' room
         client.join('employers');
         this.logger.log(`Employer ${client.data.userId} joined 'employers' room.`);
+
+        // Immediately send the list of currently online freelancers to this employer
+        this.server.to(client.id).emit('onlineUsers', {
+          userIds: Array.from(this.onlineFreelancers),
+        });
       }
 
-      // If user is freelancer, notify employers
       if (client.data.userRole === 'freelancer') {
-        // Notify employers that this freelancer is online
+        // Add this freelancer to the online set
+        this.onlineFreelancers.add(client.data.userId);
+
+        // Notify all employers that this freelancer is online
         this.server.to('employers').emit('userOnline', { userId: payload.sub });
         this.logger.log(`Freelancer ${payload.sub} connected and is now online.`);
       }
@@ -83,7 +93,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const userRole = client.data.userRole;
 
     if (userRole === 'freelancer') {
-      // Notify employers that this freelancer is offline
+      // Remove the freelancer from the online set
+      this.onlineFreelancers.delete(userId);
+
+      // Notify employers that this freelancer is now offline
       this.server.to('employers').emit('userOffline', { userId });
       this.logger.log(`Freelancer ${userId} disconnected and is now offline.`);
     }
@@ -97,33 +110,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     message: { id: string; senderId: string; receiverId: string; text: string },
     @ConnectedSocket() client: Socket,
   ) {
-    console.log(
-      'Received message from:',
-      message.senderId,
-      'to:',
-      message.receiverId,
+    this.logger.log(
+      `Received message from ${message.senderId} to ${message.receiverId}: ${message.text}`,
     );
 
     try {
       // Prevent sending a message to oneself
       if (message.senderId === message.receiverId) {
-        console.error('Sender and receiver cannot be the same.');
+        this.logger.error('Sender and receiver cannot be the same.');
         return;
       }
 
       const sender = await this.chatService.getUserById(message.senderId);
       const receiver = await this.chatService.getUserById(message.receiverId);
 
-      // Ensure that the chat is only between an employer and a freelancer
+      // Ensure chat is only between employer and freelancer
       if (
         (sender.role === 'freelancer' && receiver.role === 'employer') ||
         (sender.role === 'employer' && receiver.role === 'freelancer')
       ) {
-        // Check if a room already exists between the sender and receiver
+        // Check if a room already exists
         let room = await this.chatService.findRoomBetweenUsers(sender, receiver);
 
         if (!room) {
-          // Create a new room if one doesn't exist
+          // Create a new room if it doesn't exist
           room = await this.roomsService.createRoom(
             sender.id,
             receiver.id,
@@ -138,30 +148,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           message.text,
           message.id,
         );
-        console.log('Emitting saved message:', savedMessage);
+
+        this.logger.log(`Emitting saved message ID ${savedMessage.id}`);
 
         // Emit the saved message to both sender and receiver rooms
-        this.server
-          .to([message.senderId, message.receiverId])
-          .emit('receiveMessage', {
-            id: savedMessage.id,
-            senderId: savedMessage.sender.id,
-            receiverId: savedMessage.receiver.id,
-            text: savedMessage.message,
-            timestamp: savedMessage.createdAt,
-            isRead: savedMessage.isRead,
-          });
+        this.server.to([message.senderId, message.receiverId]).emit('receiveMessage', {
+          id: savedMessage.id,
+          senderId: savedMessage.sender.id,
+          receiverId: savedMessage.receiver.id,
+          text: savedMessage.message,
+          timestamp: savedMessage.createdAt,
+          isRead: savedMessage.isRead,
+        });
       } else {
-        console.error(
+        this.logger.error(
           'Invalid chat roles: Chats can only occur between an employer and a freelancer',
         );
       }
     } catch (error) {
-      console.error('Error saving message:', error);
+      this.logger.error('Error sending message:', error);
     }
   }
 
-  // Handle joining rooms
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(
     @MessageBody() data: { roomId: string },
@@ -170,13 +178,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // Join the client to the specified room
       client.join(data.roomId);
-      this.logger.log(`Received joinRoom event for room ID: ${data.roomId} from user ID: ${client.data.userId}`);
+      this.logger.log(
+        `User ${client.data.userId} joined room ${data.roomId}`,
+      );
     } catch (error) {
       this.logger.error('Error joining room:', error.message);
     }
   }
 
-  // Handle marking messages as read
   @SubscribeMessage('markAsRead')
   async handleMarkAsRead(
     @MessageBody() data: { senderId: string; receiverId: string },
@@ -189,10 +198,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Notify the sender that their messages have been read
       this.server.to(senderId).emit('messagesRead', { senderId, receiverId });
     } catch (error) {
-      console.error('Error marking messages as read:', error);
+      this.logger.error('Error marking messages as read:', error);
     }
   }
 }
-
-
-
