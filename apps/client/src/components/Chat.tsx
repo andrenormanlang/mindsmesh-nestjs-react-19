@@ -3,7 +3,7 @@ import { User } from "../types/types";
 import { Button } from "./shadcn/ui/button";
 import { Card, CardHeader, CardContent, CardFooter } from "./shadcn/ui/card";
 import { Input } from "./shadcn/ui/input";
-import { Send, Loader2, MoreVertical } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { getChatMessages, createRoom } from "../services/MindsMeshAPI";
 import { v4 as uuidv4 } from "uuid";
@@ -25,7 +25,7 @@ const formatTime = (date: Date) => {
 
 const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
   chatPartner,
-  onClose,
+
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -271,14 +271,7 @@ const Chat: React.FC<{ chatPartner?: User | null; onClose?: () => void }> = ({
                 )}
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hover:bg-gray-100 rounded-full"
-              onClick={onClose}
-            >
-              <MoreVertical className="h-5 w-5 text-gray-500" />
-            </Button>
+            
           </div>
         ) : (
           <div className="flex-1 text-center">

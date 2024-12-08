@@ -1,8 +1,11 @@
-import React, { useEffect, useState, useCallback, useMemo, useContext } from "react";
+import React, { useEffect, useState, useCallback, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { GradientContext } from "../contexts/GradientContext";
 import { UserContext } from "../contexts/UserContext";
 import { SocketContext } from "../contexts/SocketContext";
+import { useAtom } from "jotai"; // Import from Jotai
+import { unreadCountsAtom } from "../atoms/unreadCountsAtom"; // Our global atom
+
 import HipsterChubbyCat from "../assets/Hipster-Chubby-Cat.webp";
 import HipsterChubbyCat2 from "../assets/Hipster-Chubby-Cat-2.webp";
 import { Input } from "../components/shadcn/ui/input";
@@ -31,15 +34,22 @@ const HomePage = () => {
   const [usersWithSkills, setUsersWithSkills] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResultPhrase, setSearchResultPhrase] = useState<string | null>(null);
+  const [searchResultPhrase, setSearchResultPhrase] = useState<string | null>(
+    null
+  );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isRoomsModalOpen, setIsRoomsModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [unreadCounts, setUnreadCounts] = useState<{ [key: string]: number }>({});
-  const [onlineFreelancers, setOnlineFreelancers] = useState<Set<string>>(new Set());
+
+  // Use the atom for unreadCounts
+  const [unreadCounts, setUnreadCounts] = useAtom(unreadCountsAtom);
+
+  const [onlineFreelancers, setOnlineFreelancers] = useState<Set<string>>(
+    new Set()
+  );
 
   const navigate = useNavigate();
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -55,8 +65,6 @@ const HomePage = () => {
   }
 
   const { refreshUser, setUser } = userContext;
-
-  // Memoize refreshUser to prevent it from changing on every render
   const memoizedRefreshUser = useCallback(refreshUser, []);
 
   // Fetch Users and Profiles
@@ -94,29 +102,28 @@ const HomePage = () => {
     loadUsersAndProfile();
   }, [debouncedSearchQuery, memoizedRefreshUser, userContext?.user?.role]);
 
-  // Fetch unread counts on component mount and periodically
+  // Fetch unread counts once on mount
   useEffect(() => {
     const fetchUnread = async () => {
       try {
         const counts = await getUnreadCounts();
         console.log("Fetched unread counts:", counts);
-        setUnreadCounts(counts);
+        setUnreadCounts(counts); // Store in Jotai atom
       } catch (error) {
         console.error("Failed to fetch unread counts", error);
       }
     };
 
     fetchUnread();
-  }, []); // Empty dependency array ensures this runs once on mount
+  }, [setUnreadCounts]);
 
-  // Handle WebSocket events for real-time updates
+  // Set up global socket listeners for message events, so that unread counts update in real-time
   useEffect(() => {
-    if (socket && userContext.user?.id) {
-      const currentUserId = userContext.user.id;
-
+    if (socket && userContext.user) {
+      // When a message is received and the current user is a freelancer
       const handleReceiveMessage = (message: any) => {
-        console.log("Received message:", message);
-        if (message.receiverId === currentUserId) {
+        if (message.receiverId === userContext.user?.id) {
+          // Increase the unread count globally
           setUnreadCounts((prev) => ({
             ...prev,
             [message.senderId]: (prev[message.senderId] || 0) + 1,
@@ -124,12 +131,18 @@ const HomePage = () => {
         }
       };
 
-      const handleMessagesRead = (data: { senderId: string; receiverId: string }) => {
-        console.log("Messages read:", data);
-        setUnreadCounts((prev) => ({
-          ...prev,
-          [data.senderId]: 0,
-        }));
+      // When messages are read
+      const handleMessagesRead = (data: {
+        senderId: string;
+        receiverId: string;
+      }) => {
+        if (data.receiverId === userContext.user?.id) {
+          // Reset unread count for that sender
+          setUnreadCounts((prev) => ({
+            ...prev,
+            [data.senderId]: 0,
+          }));
+        }
       };
 
       socket.on("receiveMessage", handleReceiveMessage);
@@ -140,13 +153,17 @@ const HomePage = () => {
         socket.off("messagesRead", handleMessagesRead);
       };
     }
-  }, [socket, userContext.user?.id]);
+  }, [socket, userContext.user, setUnreadCounts]);
 
-  // Listen for freelancer online/offline events if user is employer
+  // Handle Online/Offline for freelancers if user is employer
   useEffect(() => {
-    if (socket && userContext.user?.role === 'employer') {
+    if (socket && userContext.user?.role === "employer") {
+      const handleConnect = () => {
+        socket.emit("requestOnlineUsers");
+      };
+
       const handleUserOnline = (data: { userId: string }) => {
-        setOnlineFreelancers((prev) => new Set(prev).add(data.userId));
+        setOnlineFreelancers((prev) => new Set([...prev, data.userId]));
       };
 
       const handleUserOffline = (data: { userId: string }) => {
@@ -157,12 +174,20 @@ const HomePage = () => {
         });
       };
 
-      socket.on('userOnline', handleUserOnline);
-      socket.on('userOffline', handleUserOffline);
+      const handleOnlineUsers = (data: { userIds: string[] }) => {
+        setOnlineFreelancers(new Set(data.userIds));
+      };
+
+      socket.on("onlineUsers", handleOnlineUsers);
+      socket.on("connect", handleConnect);
+      socket.on("userOnline", handleUserOnline);
+      socket.on("userOffline", handleUserOffline);
 
       return () => {
-        socket.off('userOnline', handleUserOnline);
-        socket.off('userOffline', handleUserOffline);
+        socket.off("onlineUsers", handleOnlineUsers);
+        socket.off("connect", handleConnect);
+        socket.off("userOnline", handleUserOnline);
+        socket.off("userOffline", handleUserOffline);
       };
     }
   }, [socket, userContext.user?.role]);
@@ -176,7 +201,7 @@ const HomePage = () => {
     [navigate]
   );
 
-  // Function to close all modals
+  // Close all modals
   const closeAllModals = () => {
     setIsEditModalOpen(false);
     setIsDeleteModalOpen(false);
@@ -197,15 +222,12 @@ const HomePage = () => {
     setIsDeleteModalOpen(true);
   }, []);
 
-  const openViewModal = useCallback(
-    (user: User, event: React.MouseEvent) => {
-      event.stopPropagation();
-      closeAllModals();
-      setSelectedUser(user);
-      setIsViewModalOpen(true);
-    },
-    []
-  );
+  const openViewModal = useCallback((user: User, event: React.MouseEvent) => {
+    event.stopPropagation();
+    closeAllModals();
+    setSelectedUser(user);
+    setIsViewModalOpen(true);
+  }, []);
 
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -223,49 +245,16 @@ const HomePage = () => {
         userContext?.user?.role === "freelancer" &&
         userContext.user.id === user.id
       ) {
-        // Freelancer clicks on their own card to see rooms
+        // Freelancer sees their rooms
         setSelectedUser(user);
         setIsRoomsModalOpen(true);
       } else {
-        // Employer clicks to chat with a freelancer
+        // Employer chats with freelancer
         setSelectedUser(user);
         setIsChatModalOpen(true);
       }
     },
     [userContext?.user]
-  );
-
-  const memoizedUserCards = useMemo(
-    () =>
-      usersWithSkills
-        .filter((user) => user.role !== "employer") // Exclude employers
-        .map((user) => (
-          <UserCard
-            key={user.id}
-            user={user}
-            isOnline={onlineFreelancers.has(user.id)} // Pass isOnline prop
-            unreadCount={unreadCounts[user.id] || 0} // Pass unreadCount for individual users
-            unreadCounts={unreadCounts} // Pass the entire unreadCounts object
-            onViewDetails={openViewModal}
-            onEdit={
-              userContext?.user?.id === user.id ? openEditModal : undefined
-            }
-            onDelete={
-              userContext?.user?.id === user.id ? openDeleteModal : undefined
-            }
-            onChat={openChatOrRoomsModal}
-          />
-        )),
-    [
-      usersWithSkills,
-      openViewModal,
-      openEditModal,
-      openDeleteModal,
-      openChatOrRoomsModal,
-      userContext?.user,
-      unreadCounts,
-      onlineFreelancers,
-    ]
   );
 
   return (
@@ -305,7 +294,29 @@ const HomePage = () => {
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4 sm:p-8">
-            {memoizedUserCards}
+            {usersWithSkills
+              .filter((user) => user.role !== "employer")
+              .map((user) => (
+                <UserCard
+                  key={user.id}
+                  user={user}
+                  isOnline={onlineFreelancers.has(user.id)}
+                  unreadCount={unreadCounts[user.id] || 0}
+                  unreadCounts={unreadCounts}
+                  onViewDetails={openViewModal}
+                  onEdit={
+                    userContext?.user?.id === user.id
+                      ? openEditModal
+                      : undefined
+                  }
+                  onDelete={
+                    userContext?.user?.id === user.id
+                      ? openDeleteModal
+                      : undefined
+                  }
+                  onChat={openChatOrRoomsModal}
+                />
+              ))}
           </div>
         </>
       )}
@@ -353,7 +364,7 @@ const HomePage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Rooms Modal */}
+      {/* Rooms Modal (Freelancer's Rooms) */}
       <Dialog open={isRoomsModalOpen} onOpenChange={setIsRoomsModalOpen}>
         <DialogContent className="w-full sm:max-w-[500px] p-4">
           {userContext.user && (

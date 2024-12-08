@@ -12,7 +12,7 @@ import {
   CarouselPrevious,
 } from "./shadcn/ui/carousel";
 import DefaultImage from "../assets/default-image.webp";
-import { SocketContext } from "../contexts/SocketContext"; // Import SocketContext for real-time updates
+import { SocketContext } from "../contexts/SocketContext";
 
 interface UserCardProps {
   user: User;
@@ -188,7 +188,13 @@ const UserCard: React.FC<UserCardProps> = ({
             ) : currentUser.role === "employer" &&
               user.role === "freelancer" ? (
               <button
-                onClick={(e) => onChat && onChat(user, e)}
+                onClick={(e) => {
+                  // Reset dynamic unread count before calling onChat
+                  setDynamicUnreadCount(0);
+                  if (onChat) {
+                    onChat(user, e);
+                  }
+                }}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm relative flex items-center"
                 aria-label={`Chat with ${user.username}`}
               >
@@ -227,4 +233,3 @@ const UserCard: React.FC<UserCardProps> = ({
 };
 
 export default UserCard;
-
