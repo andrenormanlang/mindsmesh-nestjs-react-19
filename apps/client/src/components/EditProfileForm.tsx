@@ -1,26 +1,17 @@
-// EditProfileForm.tsx
-
-import React, { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useState, useEffect, useActionState } from "react";
 import { Button } from "./shadcn/ui/button";
 import { Input } from "./shadcn/ui/input";
 import { Label } from "./shadcn/ui/label";
 import { Dialog } from "./shadcn/ui/dialog";
-import { Skill, User } from "../types/types";
+import { User } from "../types/types";
 import EditSkillsForm from "./EditSkillsForm";
 import { updateUser } from "../services/MindsMeshAPI";
 import DeleteImage from "./DeleteImageConfirm";
 import { useToast } from "./shadcn/ui/use-toast";
 import ChangePasswordForm from "./ChangePasswordForm";
-import { X } from "lucide-react";
-
-type ProfileFormData = {
-  username: string;
-  avatarFiles: File[];
-  skills: Skill[];
-  avatarFile?: File;
-  skillImageFiles: File[];
-};
+import ImagePreview from "./ImagePreview";
+import AvatarUpload from "./AvatarUpload";
+import SkillImagesUpload from "./SkillImagesUpload";
 
 type EditProfileFormProps = {
   user: User;
@@ -29,56 +20,52 @@ type EditProfileFormProps = {
 
 const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
   const { toast } = useToast();
+
+  // State for UI elements
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     user.avatarUrl || null
   );
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] =
     useState(false);
-  const [existingskillImageUrls, setExistingskillImageUrls] = useState<string[]>(
-    user.skillImageUrls || []
-  );
+  const [existingSkillImageUrls, setExistingSkillImageUrls] = useState<
+    string[]
+  >(user.skillImageUrls || []);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [targetDeleteIndex, setTargetDeleteIndex] = useState<number | null>(
     null
   );
+  const [isDeleteExisting, setIsDeleteExisting] = useState<boolean>(true);
+  const [selectedSkillFiles, setSelectedSkillFiles] = useState<File[]>([]);
 
-  const {
-    control,
-    handleSubmit,
-    getValues,
-    setValue,
-    formState: { errors },
-  } = useForm<ProfileFormData>({
-    defaultValues: {
-      username: user.username,
-      avatarFiles: [],
-      skills: user.skills,
-    },
-  });
+  // State for skill image previews
+  const [skillImagePreviews, setSkillImagePreviews] = useState<string[]>([]);
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setValue("avatarFile", file);
-      setAvatarPreview(URL.createObjectURL(file));
-    }
-  };
+  // State for form validation
+  const [usernameError, setUsernameError] = useState<string | null>(null);
 
-  const handleRemoveAvatar = () => {
-    setAvatarPreview(null);
-    setValue("avatarFile", undefined);
-  };
-
-  const handleFormSubmit = async (data: ProfileFormData) => {
+  const submitHandler = async (
+    _previousState: any,
+    formData: FormData
+  ): Promise<string | null> => {
     try {
-      const updatedUser = await updateUser({
-        id: user.id,
-        username: data.username,
-        skillImageUrls: existingskillImageUrls,
-        avatarFile: data.avatarFile,
-      });
+      const username = formData.get("username") as string;
+      const avatarFile = formData.get("avatarFile") as File | null;
 
+      // Validate username before submission
+      if (usernameError) {
+        return "Please resolve the errors before submitting.";
+      }
+
+      const userData = {
+        id: user.id,
+        username,
+        avatarFile: avatarFile || undefined,
+        skillImageUrls: existingSkillImageUrls, 
+        newSkillImages: selectedSkillFiles, 
+      };
+
+      const updatedUser = await updateUser(userData);
       setUser(updatedUser);
 
       toast({
@@ -88,124 +75,180 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
         duration: 3000,
       });
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000);
-    } catch (error) {
+      if (avatarFile) {
+        setAvatarPreview(URL.createObjectURL(avatarFile));
+      }
+      setSelectedSkillFiles([]);
+      setSkillImagePreviews([]);
+
+      return null;
+    } catch (error: any) {
       console.error("Failed to update profile:", error);
 
       toast({
         title: "Update Failed",
         description:
+          error.message ||
           "There was an issue updating your profile. Please try again.",
         variant: "destructive",
         duration: 5000,
       });
+
+      // Return the error message
+      return error.message;
     }
+  };
+
+  const [error, submitAction, isPending] = useActionState(submitHandler, null);
+
+  // Handlers for avatar upload and removal
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarPreview(null);
   };
 
   const handleSkillImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const files = Array.from(e.target.files);
-      setValue("skillImageFiles", [...getValues("skillImageFiles"), ...files]);
+      const filesArray = Array.from(e.target.files);
+      const validFiles = filesArray.filter((file) => {
+        const isValidType = [
+          "image/jpeg",
+          "image/png",
+          "image/gif",
+          "image/avif",
+          "image/webp",
+          "image/svg+xml",
+          "image/bmp",
+          "image/tiff",
+          "image/jpg",
+        ].includes(file.type);
+        const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+        return isValidType && isValidSize;
+      });
+
+      if (validFiles.length !== filesArray.length) {
+        toast({
+          title: "Invalid Files",
+          description:
+            "Some files were not uploaded because they are either not images or exceed 5MB.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
+
+      const previews = validFiles.map((file) => URL.createObjectURL(file));
+      setSkillImagePreviews((prev) => [...prev, ...previews]);
+      setSelectedSkillFiles((prev) => [...prev, ...validFiles]); 
+
+
+      e.target.value = "";
     }
   };
 
-  const handleDeleteImageRequest = (index: number) => {
+  const handleDeleteImageRequest = (index: number, isExisting: boolean) => {
     setTargetDeleteIndex(index);
+    setIsDeleteExisting(isExisting);
     setIsDeleteModalOpen(true);
   };
 
   const confirmDeleteImage = () => {
     if (targetDeleteIndex !== null) {
-      if (targetDeleteIndex < existingskillImageUrls.length) {
-        const updatedUrls = existingskillImageUrls.filter(
+      if (isDeleteExisting) {
+        // Deleting an existing skill image
+        const updatedUrls = existingSkillImageUrls.filter(
           (_, i) => i !== targetDeleteIndex
         );
-        setExistingskillImageUrls(updatedUrls);
+        setExistingSkillImageUrls(updatedUrls);
       } else {
-        const newIndex = targetDeleteIndex - existingskillImageUrls.length;
-        const updatedFiles = getValues("avatarFiles").filter(
-          (_, i) => i !== newIndex
+
+        const previewToDelete = skillImagePreviews[targetDeleteIndex];
+        URL.revokeObjectURL(previewToDelete); // Revoke the URL
+        const updatedPreviews = skillImagePreviews.filter(
+          (_, i) => i !== targetDeleteIndex
         );
-        setValue("avatarFiles", updatedFiles);
+        setSkillImagePreviews(updatedPreviews);
       }
       setIsDeleteModalOpen(false);
       setTargetDeleteIndex(null);
+      setIsDeleteExisting(true); 
     }
   };
 
+  // Handle username validation
+  const validateUsername = (username: string) => {
+    if (username.length < 3) {
+      setUsernameError("Username must be at least 3 characters long.");
+    } else {
+      setUsernameError(null);
+    }
+  };
+
+  // Cleanup object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      skillImagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    };
+  }, [skillImagePreviews, avatarPreview]);
+
   return (
     <>
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-        <div>
-          <Label htmlFor="avatar">Avatar Image</Label>
-          <Input type="file" onChange={handleAvatarUpload} />
-          {avatarPreview && (
-            <div className="mt-4 relative">
-              <img
-                src={avatarPreview}
-                alt="Avatar Preview"
-                className="w-32 h-32 object-cover rounded-full"
-              />
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2"
-                onClick={handleRemoveAvatar}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </div>
+      <form action={submitAction} className="space-y-6 max-w-2xl mx-auto p-4">
+        {/* Avatar Upload Section */}
+        <AvatarUpload
+          avatarPreview={avatarPreview}
+          onUpload={handleAvatarUpload}
+          onRemove={handleRemoveAvatar}
+        />
 
-        <div>
+        {/* Username Input */}
+        <div className="flex flex-col">
           <Label htmlFor="username">Username</Label>
-          <Controller
+          <Input
+            id="username"
             name="username"
-            control={control}
-            rules={{ required: "Username is required" }}
-            render={({ field }) => (
-              <Input {...field} placeholder="Username" className="w-full" />
-            )}
+            defaultValue={user.username}
+            placeholder="Username"
+            required
+            onBlur={(e) => validateUsername(e.target.value)}
           />
-          {errors.username && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.username.message}
-            </p>
+          {usernameError && (
+            <p className="text-red-500 text-sm mt-1">{usernameError}</p>
           )}
         </div>
 
-        {/* Skills Section Only Available for Non-Employers */}
+        {/* Skills Section */}
         {user.role !== "employer" && (
           <>
-            <div>
-              <Label htmlFor="skillImages">Skill Images</Label>
-              <Input type="file" multiple onChange={handleSkillImagesUpload} />
-              <div>
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  {[
-                    ...existingskillImageUrls,
-                    ...getValues("avatarFiles").map((file) =>
-                      URL.createObjectURL(file)
-                    ),
-                  ].map((url, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={url}
-                        alt={`Avatar ${index + 1}`}
-                        className="h-20 w-full object-cover rounded-md"
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => handleDeleteImageRequest(index)}
-                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 m-1"
-                      >
-                        &times;
-                      </Button>
-                    </div>
+            <div className="flex flex-col">
+              <Label htmlFor="skillImageFiles">Skill Images</Label>
+              <SkillImagesUpload onUpload={handleSkillImagesUpload} />
+              <div className="mt-2 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {/* Existing Skill Images */}
+                  {existingSkillImageUrls.map((url, index) => (
+                    <ImagePreview
+                      key={`existing-${index}`}
+                      src={url}
+                      alt={`Skill ${index + 1}`}
+                      onDelete={() => handleDeleteImageRequest(index, true)}
+                    />
+                  ))}
+
+                  {/* Newly Uploaded Skill Images */}
+                  {skillImagePreviews.map((preview, index) => (
+                    <ImagePreview
+                      key={`new-${index}`}
+                      src={preview}
+                      alt={`New Skill ${index + 1}`}
+                      onDelete={() => handleDeleteImageRequest(index, false)}
+                    />
                   ))}
                 </div>
               </div>
@@ -214,13 +257,14 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
             <Button
               type="button"
               onClick={() => setIsSkillsModalOpen(true)}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white mt-4"
             >
               Edit Skills
             </Button>
           </>
         )}
 
+        {/* Change Password Button */}
         <Button
           type="button"
           onClick={() => setIsChangePasswordModalOpen(true)}
@@ -229,12 +273,48 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
           Change Password
         </Button>
 
+        {/* Submit Button */}
         <Button
           type="submit"
-          className="w-full bg-green-500 hover:bg-green-600 text-white"
+          disabled={isPending || !!usernameError}
+          className={`w-full flex items-center justify-center ${
+            isPending || !!usernameError
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-500 hover:bg-green-600"
+          } text-white`}
         >
-          Update Profile
+          {isPending ? (
+            <>
+              <svg
+                className="animate-spin h-5 w-5 mr-3 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-label="Loading"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                ></path>
+              </svg>
+              Updating...
+            </>
+          ) : (
+            "Update Profile"
+          )}
         </Button>
+
+        {/* Error Message */}
+        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
       </form>
 
       {/* Skills Modal */}
@@ -257,6 +337,7 @@ const EditProfileForm = ({ user, setUser }: EditProfileFormProps) => {
         />
       </Dialog>
 
+      {/* Delete Image Confirmation Modal */}
       <DeleteImage
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}

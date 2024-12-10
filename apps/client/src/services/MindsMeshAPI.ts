@@ -1,3 +1,5 @@
+"use server";
+
 import axios, { AxiosError } from "axios";
 import { User, Skill, UserAuth, Room } from "../types/types";
 
@@ -160,7 +162,7 @@ export const updateUser = async (data: {
   password?: string;
   skillImageUrls?: string[];
   avatarFile?: File;
-  skills?: Skill[];
+  newSkillImages?: File[];
 }): Promise<User> => {
   const formData = new FormData();
 
@@ -176,6 +178,12 @@ export const updateUser = async (data: {
     formData.append("avatar", data.avatarFile);
   }
 
+  if (data.newSkillImages && data.newSkillImages.length > 0) {
+    data.newSkillImages.forEach((file) => {
+      formData.append("skillFiles", file); // Key matches backend expectation
+    });
+  }
+
   const response = await api.put(`/users/${data.id}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
@@ -183,6 +191,7 @@ export const updateUser = async (data: {
   });
   return response.data;
 };
+
 
 // Admin Management
 export const manageUserRoles = async (
