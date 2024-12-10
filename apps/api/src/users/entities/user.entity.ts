@@ -54,7 +54,7 @@ export class User {
       'https://example.com/image1.png',
       'https://example.com/image2.png',
     ],
-    description: 'Array of image URLs associated with the user',
+    description: 'Array of image URLs associated with the users skills',
     required: false,
     type: [String],
   })

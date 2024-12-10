@@ -15,6 +15,8 @@ import * as crypto from 'crypto';
 import { CreateUserDto } from './dto/create-user-service.dto';
 import { Skill } from '../skills/entities/skill.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CloudinaryService } from '@/cloudinary/cloudinary.service';
+import { UploadApiResponse } from 'cloudinary';
 
 @Injectable()
 export class UsersService {
@@ -26,7 +28,8 @@ export class UsersService {
     private readonly skillsRepository: Repository<Skill>,
 
     private readonly configService: ConfigService,
-    private readonly sendGridService: SendGridService
+    private readonly sendGridService: SendGridService,
+    private readonly cloudinaryService: CloudinaryService, 
   ) {}
 
   async findByEmail(email: string): Promise<User | undefined> {
@@ -169,13 +172,14 @@ export class UsersService {
     return users;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(id: string, updateUserDto: UpdateUserDto, skillFiles?: Express.Multer.File[]): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id },
       relations: ['skills'],
     });
 
     if (!user) throw new NotFoundException('User not found');
+
     // Update fields if provided
     if (updateUserDto.email) {
       user.email = updateUserDto.email;
@@ -186,7 +190,6 @@ export class UsersService {
     if (updateUserDto.isEmailVerified !== undefined) {
       user.isEmailVerified = updateUserDto.isEmailVerified;
     }
-
     if (updateUserDto.role) {
       user.role = updateUserDto.role;
     }
@@ -202,14 +205,26 @@ export class UsersService {
     if (updateUserDto.password) {
       user.password = await bcrypt.hash(updateUserDto.password, 10);
     }
-
     if (updateUserDto.isOnline !== undefined) {
       user.isOnline = updateUserDto.isOnline;
     }
 
+    // Handle new skill images
+    if (skillFiles && skillFiles.length > 0) {
+      const uploadedUrls = await Promise.all(
+        skillFiles.map(file => this.cloudinaryService.uploadImage(file))
+      );
+
+      // Filter out any failed uploads
+      const successfulUploads = uploadedUrls.filter((result): result is UploadApiResponse => (result as UploadApiResponse).secure_url !== undefined);
+
+      const newSkillImageUrls = successfulUploads.map(result => result.secure_url);
+      user.skillImageUrls = [...(user.skillImageUrls || []), ...newSkillImageUrls];
+    }
+
     // Add new skills if provided
     if (updateUserDto.skills && updateUserDto.skills.length > 0) {
-      const skills = updateUserDto.skills.map((skillDto) => {
+      const skills = updateUserDto.skills.map(skillDto => {
         return this.skillsRepository.create({
           ...skillDto,
           user: user,

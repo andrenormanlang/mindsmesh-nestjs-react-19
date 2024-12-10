@@ -110,30 +110,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     message: { id: string; senderId: string; receiverId: string; text: string },
     @ConnectedSocket() client: Socket,
   ) {
-    this.logger.log(
-      `Received message from ${message.senderId} to ${message.receiverId}: ${message.text}`,
-    );
-
     try {
-      // Prevent sending a message to oneself
-      if (message.senderId === message.receiverId) {
-        this.logger.error('Sender and receiver cannot be the same.');
-        return;
-      }
-
       const sender = await this.chatService.getUserById(message.senderId);
       const receiver = await this.chatService.getUserById(message.receiverId);
 
-      // Ensure chat is only between employer and freelancer
       if (
         (sender.role === 'freelancer' && receiver.role === 'employer') ||
         (sender.role === 'employer' && receiver.role === 'freelancer')
       ) {
-        // Check if a room already exists
         let room = await this.chatService.findRoomBetweenUsers(sender, receiver);
 
         if (!room) {
-          // Create a new room if it doesn't exist
           room = await this.roomsService.createRoom(
             sender.id,
             receiver.id,
@@ -141,7 +128,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           );
         }
 
-        // Save the message to the database
         const savedMessage = await this.chatService.sendMessageWithId(
           sender,
           receiver,
@@ -149,9 +135,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           message.id,
         );
 
-        this.logger.log(`Emitting saved message ID ${savedMessage.id}`);
-
-        // Emit the saved message to both sender and receiver rooms
         this.server.to([message.senderId, message.receiverId]).emit('receiveMessage', {
           id: savedMessage.id,
           senderId: savedMessage.sender.id,
@@ -160,10 +143,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           timestamp: savedMessage.createdAt,
           isRead: savedMessage.isRead,
         });
-      } else {
-        this.logger.error(
-          'Invalid chat roles: Chats can only occur between an employer and a freelancer',
-        );
+
+        this.server.to(message.senderId).emit('messageDelivered', {
+          id: savedMessage.id,
+          timestamp: savedMessage.createdAt,
+        });
       }
     } catch (error) {
       this.logger.error('Error sending message:', error);
@@ -192,13 +176,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     const { senderId, receiverId } = data;
+    this.logger.log(`markAsRead event received - senderId: ${senderId}, receiverId: ${receiverId}`);
+  
     try {
       await this.chatService.markMessagesAsRead(senderId, receiverId);
-
-      // Notify the sender that their messages have been read
       this.server.to(senderId).emit('messagesRead', { senderId, receiverId });
+      this.logger.log(`Messages from ${senderId} to ${receiverId} marked as read`);
     } catch (error) {
       this.logger.error('Error marking messages as read:', error);
     }
   }
+  
 }

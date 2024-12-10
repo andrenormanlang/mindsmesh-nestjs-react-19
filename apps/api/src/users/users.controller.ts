@@ -231,11 +231,12 @@ export class UsersController {
     return plainToClass(UserResponseDto, user);
   }
 
+  
   @Put(':id')
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'avatar', maxCount: 1 },
-      { name: 'skillFiles', maxCount: 10 },
+      { name: 'skillFiles', maxCount: 10 }, 
     ])
   )
   @ApiOperation({ summary: 'Update a user by ID' })
@@ -260,38 +261,11 @@ export class UsersController {
       skillFiles?: Express.Multer.File[];
     }
   ): Promise<UserResponseDto> {
-    if (!this.isValidUUID(id)) {
-      throw new BadRequestException('Invalid UUID');
-    }
+    // Optional: Log incoming files for debugging
+    console.log('Received skillFiles:', files.skillFiles);
+    console.log('Received avatar:', files.avatar);
 
-    if (files.avatar && files.avatar.length > 0) {
-      try {
-        console.log('Attempting to upload avatar:', files.avatar[0]);
-        const uploadResult = await this.cloudinaryService.uploadImage(files.avatar[0]);
-        userDto.avatarUrl = uploadResult.secure_url;
-      } catch (error) {
-        console.error('Error uploading avatar:', error);
-        throw new InternalServerErrorException('Error uploading avatar.');
-      }
-    }
-
-    if (files.skillFiles && files.skillFiles.length > 0) {
-      try {
-        console.log('Attempting to upload skill images:', files.skillFiles);
-        const uploadResults = await Promise.all(
-          files.skillFiles.map((file) => this.cloudinaryService.uploadImage(file))
-        );
-        const uploadedUrls = uploadResults.map((result) => result.secure_url);
-        userDto.skillImageUrls = [
-          ...(userDto.skillImageUrls || []),
-          ...uploadedUrls,
-        ];
-      } catch (error) {
-        console.error('Error uploading skill images:', error);
-        throw new InternalServerErrorException('Error uploading skill images.');
-      }
-    }
-    const updatedUser = await this.usersService.update(id, userDto);
+    const updatedUser = await this.usersService.update(id, userDto, files.skillFiles);
     return plainToClass(UserResponseDto, updatedUser);
   }
 
