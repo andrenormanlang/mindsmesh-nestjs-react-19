@@ -42,15 +42,17 @@ export type SkillData = {
   price: number;
   isAvailable: boolean;
 };
-
 interface Message {
   id: string;
   senderId: string;
   receiverId: string;
   text: string;
   timestamp: Date;
-  status?: "sending" | "sent" | "error";
+  status?: "sending" | "sent" | "read" | "error";
+  isRead?: boolean;
+  readAt?: Date;
 }
+
 
 export type Room = {
   id: string;
