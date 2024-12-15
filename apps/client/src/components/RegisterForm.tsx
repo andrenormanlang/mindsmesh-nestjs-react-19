@@ -7,10 +7,25 @@ import { register } from "../services/MindsMeshAPI";
 import { Card } from "./shadcn/ui/card";
 import { Eye, EyeOff, Loader2, Upload, X } from "lucide-react";
 import { cn } from "./lib/utils";
+import { z } from "zod";
 
 type RegisterFormProps = {
   onClose: () => void;
 };
+
+// Zod schema for form inputs
+const registerSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  email: z.string().email("Please enter a valid email"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters long")
+    .regex(
+      /^(?=.*[0-9])(?=.*[!@#$%^&*])/,
+      "Password must contain at least one number and one special character"
+    ),
+  role: z.enum(["freelancer", "employer"]),
+});
 
 export default function RegisterForm({ onClose }: RegisterFormProps) {
   const { toast } = useToast();
@@ -19,15 +34,20 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<"freelancer" | "employer">("freelancer");
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-
-  // Store selected files in state so we can show previews before submitting.
-  // These will be included in the FormData when the user submits the form.
+  
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  
+  // State to hold individual field errors
+  const [fieldErrors, setFieldErrors] = useState<{
+    username?: string;
+    email?: string;
+    password?: string;
+    role?: string;
+  }>({});
 
   const handleRoleSelection = (selectedRole: "freelancer" | "employer") => {
     setRole(selectedRole);
-    // Clear skill images if switching to employer
     if (selectedRole === "employer") {
       setSelectedFiles([]);
       setImagePreviews([]);
@@ -125,7 +145,6 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
       newFiles.push(file);
     }
 
-    // Update state
     setSelectedFiles((prev) => [...prev, ...newFiles]);
     const filePreviews = newFiles.map((file) => URL.createObjectURL(file));
     setImagePreviews((prev) => [...prev, ...filePreviews]);
@@ -137,18 +156,46 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Define the action function for useActionState
-  // It receives (previousState, formData) and returns either null on success or an error message.
   const [error, submitAction, isPending] = useActionState(
     async (_: unknown, formData: FormData) => {
-      try {
-        const username = formData.get("username")?.toString().trim() || "";
-        const email = formData.get("email")?.toString().trim() || "";
-        const password = formData.get("password")?.toString() || "";
-        const role = formData.get("role")?.toString() as "freelancer" | "employer";
+      // Reset field errors each submission attempt
+      setFieldErrors({});
 
-        // Get avatar file from our state since we used a controlled input for preview
-        // If you prefer, you can rely on formData.get("avatarFile") if you do not manage previews.
+      try {
+        const rawData = {
+          username: formData.get("username")?.toString().trim() || "",
+          email: formData.get("email")?.toString().trim() || "",
+          password: formData.get("password")?.toString() || "",
+          role: (formData.get("role")?.toString() as "freelancer" | "employer") || "freelancer"
+        };
+
+        // Use safeParse to get a result object
+        const result = registerSchema.safeParse(rawData);
+
+        if (!result.success) {
+          // Validation failed, collect field-level errors
+          const newFieldErrors: { [k: string]: string } = {};
+          for (const issue of result.error.issues) {
+            const fieldName = issue.path[0]; // e.g. "username", "email"
+            if (typeof fieldName === "string") {
+              newFieldErrors[fieldName] = issue.message;
+            }
+          }
+
+          setFieldErrors(newFieldErrors);
+          // Return a generic message or join all messages
+          const message = result.error.issues.map((iss) => iss.message).join(" ");
+          toast({
+            title: "Validation Error",
+            description: message,
+            variant: "destructive",
+            duration: 5000,
+          });
+          return message;
+        }
+
+        const { username, email, password, role } = result.data;
+
         const filesToUpload = role === "freelancer" ? selectedFiles : [];
         const finalAvatarFile = avatarFile || null;
 
@@ -161,7 +208,7 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
           duration: 5000,
         });
         onClose();
-        return null; // No error
+        return null;
       } catch (err: unknown) {
         if (err instanceof Error) {
           toast({
@@ -175,13 +222,12 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
         return "An unexpected error occurred.";
       }
     },
-    null // initial state (no error initially)
+    null
   );
 
   return (
     <div className="relative max-h-[80vh] overflow-y-auto scrollbar-thin px-1">
       <Card className="p-6 w-full">
-        {/* Use the new React 19 form action */}
         <form action={submitAction} className="space-y-6">
           {/* Avatar image upload */}
           <div>
@@ -227,6 +273,9 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
               autoComplete="username"
               disabled={isPending}
             />
+            {fieldErrors.username && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.username}</p>
+            )}
           </div>
 
           {/* Email field */}
@@ -243,6 +292,9 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
               autoComplete="email"
               disabled={isPending}
             />
+            {fieldErrors.email && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
+            )}
           </div>
 
           {/* Password field */}
@@ -272,6 +324,9 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
                 )}
               </Button>
             </div>
+            {fieldErrors.password && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.password}</p>
+            )}
           </div>
 
           {/* Role selection */}
@@ -298,6 +353,9 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
                 Employer
               </Button>
             </div>
+            {fieldErrors.role && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.role}</p>
+            )}
           </div>
 
           {/* Skill Images upload for freelancers */}
@@ -326,35 +384,8 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
                   </label>
                 </div>
               </div>
-
-              {/* Image previews */}
-              {imagePreviews.length > 0 && (
-                <div className="mt-4 grid grid-cols-2 gap-4">
-                  {imagePreviews.map((src, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={src}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleRemoveImage(index)}
-                        disabled={isPending}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
-
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
           <Button type="submit" className="w-full" disabled={isPending}>
             {isPending ? (
