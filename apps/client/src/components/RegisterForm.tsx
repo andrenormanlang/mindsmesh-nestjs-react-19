@@ -1,164 +1,211 @@
-import { useState,useActionState } from "react"; 
+import { useState, useActionState } from "react";
+import { Button } from "./shadcn/ui/button";
+import { Input } from "./shadcn/ui/input";
+import { Label } from "./shadcn/ui/label";
 import { useToast } from "./shadcn/ui/use-toast";
 import { register } from "../services/MindsMeshAPI";
 import { Card } from "./shadcn/ui/card";
-import { Button } from "./shadcn/ui/button";
-import { Label } from "./shadcn/ui/label";
-import { Loader2, AlertCircle, X } from "lucide-react";
+import { Eye, EyeOff, Loader2, Upload, X } from "lucide-react";
+import { cn } from "./lib/utils";
 
 type RegisterFormProps = {
   onClose: () => void;
 };
 
-function RegisterForm({ onClose }: RegisterFormProps) {
+export default function RegisterForm({ onClose }: RegisterFormProps) {
   const { toast } = useToast();
-  const [selectedRole, setSelectedRole] = useState<"freelancer" | "employer">("freelancer");
-  const [skillImagePreviews, setSkillImagePreviews] = useState<string[]>([]);
+
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState<"freelancer" | "employer">("freelancer");
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-  const submitHandler = async (_: unknown, formData: FormData) => {
-    try {
-      const username = formData.get("username") as string | null;
-      const email = formData.get("email") as string | null;
-      const password = formData.get("password") as string | null;
-      const role = formData.get("role") as "freelancer" | "employer" | null;
-      const avatarFile = formData.get("avatarFile") as File | null;
-      const skillFiles = formData.getAll("skillImageUrls") as File[];
+  // Store selected files in state so we can show previews before submitting.
+  // These will be included in the FormData when the user submits the form.
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
-      if (!username || !email || !password || !role) {
-        return "Please fill out all required fields.";
-      }
+  const handleRoleSelection = (selectedRole: "freelancer" | "employer") => {
+    setRole(selectedRole);
+    // Clear skill images if switching to employer
+    if (selectedRole === "employer") {
+      setSelectedFiles([]);
+      setImagePreviews([]);
+    }
+  };
 
-      await register(
-        username,
-        role,
-        password,
-        email,
-        avatarFile ?? null,
-        role === "freelancer" ? skillFiles : []
-      );
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !files[0]) return;
 
+    const file = files[0];
+    const validTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/jpg",
+      "image/svg+xml",
+      "image/webp",
+      "image/tiff",
+      "image/bmp",
+      "image/avif",
+    ];
+    if (!validTypes.includes(file.type)) {
       toast({
-        title: "Welcome aboard! 🎉",
-        description: "Please check your email to verify your account.",
-        variant: "success",
-        duration: 5000,
+        title: "Invalid file type",
+        description: `${file.name} is not a supported image format`,
+        variant: "destructive",
       });
-      onClose();
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        return err.message;
-      }
-      return "An unexpected error occurred.";
+      return;
     }
-  };
-
-  const [error, submitAction, isPending] = useActionState(submitHandler, null);
-
-  // Handle role change
-  const handleRoleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newRole = event.target.value as "freelancer" | "employer";
-    setSelectedRole(newRole);
-
-    // If changing to employer, clear image previews
-    if (newRole === "employer") {
-      skillImagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
-      setSkillImagePreviews([]);
-    }
-  };
-
-  // Handle skill images change (Freelancer only)
-  const handleSkillImagesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    // Revoke previous previews
-    skillImagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
-
-    const previewUrls = Array.from(files).map((file) => URL.createObjectURL(file));
-    setSkillImagePreviews(previewUrls);
-  };
-
-  // Remove a single preview image
-  const removeImagePreview = (index: number) => {
-    URL.revokeObjectURL(skillImagePreviews[index]);
-    const newPreviews = [...skillImagePreviews];
-    newPreviews.splice(index, 1);
-    setSkillImagePreviews(newPreviews);
-  };
-
-  // Handle avatar change
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      if (avatarPreview) {
-        URL.revokeObjectURL(avatarPreview);
-      }
-      setAvatarPreview(null);
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: `${file.name} exceeds 5MB limit`,
+        variant: "destructive",
+      });
       return;
     }
 
-    // Revoke previous avatar preview if any
-    if (avatarPreview) {
-      URL.revokeObjectURL(avatarPreview);
-    }
-
-    const previewUrl = URL.createObjectURL(file);
-    setAvatarPreview(previewUrl);
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
   };
 
-  // Remove avatar preview
-  const removeAvatarPreview = () => {
+  const handleRemoveAvatar = () => {
     if (avatarPreview) {
       URL.revokeObjectURL(avatarPreview);
     }
     setAvatarPreview(null);
+    setAvatarFile(null);
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    if (files.length + selectedFiles.length > 4) {
+      toast({
+        title: "Too many images",
+        description: "You can only upload up to 4 images",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/jpg",
+      "image/svg+xml",
+      "image/webp",
+      "image/tiff",
+      "image/bmp",
+      "image/avif",
+    ];
+
+    const newFiles: File[] = [];
+    for (const file of Array.from(files)) {
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not a supported image format`,
+          variant: "destructive",
+        });
+        continue;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: `${file.name} exceeds 5MB limit`,
+          variant: "destructive",
+        });
+        continue;
+      }
+      newFiles.push(file);
+    }
+
+    // Update state
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+    const filePreviews = newFiles.map((file) => URL.createObjectURL(file));
+    setImagePreviews((prev) => [...prev, ...filePreviews]);
+  };
+
+  const handleRemoveImage = (index: number) => {
+    URL.revokeObjectURL(imagePreviews[index]);
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Define the action function for useActionState
+  // It receives (previousState, formData) and returns either null on success or an error message.
+  const [error, submitAction, isPending] = useActionState(
+    async (_: unknown, formData: FormData) => {
+      try {
+        const username = formData.get("username")?.toString().trim() || "";
+        const email = formData.get("email")?.toString().trim() || "";
+        const password = formData.get("password")?.toString() || "";
+        const role = formData.get("role")?.toString() as "freelancer" | "employer";
+
+        // Get avatar file from our state since we used a controlled input for preview
+        // If you prefer, you can rely on formData.get("avatarFile") if you do not manage previews.
+        const filesToUpload = role === "freelancer" ? selectedFiles : [];
+        const finalAvatarFile = avatarFile || null;
+
+        await register(username, role, password, email, finalAvatarFile, filesToUpload);
+
+        toast({
+          title: "Welcome aboard! 🎉",
+          description: "Please check your email to verify your account.",
+          variant: "success",
+          duration: 5000,
+        });
+        onClose();
+        return null; // No error
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          toast({
+            title: "Registration Failed",
+            description: err.message,
+            variant: "destructive",
+            duration: 5000,
+          });
+          return err.message;
+        }
+        return "An unexpected error occurred.";
+      }
+    },
+    null // initial state (no error initially)
+  );
 
   return (
     <div className="relative max-h-[80vh] overflow-y-auto scrollbar-thin px-1">
-      <Card className="p-8 w-full max-w-lg mx-auto rounded-md shadow-md bg-white">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold">Create Your Account</h1>
-          <p className="text-sm text-gray-600 mt-2">
-            Join our community to showcase your skills or find the best talent.
-          </p>
-        </div>
-        <form
-          action={submitAction}
-          encType="multipart/form-data"
-          method="post"
-          className="space-y-6"
-        >
+      <Card className="p-6 w-full">
+        {/* Use the new React 19 form action */}
+        <form action={submitAction} className="space-y-6">
+          {/* Avatar image upload */}
           <div>
-            <Label htmlFor="avatarFile" className="text-sm font-medium block mb-2">
-              Avatar Image
-            </Label>
-            <p className="text-xs text-gray-500 mb-2">
-              Optional. Helps personalize your profile.
-            </p>
-            <input
-              name="avatarFile"
-              id="avatarFile"
+            <Label className="text-sm font-medium">Avatar Image</Label>
+            <Input
               type="file"
               accept="image/*"
+              name="avatarFile"
+              onChange={handleAvatarFileChange}
               disabled={isPending}
-              onChange={handleAvatarChange}
-              className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded file:text-sm file:font-semibold hover:file:bg-gray-50"
             />
             {avatarPreview && (
-              <div className="relative mt-4 inline-block">
+              <div className="mt-4 relative">
                 <img
                   src={avatarPreview}
                   alt="Avatar Preview"
-                  className="w-24 h-24 object-cover rounded-full border border-gray-300"
+                  className="w-32 h-32 object-cover rounded-full"
                 />
                 <Button
                   type="button"
                   variant="destructive"
                   size="icon"
-                  className="absolute top-1 right-1"
-                  onClick={removeAvatarPreview}
+                  className="absolute top-2 right-2"
+                  onClick={handleRemoveAvatar}
                   disabled={isPending}
                 >
                   <X className="h-4 w-4" />
@@ -167,114 +214,135 @@ function RegisterForm({ onClose }: RegisterFormProps) {
             )}
           </div>
 
+          {/* Username field */}
           <div>
-            <Label htmlFor="username" className="text-sm font-medium block mb-2">
-              Username <span className="text-red-500">*</span>
+            <Label htmlFor="username" className="text-sm font-medium">
+              Username
             </Label>
-            <input
-              name="username"
+            <Input
               id="username"
-              placeholder="e.g. johndoe123"
+              name="username"
+              placeholder="Enter your username"
+              className="mt-1"
               autoComplete="username"
               disabled={isPending}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
+          {/* Email field */}
           <div>
-            <Label htmlFor="email" className="text-sm font-medium block mb-2">
-              Email <span className="text-red-500">*</span>
+            <Label htmlFor="email" className="text-sm font-medium">
+              Email
             </Label>
-            <input
-              name="email"
+            <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              name="email"
+              placeholder="Enter your email"
+              className="mt-1"
               autoComplete="email"
               disabled={isPending}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
+          {/* Password field */}
           <div>
-            <Label htmlFor="password" className="text-sm font-medium block mb-2">
-              Password <span className="text-red-500">*</span>
+            <Label htmlFor="password" className="text-sm font-medium">
+              Password
             </Label>
-            <p className="text-xs text-gray-500 mb-2">
-              At least 8 characters. Stronger passwords keep your account secure.
-            </p>
-            <input
-              name="password"
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              disabled={isPending}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium block mb-2">
-              I am a... <span className="text-red-500">*</span>
-            </Label>
-            <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center space-x-2 border border-gray-300 rounded p-2 hover:bg-gray-50 cursor-pointer">
-                <input
-                  type="radio"
-                  name="role"
-                  value="freelancer"
-                  defaultChecked
-                  disabled={isPending}
-                  onChange={handleRoleChange}
-                />
-                <span className="text-sm">Freelancer</span>
-              </label>
-              <label className="flex items-center space-x-2 border border-gray-300 rounded p-2 hover:bg-gray-50 cursor-pointer">
-                <input
-                  type="radio"
-                  name="role"
-                  value="employer"
-                  disabled={isPending}
-                  onChange={handleRoleChange}
-                />
-                <span className="text-sm">Employer</span>
-              </label>
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                className={cn("pr-10")}
+                disabled={isPending}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <Eye className="h-4 w-4 text-gray-500" />
+                )}
+              </Button>
             </div>
           </div>
 
-          {selectedRole === "freelancer" && (
-            <div>
-              <Label className="text-sm font-medium block mb-2">
-                Skill Images (Freelancers only)
-              </Label>
-              <p className="text-xs text-gray-500 mb-2">
-                Showcase your work by uploading images (up to 4).
-              </p>
-              <input
-                name="skillImageUrls"
-                type="file"
-                accept="image/*"
-                multiple
+          {/* Role selection */}
+          <div>
+            <Label className="text-sm font-medium">I am a...</Label>
+            <input type="hidden" name="role" value={role} />
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              <Button
+                type="button"
+                variant={role === "freelancer" ? "default" : "outline"}
+                className="w-full"
+                onClick={() => handleRoleSelection("freelancer")}
                 disabled={isPending}
-                onChange={handleSkillImagesChange}
-                className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded file:text-sm file:font-semibold hover:file:bg-gray-50"
-              />
-              {/* Preview of selected images */}
-              {skillImagePreviews.length > 0 && (
+              >
+                Freelancer
+              </Button>
+              <Button
+                type="button"
+                variant={role === "employer" ? "default" : "outline"}
+                className="w-full"
+                onClick={() => handleRoleSelection("employer")}
+                disabled={isPending}
+              >
+                Employer
+              </Button>
+            </div>
+          </div>
+
+          {/* Skill Images upload for freelancers */}
+          {role === "freelancer" && (
+            <div>
+              <Label className="text-sm font-medium">Skill Images</Label>
+              <p className="text-sm text-gray-600 mt-1">
+                Upload images to showcase your skills and previous work!
+              </p>
+              <div className="mt-2">
+                <div className="flex items-center justify-center w-full">
+                  <label className="w-full flex flex-col items-center px-4 py-6 bg-white text-blue rounded-lg shadow-lg tracking-wide uppercase border border-blue cursor-pointer hover:bg-blue hover:text-white">
+                    <Upload className="w-8 h-8" />
+                    <span className="mt-2 text-base leading-normal">
+                      Select images
+                    </span>
+                    <Input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      multiple
+                      name="skillImageUrls"
+                      onChange={handleFileChange}
+                      disabled={isPending || selectedFiles.length >= 4}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Image previews */}
+              {imagePreviews.length > 0 && (
                 <div className="mt-4 grid grid-cols-2 gap-4">
-                  {skillImagePreviews.map((preview, index) => (
+                  {imagePreviews.map((src, index) => (
                     <div key={index} className="relative group">
                       <img
-                        src={preview}
+                        src={src}
                         alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded"
+                        className="w-full h-32 object-cover rounded-lg"
                       />
                       <Button
                         type="button"
                         variant="destructive"
                         size="icon"
                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => removeImagePreview(index)}
+                        onClick={() => handleRemoveImage(index)}
                         disabled={isPending}
                       >
                         <X className="h-4 w-4" />
@@ -286,23 +354,14 @@ function RegisterForm({ onClose }: RegisterFormProps) {
             </div>
           )}
 
-          {error && (
-            <div className="bg-red-50 border border-red-300 text-red-800 text-sm rounded p-3 flex items-start space-x-2">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
-          <Button
-            type="submit"
-            className="w-full text-sm font-medium bg-blue-600 text-white py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600"
-            disabled={isPending}
-          >
+          <Button type="submit" className="w-full" disabled={isPending}>
             {isPending ? (
-              <div className="flex items-center justify-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Creating account...</span>
-              </div>
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating account...
+              </>
             ) : (
               "Create Account"
             )}
@@ -312,5 +371,3 @@ function RegisterForm({ onClose }: RegisterFormProps) {
     </div>
   );
 }
-
-export default RegisterForm;
