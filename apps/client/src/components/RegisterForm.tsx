@@ -1,5 +1,5 @@
 // RegisterForm.tsx
-import React, { useState, useEffect, useActionState } from "react";
+import  { useState, useEffect, useActionState } from "react";
 import { Button } from "./shadcn/ui/button";
 import { Input } from "./shadcn/ui/input";
 import { Label } from "./shadcn/ui/label";
@@ -32,22 +32,75 @@ const registerSchema = z.object({
 export default function RegisterForm({ onClose }: RegisterFormProps) {
   const { toast } = useToast();
 
+  // States for managing avatar and skill images
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<"freelancer" | "employer">("freelancer");
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [_avatarFile, setAvatarFile] = useState<File | null>(null);
 
-  // State to hold individual field errors
-  const [fieldErrors, setFieldErrors] = useState<{
-    username?: string;
-    email?: string;
-    password?: string;
-    role?: string;
-  }>({});
+  // Initialize useActionState
+  const [error, submitAction, isPending] = useActionState(submitHandler, null);
 
+  // Action Function
+  async function submitHandler(_: unknown, formData: FormData) {
+    // Extract form values
+    const username = formData.get("username")?.toString().trim() || "";
+    const email = formData.get("email")?.toString().trim() || "";
+    const password = formData.get("password")?.toString() || "";
+    const role = (formData.get("role") as "freelancer" | "employer") || "freelancer";
+    const avatarFile = formData.get("avatarFile") as File | null;
+
+    // Validate form data
+    const result = registerSchema.safeParse({ username, email, password, role });
+
+    if (!result.success) {
+      // Extract and return validation errors
+      const message = result.error.issues.map((issue) => issue.message).join(" ");
+      toast({
+        title: "Validation Error",
+        description: message,
+        variant: "destructive",
+        duration: 5000,
+      });
+      return "Validation failed. Please check your inputs.";
+    }
+
+    try {
+      // Prepare data for registration
+      const { username, email, password, role } = result.data;
+      const filesToUpload = role === "freelancer" ? selectedFiles : [];
+
+      // Call the register API
+      await register(username, role, password, email, avatarFile, filesToUpload);
+
+      // Success toast
+      toast({
+        title: "Welcome aboard! 🎉",
+        description: "Please check your email to verify your account.",
+        variant: "success",
+        duration: 5000,
+      });
+
+      // Close the form/modal
+      onClose();
+      return null;
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast({
+          title: "Registration Failed",
+          description: err.message,
+          variant: "destructive",
+          duration: 5000,
+        });
+        return err.message;
+      }
+      return "An unexpected error occurred.";
+    }
+  }
+
+  // Handle Role Selection
   const handleRoleSelection = (selectedRole: "freelancer" | "employer") => {
     setRole(selectedRole);
     if (selectedRole === "employer") {
@@ -59,6 +112,7 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
     }
   };
 
+  // Handle Avatar File Change
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || !files[0]) return;
@@ -101,6 +155,7 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
     setAvatarPreview(URL.createObjectURL(file));
   };
 
+  // Handle Remove Avatar
   const handleRemoveAvatar = () => {
     if (avatarPreview) {
       URL.revokeObjectURL(avatarPreview);
@@ -109,7 +164,7 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
     setAvatarFile(null);
   };
 
-  // Updated handler to accept File[] instead of ChangeEvent
+  // Handle Skill Images Upload
   const handleSkillImagesUpload = (files: File[]) => {
     if (files.length + selectedFiles.length > 4) {
       toast({
@@ -162,6 +217,7 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
     setImagePreviews((prev) => [...prev, ...newPreviews]);
   };
 
+  // Handle Remove Skill Image
   const handleRemoveImage = (index: number) => {
     // Revoke the object URL to free memory
     URL.revokeObjectURL(imagePreviews[index]);
@@ -177,91 +233,11 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
     };
   }, [imagePreviews, avatarPreview]);
 
-  const [error, submitAction, isPending] = useActionState(
-    async (_: unknown, formData: FormData) => {
-      // Reset field errors each submission attempt
-      setFieldErrors({});
-
-      try {
-        const rawData = {
-          username: formData.get("username")?.toString().trim() || "",
-          email: formData.get("email")?.toString().trim() || "",
-          password: formData.get("password")?.toString() || "",
-          role:
-            (formData.get("role")?.toString() as "freelancer" | "employer") ||
-            "freelancer",
-        };
-
-        // Use safeParse to get a result object
-        const result = registerSchema.safeParse(rawData);
-
-        if (!result.success) {
-          // Validation failed, collect field-level errors
-          const newFieldErrors: { [k: string]: string } = {};
-          for (const issue of result.error.issues) {
-            const fieldName = issue.path[0]; // e.g. "username", "email"
-            if (typeof fieldName === "string") {
-              newFieldErrors[fieldName] = issue.message;
-            }
-          }
-
-          setFieldErrors(newFieldErrors);
-          // Return a generic message or join all messages
-          const message = result.error.issues
-            .map((iss) => iss.message)
-            .join(" ");
-          toast({
-            title: "Validation Error",
-            description: message,
-            variant: "destructive",
-            duration: 5000,
-          });
-          return message;
-        }
-
-        const { username, email, password, role } = result.data;
-
-        const filesToUpload = role === "freelancer" ? selectedFiles : [];
-        const finalAvatarFile = avatarFile || null;
-
-        await register(
-          username,
-          role,
-          password,
-          email,
-          finalAvatarFile,
-          filesToUpload
-        );
-
-        toast({
-          title: "Welcome aboard! 🎉",
-          description: "Please check your email to verify your account.",
-          variant: "success",
-          duration: 5000,
-        });
-        onClose();
-        return null;
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          toast({
-            title: "Registration Failed",
-            description: err.message,
-            variant: "destructive",
-            duration: 5000,
-          });
-          return err.message;
-        }
-        return "An unexpected error occurred.";
-      }
-    },
-    null
-  );
-
   return (
     <div className="relative max-h-[80vh] overflow-y-auto scrollbar-thin px-1">
       <Card className="p-6 w-full">
         <form action={submitAction} className="space-y-6">
-          {/* Avatar image upload */}
+          {/* Avatar Image Upload */}
           <div>
             <Label className="text-sm font-medium">Avatar Image</Label>
             <Input
@@ -292,7 +268,7 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
             )}
           </div>
 
-          {/* Username field */}
+          {/* Username Field */}
           <div>
             <Label htmlFor="username" className="text-sm font-medium">
               Username
@@ -305,14 +281,13 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
               autoComplete="username"
               disabled={isPending}
             />
-            {fieldErrors.username && (
-              <p className="text-red-500 text-sm mt-1">
-                {fieldErrors.username}
-              </p>
-            )}
+            {/* Optionally handle field-specific errors */}
+            {/* {fieldErrors.username && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.username}</p>
+            )} */}
           </div>
 
-          {/* Email field */}
+          {/* Email Field */}
           <div>
             <Label htmlFor="email" className="text-sm font-medium">
               Email
@@ -326,12 +301,13 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
               autoComplete="email"
               disabled={isPending}
             />
-            {fieldErrors.email && (
+            {/* Optionally handle field-specific errors */}
+            {/* {fieldErrors.email && (
               <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
-            )}
+            )} */}
           </div>
 
-          {/* Password field */}
+          {/* Password Field */}
           <div>
             <Label htmlFor="password" className="text-sm font-medium">
               Password
@@ -358,14 +334,13 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
                 )}
               </Button>
             </div>
-            {fieldErrors.password && (
-              <p className="text-red-500 text-sm mt-1">
-                {fieldErrors.password}
-              </p>
-            )}
+            {/* Optionally handle field-specific errors */}
+            {/* {fieldErrors.password && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.password}</p>
+            )} */}
           </div>
 
-          {/* Role selection */}
+          {/* Role Selection */}
           <div>
             <Label className="text-sm font-medium">I am a...</Label>
             <input type="hidden" name="role" value={role} />
@@ -389,12 +364,13 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
                 Employer
               </Button>
             </div>
-            {fieldErrors.role && (
+            {/* Optionally handle field-specific errors */}
+            {/* {fieldErrors.role && (
               <p className="text-red-500 text-sm mt-1">{fieldErrors.role}</p>
-            )}
+            )} */}
           </div>
 
-          {/* Skill Images upload for freelancers */}
+          {/* Skill Images Upload for Freelancers */}
           {role === "freelancer" && (
             <div>
               <Label className="text-sm font-medium">Skill Images</Label>
@@ -432,6 +408,7 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
             </div>
           )}
 
+          {/* Submit Button */}
           <Button type="submit" className="w-full" disabled={isPending}>
             {isPending ? (
               <>
@@ -442,6 +419,9 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
               "Create Account"
             )}
           </Button>
+
+          {/* Display General Errors */}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
         </form>
       </Card>
     </div>
