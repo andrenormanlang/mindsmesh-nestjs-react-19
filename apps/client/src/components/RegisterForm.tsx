@@ -1,13 +1,15 @@
-import { useState, useActionState } from "react";
+// RegisterForm.tsx
+import React, { useState, useEffect, useActionState } from "react";
 import { Button } from "./shadcn/ui/button";
 import { Input } from "./shadcn/ui/input";
 import { Label } from "./shadcn/ui/label";
 import { useToast } from "./shadcn/ui/use-toast";
 import { register } from "../services/MindsMeshAPI";
 import { Card } from "./shadcn/ui/card";
-import { Eye, EyeOff, Loader2, Upload, X } from "lucide-react";
+import { Eye, EyeOff, Loader2, X } from "lucide-react";
 import { cn } from "./lib/utils";
 import { z } from "zod";
+import RegistrationSkillImagesUpload from "./RegistrationSkillImagesUpload";
 
 type RegisterFormProps = {
   onClose: () => void;
@@ -34,10 +36,10 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<"freelancer" | "employer">("freelancer");
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  
+
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  
+
   // State to hold individual field errors
   const [fieldErrors, setFieldErrors] = useState<{
     username?: string;
@@ -49,6 +51,9 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
   const handleRoleSelection = (selectedRole: "freelancer" | "employer") => {
     setRole(selectedRole);
     if (selectedRole === "employer") {
+      // Clear freelancer-specific uploads when switching to employer
+      // Revoke object URLs
+      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
       setSelectedFiles([]);
       setImagePreviews([]);
     }
@@ -87,6 +92,11 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
       return;
     }
 
+    // Revoke previous avatar preview if exists
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
   };
@@ -99,10 +109,8 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
     setAvatarFile(null);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
+  // Updated handler to accept File[] instead of ChangeEvent
+  const handleSkillImagesUpload = (files: File[]) => {
     if (files.length + selectedFiles.length > 4) {
       toast({
         title: "Too many images",
@@ -112,6 +120,7 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
       return;
     }
 
+    // Validate each file
     const validTypes = [
       "image/jpeg",
       "image/png",
@@ -123,38 +132,50 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
       "image/bmp",
       "image/avif",
     ];
+    const maxSize = 5 * 1024 * 1024; // 5MB
 
     const newFiles: File[] = [];
-    for (const file of Array.from(files)) {
+    const newPreviews: string[] = [];
+
+    files.forEach((file) => {
       if (!validTypes.includes(file.type)) {
         toast({
           title: "Invalid file type",
           description: `${file.name} is not a supported image format`,
           variant: "destructive",
         });
-        continue;
+        return;
       }
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > maxSize) {
         toast({
           title: "File too large",
           description: `${file.name} exceeds 5MB limit`,
           variant: "destructive",
         });
-        continue;
+        return;
       }
       newFiles.push(file);
-    }
+      newPreviews.push(URL.createObjectURL(file));
+    });
 
     setSelectedFiles((prev) => [...prev, ...newFiles]);
-    const filePreviews = newFiles.map((file) => URL.createObjectURL(file));
-    setImagePreviews((prev) => [...prev, ...filePreviews]);
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
   };
 
   const handleRemoveImage = (index: number) => {
+    // Revoke the object URL to free memory
     URL.revokeObjectURL(imagePreviews[index]);
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
+
+  // Cleanup object URLs on component unmount
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    };
+  }, [imagePreviews, avatarPreview]);
 
   const [error, submitAction, isPending] = useActionState(
     async (_: unknown, formData: FormData) => {
@@ -166,7 +187,9 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
           username: formData.get("username")?.toString().trim() || "",
           email: formData.get("email")?.toString().trim() || "",
           password: formData.get("password")?.toString() || "",
-          role: (formData.get("role")?.toString() as "freelancer" | "employer") || "freelancer"
+          role:
+            (formData.get("role")?.toString() as "freelancer" | "employer") ||
+            "freelancer",
         };
 
         // Use safeParse to get a result object
@@ -184,7 +207,9 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
 
           setFieldErrors(newFieldErrors);
           // Return a generic message or join all messages
-          const message = result.error.issues.map((iss) => iss.message).join(" ");
+          const message = result.error.issues
+            .map((iss) => iss.message)
+            .join(" ");
           toast({
             title: "Validation Error",
             description: message,
@@ -199,7 +224,14 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
         const filesToUpload = role === "freelancer" ? selectedFiles : [];
         const finalAvatarFile = avatarFile || null;
 
-        await register(username, role, password, email, finalAvatarFile, filesToUpload);
+        await register(
+          username,
+          role,
+          password,
+          email,
+          finalAvatarFile,
+          filesToUpload
+        );
 
         toast({
           title: "Welcome aboard! 🎉",
@@ -274,7 +306,9 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
               disabled={isPending}
             />
             {fieldErrors.username && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.username}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {fieldErrors.username}
+              </p>
             )}
           </div>
 
@@ -325,7 +359,9 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
               </Button>
             </div>
             {fieldErrors.password && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.password}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {fieldErrors.password}
+              </p>
             )}
           </div>
 
@@ -366,24 +402,33 @@ export default function RegisterForm({ onClose }: RegisterFormProps) {
                 Upload images to showcase your skills and previous work!
               </p>
               <div className="mt-2">
-                <div className="flex items-center justify-center w-full">
-                  <label className="w-full flex flex-col items-center px-4 py-6 bg-white text-blue rounded-lg shadow-lg tracking-wide uppercase border border-blue cursor-pointer hover:bg-blue hover:text-white">
-                    <Upload className="w-8 h-8" />
-                    <span className="mt-2 text-base leading-normal">
-                      Select images
-                    </span>
-                    <Input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      multiple
-                      name="skillImageUrls"
-                      onChange={handleFileChange}
-                      disabled={isPending || selectedFiles.length >= 4}
-                    />
-                  </label>
-                </div>
+                <RegistrationSkillImagesUpload onUpload={handleSkillImagesUpload} />
               </div>
+
+              {/* Display Image Previews */}
+              {imagePreviews.length > 0 && (
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={preview}
+                        alt={`Skill Preview ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-md"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2"
+                        onClick={() => handleRemoveImage(index)}
+                        disabled={isPending}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
